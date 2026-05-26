@@ -875,6 +875,7 @@
                                         <tr>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Vendas</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Contratos concluídos com Status Ativo">Ativas</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Faturamento</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200" title="Ticket Médio Atual (com desconto)">T.M. Atual</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200" title="Ticket Médio Após 1 Ano (valor cheio)">T.M. 1 Ano</th>
@@ -897,6 +898,7 @@
                                         <tr>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Vendas</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Contratos concluídos com Status Ativo">Ativas</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Faturamento</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200" title="Ticket Médio Atual (com desconto)">T.M. Atual</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200" title="Ticket Médio Após 1 Ano (valor cheio)">T.M. 1 Ano</th>
@@ -926,6 +928,7 @@
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Canal Op.</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Brutas</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Concluídas</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Contratos concluídos com Status Ativo">Ativas</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Ativação</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Rec. (Desconto)</th>
                                         </tr>
@@ -2966,13 +2969,14 @@
                 const vend = d['Vendedor'] || 'Não Identificado';
                 const setor = (d['Setor'] || '').trim().toUpperCase();
 
-                if (!aggGeral[vend]) aggGeral[vend] = { setor: setor, vendas: 0, concluidas: 0, faturamento: 0, faturamentoCheio: 0 };
+                if (!aggGeral[vend]) aggGeral[vend] = { setor: setor, vendas: 0, concluidas: 0, ativas: 0, faturamento: 0, faturamentoCheio: 0 };
                 aggGeral[vend].vendas++;
                 if (d._isConcluida) {
                     aggGeral[vend].concluidas++;
                     aggGeral[vend].faturamento += (d._valorDesconto || 0);
                     aggGeral[vend].faturamentoCheio += (d._valorCheio || 0);
                 }
+                if (isClienteAtivo(d)) aggGeral[vend].ativas++;
             });
 
             const arrGeral = Object.keys(aggGeral).map(k => ({
@@ -2980,6 +2984,7 @@
                 setor: aggGeral[k].setor,
                 vendas: aggGeral[k].vendas,
                 concluidas: aggGeral[k].concluidas,
+                ativas: aggGeral[k].ativas,
                 faturamento: aggGeral[k].faturamento,
                 ticketAtual: aggGeral[k].concluidas > 0 ? (aggGeral[k].faturamento / aggGeral[k].concluidas) : 0,
                 ticket1Ano: aggGeral[k].concluidas > 0 ? (aggGeral[k].faturamentoCheio / aggGeral[k].concluidas) : 0,
@@ -2997,6 +3002,7 @@
                     <td class="py-2 px-5 text-slate-500 text-[10px] text-center font-bold uppercase tracking-wider">${v.setor || '-'}</td>
                     <td class="py-2 px-5 text-slate-600 text-center font-bold">${v.vendas}</td>
                     <td class="py-2 px-5 text-green-600 text-center font-black">${v.concluidas}</td>
+                    <td class="py-2 px-5 text-center font-black"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black ${v.ativas > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'text-slate-400'}">${v.ativas}</span></td>
                     <td class="py-2 px-5 text-purple-600 text-center font-bold">${v.conversao.toFixed(1)}%</td>
                     <td class="py-2 px-5 text-slate-800 text-right font-bold">${formatBRL(v.faturamento)}</td>
                 `;
@@ -3019,6 +3025,7 @@
                     tr.innerHTML = `
                     <td class="py-2.5 px-5 text-slate-800 font-bold text-xs truncate max-w-[200px]" title="${v.nome}">${v.nome}</td>
                     <td class="py-2.5 px-5 text-slate-600 text-center font-black">${v.vendas}</td>
+                    <td class="py-2.5 px-5 text-center"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black ${v.ativas > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'text-slate-400'}">${v.ativas}</span></td>
                     <td class="py-2.5 px-5 text-green-600 text-right font-bold">${formatBRL(v.faturamento)}</td>
                     <td class="py-2.5 px-5 text-blue-600 text-right font-medium">${formatBRL(v.ticketAtual)}</td>
                     <td class="py-2.5 px-5 text-slate-500 text-right font-medium">${formatBRL(v.ticket1Ano)}</td>
