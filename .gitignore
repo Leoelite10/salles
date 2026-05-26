@@ -1,0 +1,7 @@
+# Ignorar tudo por padrão
+*
+
+# Manter apenas o arquivo principal e o index
+!.gitignore
+!index.html
+!Sales Intelligence Atual.html
