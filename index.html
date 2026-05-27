@@ -21,6 +21,10 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -134,13 +138,22 @@
             </div>
         </div>
         
-        <div class="bg-[#1e293b] p-1.5 rounded-xl flex items-center gap-3 border border-slate-700 shadow-sm relative group">
-            <label for="csvFileInput" class="cursor-pointer bg-blue-600 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-blue-500 transition-all shadow-md text-sm flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                Importar Base
-            </label>
-            <input type="file" id="csvFileInput" accept=".csv" class="hidden">
-            <span id="fileNameDisplay" class="text-sm text-slate-400 font-medium px-2 max-w-[200px] truncate">Nenhum arquivo...</span>
+        <div class="flex flex-col items-end gap-1.5">
+            <div class="bg-[#1e293b] p-1.5 rounded-xl flex items-center gap-3 border border-slate-700 shadow-sm relative group">
+                <label for="csvFileInput" class="cursor-pointer bg-blue-600 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-blue-500 transition-all shadow-md text-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    Importar Base
+                </label>
+                <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                <span id="fileNameDisplay" class="text-sm text-slate-400 font-medium px-2 max-w-[200px] truncate">Nenhum arquivo...</span>
+                <button id="btnLimparBase" title="Limpar base de dados" class="text-slate-500 hover:text-red-400 transition-colors px-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </div>
+            <div class="flex items-center gap-3 pr-1">
+                <span id="ultimaAtualizacao" class="text-[11px] text-slate-400 font-medium"></span>
+                <span id="importStats" class="hidden text-[11px] text-emerald-400 font-bold"></span>
+            </div>
         </div>
     </header>
 
@@ -1444,6 +1457,92 @@
             document.getElementById('blocoTabelaDetalhada').scrollIntoView({behavior: 'smooth', block: 'start'});
         });
         
+        // ===== Firebase / Firestore — Persistência em Nuvem =====
+        firebase.initializeApp({
+            apiKey: "AIzaSyA-MV3NSxdXkM3a9iaYrSISc_bJz295x60",
+            authDomain: "salles-74646.firebaseapp.com",
+            projectId: "salles-74646",
+            storageBucket: "salles-74646.firebasestorage.app",
+            messagingSenderId: "199378279027",
+            appId: "1:199378279027:web:959cc613a24d781b402806"
+        });
+        const _fsDB = firebase.firestore();
+
+        function _sanitizeDocId(id) {
+            return id.replace(/\//g, '-');
+        }
+
+        async function _dbSalvarMeta(key, value) {
+            await _fsDB.collection('meta').doc(key).set({ value });
+        }
+
+        async function _dbLerMeta(key) {
+            const snap = await _fsDB.collection('meta').doc(key).get();
+            return snap.exists ? snap.data().value : null;
+        }
+
+        async function _dbMerge(rawObjects) {
+            const snapshot = await _fsDB.collection('registros').get();
+            const existingIds = new Set(snapshot.docs.map(d => d.id));
+
+            const novos = rawObjects.filter(obj => {
+                const id = _sanitizeDocId((obj['ID O.S'] || '').trim());
+                return id && !existingIds.has(id);
+            });
+            const existentes = rawObjects.length - novos.length;
+
+            const chunkSize = 500;
+            for (let i = 0; i < novos.length; i += chunkSize) {
+                const batch = _fsDB.batch();
+                novos.slice(i, i + chunkSize).forEach(obj => {
+                    const id  = _sanitizeDocId((obj['ID O.S'] || '').trim());
+                    const ref = _fsDB.collection('registros').doc(id);
+                    batch.set(ref, { _raw: JSON.stringify(obj) });
+                });
+                await batch.commit();
+            }
+            return { novos: novos.length, existentes };
+        }
+
+        async function _dbCarregarTodos() {
+            const snapshot = await _fsDB.collection('registros').get();
+            return snapshot.docs.map(d => JSON.parse(d.data()._raw));
+        }
+
+        async function _dbLimpar() {
+            const snapshot = await _fsDB.collection('registros').get();
+            const chunkSize = 500;
+            for (let i = 0; i < snapshot.docs.length; i += chunkSize) {
+                const batch = _fsDB.batch();
+                snapshot.docs.slice(i, i + chunkSize).forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+            }
+            await _fsDB.collection('meta').doc('ultima_atualizacao').delete().catch(() => {});
+        }
+
+        function _formatarDH(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function _atualizarTimestamp() {
+            const ts = await _dbLerMeta('ultima_atualizacao');
+            const el = document.getElementById('ultimaAtualizacao');
+            if (el) el.textContent = ts ? `Atualizado: ${_formatarDH(ts)}` : '';
+        }
+
+        document.getElementById('btnLimparBase').addEventListener('click', async function() {
+            if (!confirm('Limpar toda a base de dados histórica? Esta ação não pode ser desfeita.')) return;
+            await _dbLimpar();
+            await _atualizarTimestamp();
+            document.getElementById('fileNameDisplay').textContent = 'Nenhum arquivo...';
+            document.getElementById('importStats').classList.add('hidden');
+            rawData = []; rawFilteredData = []; globalData = []; filteredData = [];
+            mainContent.classList.add('hidden');
+            initialState.classList.remove('hidden');
+        });
+
         fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -1452,11 +1551,21 @@
             loadingIndicator.classList.remove('hidden');
 
             const reader = new FileReader();
-            reader.onload = function(event) {
-                processData(event.target.result);
+            reader.onload = async function(event) {
+                const rawObjects = parseCSVParaObjetos(event.target.result);
+                if (!rawObjects) { loadingIndicator.classList.add('hidden'); return; }
+                const { novos, existentes } = await _dbMerge(rawObjects);
+                await _dbSalvarMeta('ultima_atualizacao', new Date().toISOString());
+                await _atualizarTimestamp();
+                const statsEl = document.getElementById('importStats');
+                statsEl.textContent = `+${novos} novos · ${existentes} já existiam`;
+                statsEl.classList.remove('hidden');
+                setTimeout(() => statsEl.classList.add('hidden'), 6000);
+                const todos = await _dbCarregarTodos();
+                processRawObjects(todos);
             };
             reader.onerror = () => { alert("Erro ao ler arquivo."); loadingIndicator.classList.add('hidden'); };
-            reader.readAsText(file, 'utf-8'); 
+            reader.readAsText(file, 'utf-8');
         });
 
         function parseCSVLine(line, delimiter = ';') {
@@ -1537,27 +1646,33 @@
             return Number.isFinite(numero) ? numero : 0;
         }
 
-        function processData(csvText) {
+        function parseCSVParaObjetos(csvText) {
             const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
-            if (lines.length < 2) return alert("Arquivo inválido.");
-
-            headersList = parseCSVLine(lines[0]).map(h => h.trim());
-            
-            const sellerToSector = {};
+            if (lines.length < 2) { alert("Arquivo inválido."); return null; }
+            const headers = parseCSVLine(lines[0]).map(h => h.trim());
             const rawObjects = [];
-
             for (let i = 1; i < lines.length; i++) {
                 const row = parseCSVLine(lines[i]);
-                if (row.length === headersList.length) {
+                if (row.length === headers.length) {
                     let obj = {};
-                    for (let j = 0; j < headersList.length; j++) {
-                        obj[headersList[j]] = row[j] ? row[j].trim() : '';
+                    for (let j = 0; j < headers.length; j++) {
+                        obj[headers[j]] = row[j] ? row[j].trim() : '';
                     }
                     rawObjects.push(obj);
+                }
+            }
+            return rawObjects;
+        }
 
-                    if (obj['Vendedor'] && obj['Setor']) {
-                        sellerToSector[obj['Vendedor']] = obj['Setor'];
-                    }
+        function processRawObjects(rawObjects) {
+            if (!rawObjects || rawObjects.length === 0) return;
+
+            headersList = Object.keys(rawObjects[0]).filter(k => !k.startsWith('_'));
+
+            const sellerToSector = {};
+            for (const obj of rawObjects) {
+                if (obj['Vendedor'] && obj['Setor']) {
+                    sellerToSector[obj['Vendedor']] = obj['Setor'];
                 }
             }
 
@@ -1573,29 +1688,28 @@
                 obj['Setor'] = normalizarSetorOperacional(obj._setorOriginal);
                 obj._ufOperacao = identificarUFOperacao(obj['Filial'], obj['Cidade']);
 
-                // Normalização do Canal
                 const canalRaw = obj['Canal'] || '';
                 obj['Canal'] = canalRaw.trim() !== '' ? canalRaw.trim() : 'Não Identificado';
 
                 const diag = (obj['Diagnóstico'] || '').trim();
                 const isConcluida = diag.includes('340');
                 const isVazia = diag === '';
-                
+
                 obj._isConcluida = isConcluida;
                 obj._isDiagnosticoVazio = isVazia;
                 obj._situacao = isConcluida ? 'Concluída' : (isVazia ? 'Pendente' : 'Não concluída');
                 obj._motivoDiagnostico = isConcluida ? 'Instalação concluída (340)' : (isVazia ? 'Sem diagnóstico' : diag);
-                
+
                 let valorCheio = parseValorMonetario(obj['Valor contrato']);
                 obj._valorCheio = valorCheio;
-                obj._valorDesconto = Math.max(0, valorCheio - 10); 
-                
+                obj._valorDesconto = Math.max(0, valorCheio - 10);
+
                 const rawDate = (obj['Data ativação'] || '').trim();
                 obj._dataExata = rawDate;
                 if (rawDate && rawDate.includes('/')) {
                     const parts = rawDate.split('/');
                     if (parts.length >= 3) {
-                        obj._mes = `${parts[1]}/${parts[2]}`; 
+                        obj._mes = `${parts[1]}/${parts[2]}`;
                     } else {
                         obj._mes = rawDate;
                     }
@@ -1609,11 +1723,11 @@
                 obj._vendedorNome = (obj['Vendedor'] || 'Não Identificado').trim();
                 obj._statusLower = (obj['Status contrato'] || '').trim().toLowerCase();
                 obj._canalOriginalVazio = canalRaw.trim() === '';
-                
+
                 rawData.push(obj);
 
                 if (!isConcluida && !isVazia) {
-                    continue; 
+                    continue;
                 }
 
                 globalData.push(obj);
@@ -1625,7 +1739,7 @@
 
             populateMultiSelectOptions();
             applyFilters();
-            
+
             loadingIndicator.classList.add('hidden');
             initialState.classList.add('hidden');
             mainContent.classList.remove('hidden');
@@ -5445,6 +5559,16 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         });
+
+        // ===== Inicialização: carrega dados do IndexedDB ao abrir a página =====
+        (async function() {
+            await _atualizarTimestamp();
+            const registros = await _dbCarregarTodos();
+            if (registros.length > 0) {
+                loadingIndicator.classList.remove('hidden');
+                processRawObjects(registros);
+            }
+        })();
 
     </script>
 </body>
