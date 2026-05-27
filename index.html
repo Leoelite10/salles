@@ -157,25 +157,25 @@
         </div>
     </header>
 
-    <!-- ESTADO INICIAL -->
-    <div id="initialState" class="flex-1 flex flex-col items-center justify-center p-6 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4=')]">
-        <div class="bg-white p-12 rounded-[2rem] shadow-xl border border-slate-100 max-w-lg w-full text-center relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-            <div class="bg-blue-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-            </div>
-            <h2 class="text-2xl font-extrabold text-slate-800 mb-3 tracking-tight">Análise Executiva</h2>
-            <p class="text-slate-500 mb-8 text-sm leading-relaxed">Carregue sua base de Ativações (CSV) no canto superior direito. O <b>Sales Intelligence 5.0</b> processará instantaneamente o funil de vendas, churn, previsões e metas da <b>AVANCA PAR</b>.</p>
-            
-            <div id="loadingIndicator" class="hidden flex flex-col items-center bg-slate-50 p-4 rounded-xl">
-                <div class="loader mb-3"></div>
-                <p class="text-blue-600 text-sm font-bold tracking-wide">Construindo Painel Analítico...</p>
-            </div>
+    <!-- Overlay: carregando dados do Firebase -->
+    <div id="firebaseLoader" class="fixed inset-0 bg-[#0f172a]/90 backdrop-blur-sm flex flex-col items-center justify-center z-50">
+        <div class="loader mb-4"></div>
+        <p class="text-white font-bold text-sm tracking-widest uppercase">Carregando dados...</p>
+    </div>
+
+    <!-- Overlay: processando importação CSV (admin) -->
+    <div id="loadingIndicator" class="hidden fixed inset-0 bg-[#0f172a]/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-3">
+            <div class="loader"></div>
+            <p class="text-blue-600 text-sm font-bold tracking-wide">Construindo Painel Analítico...</p>
         </div>
     </div>
 
+    <!-- Elemento fantasma mantido para compatibilidade com JS -->
+    <div id="initialState" class="hidden"></div>
+
     <!-- PAINEL PRINCIPAL -->
-    <main class="flex-1 p-6 max-w-[1920px] mx-auto hidden w-full" id="mainContent">
+    <main class="flex-1 p-6 max-w-[1920px] mx-auto w-full" id="mainContent">
         <div class="flex flex-col xl:flex-row gap-8">
             
             <!-- BARRA LATERAL (Filtros Múltiplos e Exportação) -->
@@ -5560,14 +5560,18 @@
             URL.revokeObjectURL(url);
         });
 
-        // ===== Inicialização: carrega dados do IndexedDB ao abrir a página =====
+        // ===== Inicialização: carrega dados do Firebase ao abrir a página =====
         (async function() {
             await _atualizarTimestamp();
-            const registros = await _dbCarregarTodos();
-            if (registros.length > 0) {
-                loadingIndicator.classList.remove('hidden');
-                processRawObjects(registros);
+            try {
+                const registros = await _dbCarregarTodos();
+                if (registros.length > 0) {
+                    processRawObjects(registros);
+                }
+            } catch(e) {
+                console.error('Erro ao carregar Firebase:', e);
             }
+            document.getElementById('firebaseLoader').classList.add('hidden');
         })();
 
     </script>
