@@ -137,6 +137,34 @@
             .text-\[10px\] { font-size: 11px !important; }
             .text-\[11px\] { font-size: 12px !important; }
         }
+
+        /* ===== MOBILE — Tab menu dropdown ===== */
+        #tabMenuTrigger { display: none; }
+        @media (max-width: 767px) {
+            #dashboardTabsBar { position: relative; }
+            #dashboardTabs {
+                display: none;
+                position: absolute;
+                left: 0; right: 0;
+                top: calc(100% + 6px);
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: 1rem;
+                box-shadow: 0 12px 28px rgba(0,0,0,0.13);
+                padding: 0.625rem;
+                flex-wrap: wrap;
+                gap: 0.375rem;
+                z-index: 50;
+            }
+            #dashboardTabs.tabs-aberto { display: flex; }
+            #dashboardTabs .dashboard-tab-btn {
+                flex: 1 1 calc(50% - 0.375rem);
+                text-align: center;
+                justify-content: center;
+                font-size: 10px;
+            }
+            #tabMenuTrigger { display: flex; }
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
@@ -325,6 +353,11 @@
             <!-- ÁREA DE CONTEÚDO E INDICADORES -->
             <div class="flex-1 space-y-8 min-w-0" id="areaRelatorios">
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-2 no-print-pdf sticky top-4 z-10" id="dashboardTabsBar">
+                    <!-- Mobile: trigger do menu de abas -->
+                    <button id="tabMenuTrigger" class="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-blue-600 text-white" aria-label="Menu de abas">
+                        <span class="text-xs font-black uppercase tracking-wider" id="tabAtualLabel">Executivo</span>
+                        <svg id="tabMenuChevron" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
                     <div class="flex gap-2 overflow-x-auto custom-scrollbar" id="dashboardTabs">
                         <button type="button" data-tab="executivo" class="dashboard-tab-btn active px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Executivo</button>
                         <button type="button" data-tab="funil" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Funil</button>
@@ -532,113 +565,6 @@
                     </h3>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5" id="regionalCards">
                         <!-- JS Inject -->
-                    </div>
-                </div>
-
-                <!-- BLOCO 3: Metas -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-6">
-                        <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-orange-500"></span> Performance vs Metas <span class="text-slate-400 font-medium normal-case ml-1 tracking-normal">(Ativações 340)</span>
-                        </h3>
-                        
-                        <!-- Configuração das Metas -->
-                        <div class="flex flex-wrap items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200 no-print-pdf" id="blocoAjusteMetas">
-                            <span class="text-[11px] font-extrabold text-slate-600 uppercase tracking-widest mr-2 px-2">Ajustar Metas:</span>
-                            <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                                <label class="text-[10px] uppercase text-slate-500 font-bold">Geral</label>
-                                <input type="number" id="inputMetaGeral" placeholder="Qtd" class="border-none w-14 text-sm font-bold text-slate-800 focus:ring-0 text-center bg-transparent">
-                            </div>
-                            <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                                <label class="text-[10px] uppercase text-slate-500 font-bold">Lojas</label>
-                                <input type="number" id="inputMetaAtendimento" placeholder="Qtd" class="border-none w-14 text-sm font-bold text-slate-800 focus:ring-0 text-center bg-transparent">
-                            </div>
-                            <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                                <label class="text-[10px] uppercase text-slate-500 font-bold">MCV</label>
-                                <input type="number" id="inputMetaVendasInt" placeholder="Qtd" class="border-none w-14 text-sm font-bold text-slate-800 focus:ring-0 text-center bg-transparent">
-                            </div>
-                            <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                                <label class="text-[10px] uppercase text-slate-500 font-bold">PAP</label>
-                                <input type="number" id="inputMetaVendasExt" placeholder="Qtd" class="border-none w-14 text-sm font-bold text-slate-800 focus:ring-0 text-center bg-transparent">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Barras de Progresso -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        
-                        <!-- Progresso Meta Geral -->
-                        <div class="flex flex-col justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <div>
-                                <div class="flex justify-between items-end mb-3">
-                                    <span class="text-slate-800 text-xs font-extrabold uppercase tracking-wide">Meta Geral</span>
-                                    <span class="text-lg font-black text-slate-300 leading-none" id="txtPctGeral">0%</span>
-                                </div>
-                                <div class="w-full bg-slate-200 rounded-full h-3 mb-3 overflow-hidden shadow-inner">
-                                    <div class="bg-slate-300 h-3 rounded-full transition-all duration-700" id="barPctGeral" style="width: 0%"></div>
-                                </div>
-                                <div class="flex justify-between text-[11px] text-slate-500 font-semibold mb-2">
-                                    <span id="realGeralText">Real: <b class="text-slate-700">0</b></span>
-                                    <span id="objGeralText">Obj: <b class="text-slate-700">0</b></span>
-                                </div>
-                            </div>
-                            <div id="statusGeral" class="text-[10px] font-bold mt-1 text-center rounded-lg py-1 bg-slate-200 text-slate-500 uppercase tracking-wide">Aguardando meta</div>
-                        </div>
-
-                        <!-- Progresso Meta Lojas -->
-                        <div class="flex flex-col justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <div>
-                                <div class="flex justify-between items-end mb-3">
-                                    <span class="text-slate-800 text-xs font-extrabold uppercase tracking-wide">Lojas</span>
-                                    <span class="text-lg font-black text-slate-300 leading-none" id="txtPctAtend">0%</span>
-                                </div>
-                                <div class="w-full bg-slate-200 rounded-full h-3 mb-3 overflow-hidden shadow-inner">
-                                    <div class="bg-slate-300 h-3 rounded-full transition-all duration-700" id="barPctAtend" style="width: 0%"></div>
-                                </div>
-                                <div class="flex justify-between text-[11px] text-slate-500 font-semibold mb-2">
-                                    <span id="realAtendText">Real: <b class="text-slate-700">0</b></span>
-                                    <span id="objAtendText">Obj: <b class="text-slate-700">0</b></span>
-                                </div>
-                            </div>
-                            <div id="statusAtend" class="text-[10px] font-bold mt-1 text-center rounded-lg py-1 bg-slate-200 text-slate-500 uppercase tracking-wide">Aguardando meta</div>
-                        </div>
-
-                        <!-- Progresso Meta MCV -->
-                        <div class="flex flex-col justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <div>
-                                <div class="flex justify-between items-end mb-3">
-                                    <span class="text-slate-800 text-xs font-extrabold uppercase tracking-wide">MCV</span>
-                                    <span class="text-lg font-black text-slate-300 leading-none" id="txtPctVInt">0%</span>
-                                </div>
-                                <div class="w-full bg-slate-200 rounded-full h-3 mb-3 overflow-hidden shadow-inner">
-                                    <div class="bg-slate-300 h-3 rounded-full transition-all duration-700" id="barPctVInt" style="width: 0%"></div>
-                                </div>
-                                <div class="flex justify-between text-[11px] text-slate-500 font-semibold mb-2">
-                                    <span id="realVIntText">Real: <b class="text-slate-700">0</b></span>
-                                    <span id="objVIntText">Obj: <b class="text-slate-700">0</b></span>
-                                </div>
-                            </div>
-                            <div id="statusVInt" class="text-[10px] font-bold mt-1 text-center rounded-lg py-1 bg-slate-200 text-slate-500 uppercase tracking-wide">Aguardando meta</div>
-                        </div>
-
-                        <!-- Progresso Meta PAP -->
-                        <div class="flex flex-col justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <div>
-                                <div class="flex justify-between items-end mb-3">
-                                    <span class="text-slate-800 text-xs font-extrabold uppercase tracking-wide">PAP</span>
-                                    <span class="text-lg font-black text-slate-300 leading-none" id="txtPctVExt">0%</span>
-                                </div>
-                                <div class="w-full bg-slate-200 rounded-full h-3 mb-3 overflow-hidden shadow-inner">
-                                    <div class="bg-slate-300 h-3 rounded-full transition-all duration-700" id="barPctVExt" style="width: 0%"></div>
-                                </div>
-                                <div class="flex justify-between text-[11px] text-slate-500 font-semibold mb-2">
-                                    <span id="realVExtText">Real: <b class="text-slate-700">0</b></span>
-                                    <span id="objVExtText">Obj: <b class="text-slate-700">0</b></span>
-                                </div>
-                            </div>
-                            <div id="statusVExt" class="text-[10px] font-bold mt-1 text-center rounded-lg py-1 bg-slate-200 text-slate-500 uppercase tracking-wide">Aguardando meta</div>
-                        </div>
-
                     </div>
                 </div>
 
@@ -1987,6 +1913,71 @@
             }
         }
 
+        // Persiste valores dos inputs de metas regionais entre re-renders
+        const _metasRegionais = { Geral_RJ:'', Lojas_RJ:'', MCV_RJ:'', PAP_RJ:'', Geral_SP:'', Lojas_SP:'', MCV_SP:'', PAP_SP:'' };
+
+        function _metaBarHtml(uf, canal, label, real) {
+            const sid = `${canal}_${uf}`;
+            return `
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] font-extrabold text-slate-600 uppercase tracking-wide">${label}</span>
+                        <span class="text-[10px] font-black text-slate-300" id="txtPctM${sid}">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden mb-1">
+                        <div class="h-2 rounded-full transition-all duration-500 bg-slate-300" id="barM${sid}" style="width:0%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-slate-500 font-semibold mb-1">
+                        <span>Real: <b class="text-slate-700">${real}</b></span>
+                        <span id="objTxtM${sid}">Meta: <b class="text-slate-700">-</b></span>
+                    </div>
+                    <div id="statusM${sid}" class="text-[9px] font-extrabold text-center rounded py-0.5 bg-slate-100 text-slate-400 uppercase tracking-wide">Defina a meta</div>
+                </div>`;
+        }
+
+        function _atualizarMetaBar(uf, canal, real) {
+            const sid = `${canal}_${uf}`;
+            const input = document.getElementById(`inputMeta${sid}`);
+            const barEl = document.getElementById(`barM${sid}`);
+            const txtEl = document.getElementById(`txtPctM${sid}`);
+            const objEl = document.getElementById(`objTxtM${sid}`);
+            const statusEl = document.getElementById(`statusM${sid}`);
+            if (!input || !barEl || !txtEl || !statusEl) return;
+            const meta = parseInt(input.value) || 0;
+            if (meta > 0) {
+                const pct = (real / meta * 100).toFixed(1);
+                const pctBarra = Math.min(100, real / meta * 100).toFixed(1);
+                txtEl.textContent = `${pct}%`;
+                barEl.style.width = `${pctBarra}%`;
+                if (objEl) objEl.innerHTML = `Meta: <b class="text-slate-700">${meta}</b>`;
+                const diff = real - meta;
+                if (real < meta) {
+                    barEl.className = 'h-2 rounded-full transition-all duration-500 bg-red-500';
+                    txtEl.className = 'text-[10px] font-black text-red-600';
+                    statusEl.className = 'text-[9px] font-extrabold text-center rounded py-0.5 bg-red-50 text-red-700 border border-red-100 uppercase tracking-wide';
+                    statusEl.textContent = `Abaixo (${diff})`;
+                } else if (real === meta) {
+                    barEl.className = 'h-2 rounded-full transition-all duration-500 bg-blue-500';
+                    txtEl.className = 'text-[10px] font-black text-blue-600';
+                    statusEl.className = 'text-[9px] font-extrabold text-center rounded py-0.5 bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-wide';
+                    statusEl.textContent = 'Meta atingida';
+                } else {
+                    barEl.className = 'h-2 rounded-full transition-all duration-500 bg-green-500';
+                    txtEl.className = 'text-[10px] font-black text-green-600';
+                    statusEl.className = 'text-[9px] font-extrabold text-center rounded py-0.5 bg-green-50 text-green-700 border border-green-100 uppercase tracking-wide';
+                    statusEl.textContent = `Acima (+${diff})`;
+                }
+            } else {
+                barEl.style.width = '0%';
+                barEl.className = 'h-2 rounded-full transition-all duration-500 bg-slate-300';
+                txtEl.textContent = '0%';
+                txtEl.className = 'text-[10px] font-black text-slate-300';
+                if (objEl) objEl.innerHTML = 'Meta: <b class="text-slate-700">-</b>';
+                statusEl.className = 'text-[9px] font-extrabold text-center rounded py-0.5 bg-slate-100 text-slate-400 uppercase tracking-wide';
+                statusEl.textContent = 'Defina a meta';
+            }
+        }
+
         // Renderiza os Cards de Setor (Top 3)
         function renderSectorCards(setorStats) {
             const mapId = {
@@ -2976,12 +2967,6 @@
             document.getElementById('kpiVendasFuturas').textContent = vendasFuturas;
             document.getElementById('kpiPotencialTotal').textContent = potencialTotal;
 
-            // --- ATUALIZAÇÃO DOS GRÁFICOS DE METAS ---
-            atualizarBarraMeta(ativacoesAtuais, 'inputMetaGeral', 'txtPctGeral', 'barPctGeral', 'realGeralText', 'statusGeral');
-            atualizarBarraMeta(realAtendimento, 'inputMetaAtendimento', 'txtPctAtend', 'barPctAtend', 'realAtendText', 'statusAtend');
-            atualizarBarraMeta(realVendasInterno, 'inputMetaVendasInt', 'txtPctVInt', 'barPctVInt', 'realVIntText', 'statusVInt');
-            atualizarBarraMeta(realVendasExterno, 'inputMetaVendasExt', 'txtPctVExt', 'barPctVExt', 'realVExtText', 'statusVExt');
-
             // --- Renderização dos novos Cards de Setor, Canais e Vendas Futuras ---
             renderSectorCards(setorStats);
             renderCanaisCards(filteredData);
@@ -3440,8 +3425,8 @@
             if (!container) return;
 
             const regioes = {
-                RJ: { brutas: 0, concluidas: 0, receita: 0, setores: {}, cidades: {}, filiais: {}, status: {} },
-                SP: { brutas: 0, concluidas: 0, receita: 0, setores: {}, cidades: {}, filiais: {}, status: {} }
+                RJ: { brutas: 0, concluidas: 0, receita: 0, setores: {}, cidades: {}, filiais: {}, status: {}, conclPorSetor: {} },
+                SP: { brutas: 0, concluidas: 0, receita: 0, setores: {}, cidades: {}, filiais: {}, status: {}, conclPorSetor: {} }
             };
             const baseRegional = getBaseRegionalSemFiltroUF();
             const ufSelecionada = activeFilters._ufOperacao.length === 1 ? activeFilters._ufOperacao[0] : '';
@@ -3461,6 +3446,9 @@
                 if (d._isConcluida) {
                     regioes[uf].concluidas++;
                     regioes[uf].receita += d._valorDesconto || 0;
+                    if (setor === 'LOJAS' || setor === 'MCV' || setor === 'PAP') {
+                        regioes[uf].conclPorSetor[setor] = (regioes[uf].conclPorSetor[setor] || 0) + 1;
+                    }
                 }
             });
 
@@ -3535,9 +3523,62 @@
                                 <span class="text-slate-700">${resumoCurto(item.status)}</span>
                             </div>
                         </div>
+                        <!-- METAS POR REGIÃO -->
+                        <div class="border-t border-orange-100 pt-4 mt-4" onclick="event.stopPropagation()">
+                            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                                <span class="text-[10px] font-black text-orange-600 uppercase tracking-widest flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                    Performance vs Metas
+                                </span>
+                                <div class="flex flex-wrap gap-1.5 no-print-pdf" onclick="event.stopPropagation()">
+                                    <div class="flex items-center gap-1 bg-orange-50 border border-orange-100 px-2 py-1 rounded-lg">
+                                        <label class="text-[9px] uppercase text-orange-600 font-bold">Geral</label>
+                                        <input type="number" id="inputMetaGeral_${uf}" min="0" placeholder="0" value="${_metasRegionais['Geral_'+uf]}" class="w-11 text-xs font-bold text-slate-800 bg-transparent border-none focus:ring-0 text-center">
+                                    </div>
+                                    <div class="flex items-center gap-1 bg-orange-50 border border-orange-100 px-2 py-1 rounded-lg">
+                                        <label class="text-[9px] uppercase text-orange-600 font-bold">Lojas</label>
+                                        <input type="number" id="inputMetaLojas_${uf}" min="0" placeholder="0" value="${_metasRegionais['Lojas_'+uf]}" class="w-11 text-xs font-bold text-slate-800 bg-transparent border-none focus:ring-0 text-center">
+                                    </div>
+                                    <div class="flex items-center gap-1 bg-orange-50 border border-orange-100 px-2 py-1 rounded-lg">
+                                        <label class="text-[9px] uppercase text-orange-600 font-bold">MCV</label>
+                                        <input type="number" id="inputMetaMCV_${uf}" min="0" placeholder="0" value="${_metasRegionais['MCV_'+uf]}" class="w-11 text-xs font-bold text-slate-800 bg-transparent border-none focus:ring-0 text-center">
+                                    </div>
+                                    <div class="flex items-center gap-1 bg-orange-50 border border-orange-100 px-2 py-1 rounded-lg">
+                                        <label class="text-[9px] uppercase text-orange-600 font-bold">PAP</label>
+                                        <input type="number" id="inputMetaPAP_${uf}" min="0" placeholder="0" value="${_metasRegionais['PAP_'+uf]}" class="w-11 text-xs font-bold text-slate-800 bg-transparent border-none focus:ring-0 text-center">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                ${_metaBarHtml(uf, 'Geral', 'Meta Geral', item.concluidas)}
+                                ${_metaBarHtml(uf, 'Lojas', 'Lojas', item.conclPorSetor['LOJAS'] || 0)}
+                                ${_metaBarHtml(uf, 'MCV', 'MCV', item.conclPorSetor['MCV'] || 0)}
+                                ${_metaBarHtml(uf, 'PAP', 'PAP', item.conclPorSetor['PAP'] || 0)}
+                            </div>
+                        </div>
                     </button>
                 `;
             }).join('');
+
+            // Após render: atualiza barras e registra listeners
+            ['RJ', 'SP'].forEach(uf => {
+                const canais = [
+                    { canal: 'Geral', real: regioes[uf].concluidas },
+                    { canal: 'Lojas', real: regioes[uf].conclPorSetor['LOJAS'] || 0 },
+                    { canal: 'MCV',   real: regioes[uf].conclPorSetor['MCV']   || 0 },
+                    { canal: 'PAP',   real: regioes[uf].conclPorSetor['PAP']   || 0 }
+                ];
+                canais.forEach(({ canal, real }) => {
+                    _atualizarMetaBar(uf, canal, real);
+                    const input = document.getElementById(`inputMeta${canal}_${uf}`);
+                    if (input) {
+                        input.addEventListener('input', () => {
+                            _metasRegionais[`${canal}_${uf}`] = input.value;
+                            _atualizarMetaBar(uf, canal, real);
+                        });
+                    }
+                });
+            });
 
             container.querySelectorAll('[data-regional-uf]').forEach(card => {
                 card.addEventListener('click', () => {
@@ -5596,6 +5637,37 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         });
+
+        // ===== Mobile: tab menu dropdown =====
+        (function() {
+            const trigger = document.getElementById('tabMenuTrigger');
+            const tabsEl  = document.getElementById('dashboardTabs');
+            const chevron = document.getElementById('tabMenuChevron');
+            const label   = document.getElementById('tabAtualLabel');
+            if (!trigger || !tabsEl) return;
+
+            function fecharTabMenu() {
+                tabsEl.classList.remove('tabs-aberto');
+                chevron.style.transform = '';
+            }
+
+            trigger.addEventListener('click', () => {
+                const aberto = tabsEl.classList.toggle('tabs-aberto');
+                chevron.style.transform = aberto ? 'rotate(180deg)' : '';
+            });
+
+            document.addEventListener('click', e => {
+                if (!trigger.contains(e.target) && !tabsEl.contains(e.target)) fecharTabMenu();
+            });
+
+            // Atualiza label e fecha dropdown quando um tab é clicado
+            tabsEl.querySelectorAll('.dashboard-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    label.textContent = btn.textContent.trim();
+                    fecharTabMenu();
+                });
+            });
+        })();
 
         // ===== Mobile: toggle sidebar drawer =====
         (function() {
