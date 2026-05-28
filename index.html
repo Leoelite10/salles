@@ -1737,9 +1737,9 @@
             if (el) el.textContent = ts ? `Atualizado: ${_formatarDH(ts)}` : '';
         }
 
-        async function _salvarMetasAnuais(ano, metasObj) {
+        async function _salvarMetasAnuais(ano, mes, metasObj) {
             await _fsDB.collection('meta').doc('metas_regionais').set({
-                ano, ...metasObj,
+                ano, mes, ...metasObj,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
@@ -1999,6 +1999,8 @@
 
         function _wizardMetasHtml(metas) {
             const anoAtual = new Date().getFullYear();
+            const mesAtual = new Date().getMonth() + 1;
+            const mesesNomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
             const v = k => (metas && metas[k] !== undefined && metas[k] !== null && metas[k] !== '') ? metas[k] : '';
             const inp = (key, label) => `<div>
                 <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">${label}</label>
@@ -2006,23 +2008,34 @@
                     class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                     placeholder="0" />
             </div>`;
+            const mesSalvo = metas && metas.mes ? metas.mes : mesAtual;
+            const refLabel = metas ? `${mesesNomes[(metas.mes || mesAtual) - 1]} / ${metas.ano || '—'}` : '—';
             const banner = metas
-                ? `<div class="mb-5 p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-xs text-emerald-700 font-medium flex items-center gap-2"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Metas salvas para ${metas.ano || '—'}. Edite abaixo para atualizar.</div>`
+                ? `<div class="mb-5 p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-xs text-emerald-700 font-medium flex items-center gap-2"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Metas salvas para ${refLabel}. Edite abaixo para atualizar.</div>`
                 : `<div class="mb-5 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 font-medium flex items-center gap-2"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Nenhuma meta configurada. Preencha o wizard abaixo.</div>`;
+            const opsMes = mesesNomes.map((n, i) => `<option value="${i+1}" ${mesSalvo == i+1 ? 'selected' : ''}>${n}</option>`).join('');
             return banner + `
             <div class="flex items-center mb-6">
-                <div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shadow-sm" id="wizIndCirc1">1</div><span class="text-xs font-bold text-blue-700" id="wizIndLbl1">Ano</span></div>
+                <div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shadow-sm" id="wizIndCirc1">1</div><span class="text-xs font-bold text-blue-700" id="wizIndLbl1">Período</span></div>
                 <div class="flex-1 mx-2 h-0.5 bg-slate-200"></div>
                 <div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-slate-200 text-slate-500 text-[11px] font-black flex items-center justify-center" id="wizIndCirc2">2</div><span class="text-xs font-bold text-slate-400" id="wizIndLbl2">RJ</span></div>
                 <div class="flex-1 mx-2 h-0.5 bg-slate-200"></div>
                 <div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-slate-200 text-slate-500 text-[11px] font-black flex items-center justify-center" id="wizIndCirc3">3</div><span class="text-xs font-bold text-slate-400" id="wizIndLbl3">SP</span></div>
             </div>
             <div id="wizS1">
-                <p class="text-xs text-slate-500 mb-4">Selecione o ano de referência para as metas de RJ e SP.</p>
-                <div class="mb-2">
-                    <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Ano de Referência</label>
-                    <input type="number" id="wizAno" value="${metas ? (metas.ano || anoAtual) : anoAtual}" min="2020" max="2099"
-                        class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none bg-white" />
+                <p class="text-xs text-slate-500 mb-4">Selecione o período de referência para as metas de RJ e SP.</p>
+                <div class="grid grid-cols-2 gap-3 mb-2">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Mês de Referência</label>
+                        <select id="wizMes" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                            ${opsMes}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Ano de Referência</label>
+                        <input type="number" id="wizAno" value="${metas ? (metas.ano || anoAtual) : anoAtual}" min="2020" max="2099"
+                            class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none bg-white" />
+                    </div>
                 </div>
                 <div class="flex justify-end mt-5">
                     <button onclick="_wizGoto(2)" class="px-5 py-2.5 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-colors">Próximo →</button>
@@ -2081,6 +2094,7 @@
                 return el && el.value !== '' ? Number(el.value) : '';
             };
             const ano = Number(document.getElementById('wizAno')?.value) || new Date().getFullYear();
+            const mes = Number(document.getElementById('wizMes')?.value) || (new Date().getMonth() + 1);
             const metasObj = {
                 Geral_RJ: getVal('Geral_RJ'), Lojas_RJ: getVal('Lojas_RJ'),
                 MCV_RJ:   getVal('MCV_RJ'),   PAP_RJ:   getVal('PAP_RJ'),
@@ -2088,7 +2102,7 @@
                 MCV_SP:   getVal('MCV_SP'),   PAP_SP:   getVal('PAP_SP'),
             };
             try {
-                await _salvarMetasAnuais(ano, metasObj);
+                await _salvarMetasAnuais(ano, mes, metasObj);
                 Object.keys(metasObj).forEach(k => {
                     if (metasObj[k] !== '') _metasRegionais[k] = String(metasObj[k]);
                 });
