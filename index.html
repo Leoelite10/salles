@@ -664,7 +664,11 @@
                         <div class="glass-card p-5 border-l-4 border-l-indigo-500">
                             <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Ticket Médio (Após 1 Ano)</span>
                             <span class="block text-2xl font-black text-indigo-600 mt-3" id="kpiTicket1Ano">R$ 0,00</span>
-                            <span class="text-xs text-slate-400 font-medium mt-1 block">Receita Valor Cheio</span>
+                            <span class="text-xs text-slate-400 font-medium mt-1 block">Receita Valor Cheio por Contrato</span>
+                            <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight">Receita Após 1 Ano</span>
+                                <span class="text-base font-black text-indigo-500" id="kpiReceitaAno">R$ 0,00</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3584,6 +3588,7 @@
             const ticket1Ano = totalConcluidas > 0 ? (sumValorCheio / totalConcluidas) : 0;
             document.getElementById('kpiTicketAtual').textContent = formatBRL(ticketAtual);
             document.getElementById('kpiTicket1Ano').textContent = formatBRL(ticket1Ano);
+            document.getElementById('kpiReceitaAno').textContent = formatBRL(sumValorCheio);
 
             // --- PROJEÇÃO DE VENDAS BRUTAS ---
             let mediaDiariaBrutas = 0;
