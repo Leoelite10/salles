@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sales Intelligence 5.0 | AVANCA PAR</title>
     
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS via Play CDN (necessário para valores arbitrários como text-[10px], bg-[#0f172a]) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Google Fonts: Plus Jakarta Sans (Tipografia Moderna e Executiva) -->
@@ -1353,12 +1353,6 @@
         const filterDataInicio = document.getElementById('filterDataInicio');
         const filterDataFim = document.getElementById('filterDataFim');
 
-        // Inputs de Meta
-        const inputMetaGeral = document.getElementById('inputMetaGeral');
-        const inputMetaAtendimento = document.getElementById('inputMetaAtendimento');
-        const inputMetaVendasInt = document.getElementById('inputMetaVendasInt');
-        const inputMetaVendasExt = document.getElementById('inputMetaVendasExt');
-
         // Sort de Cidades
         const sortCidades = document.getElementById('sortCidades');
         sortCidades.addEventListener('change', () => {
@@ -1376,11 +1370,6 @@
         document.getElementById('btnExportRegionalIsolado')?.addEventListener('click', () => exportarRelatorioIsolado('regional'));
         document.getElementById('btnExportCidadeIsolado')?.addEventListener('click', () => exportarRelatorioIsolado('cidade'));
         document.getElementById('btnExportSegmentoIsolado')?.addEventListener('click', () => exportarRelatorioIsolado('segmento'));
-
-        // Escutar Mudanças nas Metas
-        [inputMetaGeral, inputMetaAtendimento, inputMetaVendasInt, inputMetaVendasExt].forEach(input => {
-            input.addEventListener('input', updateInterface);
-        });
 
         // Ações de clique nos Cards Interativos para Drill-Down na tabela
         document.getElementById('cardAtivos').addEventListener('click', () => {
