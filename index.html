@@ -4755,14 +4755,23 @@
         // MAPA DE CALOR POR BAIRROS
         // ─────────────────────────────────────────────────────────────
 
-        function _heatColor(value, maxValue) {
-            if (maxValue === 0 || value === 0) return { bg: '#f1f5f9', text: '#94a3b8', border: '#e2e8f0' };
+        // Paleta de matizes vibrantes para diferenciar cidades
+        const _CIDADE_HUES = [220, 142, 24, 280, 346, 174, 45, 199, 316, 262, 16, 91, 160, 300, 48, 230];
+
+        function _getCidadeHue(nome) {
+            let h = 0;
+            for (let i = 0; i < nome.length; i++) { h = Math.imul(31, h) + nome.charCodeAt(i) | 0; }
+            return _CIDADE_HUES[Math.abs(h) % _CIDADE_HUES.length];
+        }
+
+        function _heatColorCity(value, maxValue, hue) {
+            if (maxValue === 0 || value === 0) return { bg: `hsl(${hue},25%,94%)`, text: `hsl(${hue},30%,52%)`, border: `hsl(${hue},20%,86%)` };
             const r = value / maxValue;
-            if (r < 0.2) return { bg: '#dbeafe', text: '#1e40af', border: '#bfdbfe' };
-            if (r < 0.4) return { bg: '#93c5fd', text: '#1e3a8a', border: '#60a5fa' };
-            if (r < 0.6) return { bg: '#3b82f6', text: '#ffffff', border: '#2563eb' };
-            if (r < 0.8) return { bg: '#1d4ed8', text: '#ffffff', border: '#1e40af' };
-            return { bg: '#1e3a8a', text: '#ffffff', border: '#1e3a8a' };
+            if (r < 0.2) return { bg: `hsl(${hue},80%,88%)`, text: `hsl(${hue},65%,24%)`, border: `hsl(${hue},70%,72%)` };
+            if (r < 0.4) return { bg: `hsl(${hue},82%,68%)`, text: `hsl(${hue},70%,16%)`, border: `hsl(${hue},78%,52%)` };
+            if (r < 0.6) return { bg: `hsl(${hue},86%,50%)`, text: '#ffffff',              border: `hsl(${hue},82%,38%)` };
+            if (r < 0.8) return { bg: `hsl(${hue},88%,38%)`, text: '#ffffff',              border: `hsl(${hue},85%,28%)` };
+            return           { bg: `hsl(${hue},92%,26%)`,  text: '#ffffff',              border: `hsl(${hue},90%,18%)` };
         }
 
         // ─── GEOCODIFICAÇÃO PROGRESSIVA DE BAIRROS (Nominatim/OpenStreetMap) ────
@@ -4801,7 +4810,8 @@
                 if (!coords) return;
                 mapeados++;
 
-                const col = _heatColor(stats.total, globalMax);
+                const hue = stats.hue !== undefined ? stats.hue : _getCidadeHue(stats.cidade);
+                const col = _heatColorCity(stats.total, globalMax, hue);
                 const r = Math.min(5 + Math.sqrt(stats.total) * 1.8, 22);
                 const circle = L.circleMarker(coords, {
                     radius: r, fillColor: col.bg, color: col.border,
@@ -4998,9 +5008,10 @@
             cityMarkersData.forEach(({ cidade, coords, stats }) => {
                 const conv = stats.brutas > 0 ? ((stats.ativacoes / stats.brutas) * 100).toFixed(1) : '0.0';
                 const r = Math.min(6 + Math.sqrt(stats.brutas) * 1.3, 22);
+                const cityHueM = _getCidadeHue(cidade);
                 const circle = L.circleMarker(coords, {
-                    radius: r, fillColor: '#2563eb', color: '#ffffff',
-                    weight: 2, opacity: 1, fillOpacity: 0.72
+                    radius: r, fillColor: `hsl(${cityHueM},85%,50%)`, color: `hsl(${cityHueM},90%,28%)`,
+                    weight: 2.5, opacity: 1, fillOpacity: 0.88
                 });
                 circle.bindPopup(`
                     <div style="font-family:sans-serif;min-width:185px">
@@ -5076,7 +5087,7 @@
                         const nd = Object.entries(data.nomeCount).sort((a, b) => b[1] - a[1])[0][0];
                         const ck = key + '||' + c.nome;
                         const pct = c.total > 0 ? (data.total / c.total) * 100 : 0;
-                        sm[ck] = { key, nomeDisplay: nd, cidade: c.nome, total: data.total, concluidas: data.concluidas, pctCidade: pct };
+                        sm[ck] = { key, nomeDisplay: nd, cidade: c.nome, total: data.total, concluidas: data.concluidas, pctCidade: pct, hue: _getCidadeHue(c.nome) };
                         gq.push({ key, nomeDisplay: nd, cidade: c.nome, cacheKey: ck });
                     });
                 });
@@ -5154,6 +5165,7 @@
 
             // Renderizar blocos por cidade (top 6 bairros + toggle "ver mais")
             heatmapGrid.innerHTML = cidades.map((c, cidIdx) => {
+                const cityHue = _getCidadeHue(c.nome);
                 const bairrosArr = Object.entries(c.bairros)
                     .map(([key, data]) => {
                         const nomeDisplay = Object.entries(data.nomeCount).sort((a, b) => b[1] - a[1])[0][0];
@@ -5164,7 +5176,7 @@
                 const TOP_N = 6;
                 const extraId = 'bxtra_' + cidIdx;
                 const makeCard = (b) => {
-                    const col = _heatColor(b.total, globalMax);
+                    const col = _heatColorCity(b.total, globalMax, cityHue);
                     const bKey = b.key.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                     const cNome = c.nome.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                     return `
@@ -5187,18 +5199,24 @@
                         ${bairrosArr.slice(TOP_N).map(makeCard).join('')}
                     </div>
                     <button onclick="toggleCidadeExtra(this,'${extraId}',${extraCount})"
-                            class="w-full mt-1.5 py-1.5 text-[10px] font-bold text-slate-400 hover:text-blue-600 border border-dashed border-slate-200 hover:border-blue-200 rounded-lg transition-colors">
+                            class="w-full mt-1.5 py-1.5 text-[10px] font-bold border border-dashed rounded-lg transition-colors"
+                            style="color:hsl(${cityHue},60%,38%);border-color:hsl(${cityHue},55%,72%);"
+                            onmouseover="this.style.background='hsl(${cityHue},82%,50%)';this.style.color='#fff';this.style.borderColor='transparent'"
+                            onmouseout="this.style.background='';this.style.color='hsl(${cityHue},60%,38%)';this.style.borderColor='hsl(${cityHue},55%,72%)'">
                         + ${extraCount} outros bairros
                     </button>` : '';
 
                 const taxaAtiv = c.total > 0 ? ((c.concluidas / c.total) * 100).toFixed(1) : '0.0';
                 return `
-                    <div class="glass-card p-5">
+                    <div class="glass-card p-5" style="border-left:4px solid hsl(${cityHue},80%,48%);">
                         <div class="flex items-center justify-between mb-3">
-                            <h4 class="text-sm font-extrabold text-slate-800 uppercase tracking-wide truncate" title="${escapeHTML(c.nome)}">${escapeHTML(c.nome)}</h4>
+                            <div class="flex items-center gap-2 min-w-0">
+                                <div class="w-3 h-3 rounded-full shrink-0" style="background:hsl(${cityHue},80%,48%);box-shadow:0 0 0 3px hsl(${cityHue},80%,88%);"></div>
+                                <h4 class="text-sm font-extrabold uppercase tracking-wide truncate" style="color:hsl(${cityHue},65%,26%);" title="${escapeHTML(c.nome)}">${escapeHTML(c.nome)}</h4>
+                            </div>
                             <div class="flex items-center gap-2 shrink-0 ml-2">
                                 <span class="text-[10px] font-black text-green-600 bg-green-50 border border-green-100 px-2 py-1 rounded-lg">${c.concluidas} ativ. (${taxaAtiv}%)</span>
-                                <span class="text-xs font-black text-blue-600 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-lg">${c.total} vendas</span>
+                                <span class="text-xs font-black px-2.5 py-1 rounded-lg" style="color:hsl(${cityHue},65%,26%);background:hsl(${cityHue},80%,92%);border:1px solid hsl(${cityHue},65%,78%);">${c.total} vendas</span>
                             </div>
                         </div>
                         <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
@@ -5219,18 +5237,23 @@
             rankingGlobal.sort((a, b) => b.total - a.total);
 
             bairroRanking.innerHTML = rankingGlobal.slice(0, 30).map((b, idx) => {
-                const col = _heatColor(b.total, globalMax);
-                const bgBadge = col.bg === '#f1f5f9' ? '#94a3b8' : col.bg;
+                const rHue = _getCidadeHue(b.cidade);
+                const bgBadge = `hsl(${rHue},82%,46%)`;
                 const bKey = b.key.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 const cNome = b.cidade.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 return `
-                    <div class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-blue-50 border border-transparent hover:border-blue-100 cursor-pointer transition-all mb-1.5"
+                    <div class="flex items-center gap-3 p-2.5 rounded-xl border border-transparent cursor-pointer transition-all mb-1.5"
+                         onmouseover="this.style.background='hsl(${rHue},80%,96%)';this.style.borderColor='hsl(${rHue},60%,84%)'"
+                         onmouseout="this.style.background='';this.style.borderColor='transparent'"
                          onclick="abrirDetalheBairro('${bKey}','${cNome}')"
                          title="Clique para ver detalhes de ${escapeHTML(b.nomeDisplay)}">
                         <span class="w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-black text-white shrink-0" style="background:${bgBadge};">${idx + 1}</span>
                         <div class="flex-1 min-w-0">
                             <div class="text-[11px] font-extrabold text-slate-800 truncate uppercase">${escapeHTML(b.nomeDisplay)}</div>
-                            <div class="text-[10px] text-slate-400 font-medium truncate">${escapeHTML(b.cidade)}</div>
+                            <div class="flex items-center gap-1.5">
+                                <div class="w-2 h-2 rounded-full shrink-0" style="background:${bgBadge};"></div>
+                                <div class="text-[10px] font-medium truncate" style="color:hsl(${rHue},55%,36%);">${escapeHTML(b.cidade)}</div>
+                            </div>
                         </div>
                         <div class="text-right shrink-0">
                             <div class="text-sm font-black text-slate-800">${b.total}</div>
