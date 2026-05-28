@@ -1967,8 +1967,28 @@
             try {
                 const snap = await _fsDB.collection('users').doc(user.uid).get();
                 if (!snap.exists) {
+                    // Auto-bootstrap: cria documento admin na primeira vez
+                    if (user.email === 'leonardo.amaral@amointernet.com.br') {
+                        try {
+                            await _fsDB.collection('users').doc(user.uid).set({
+                                nome: 'Leonardo Amaral',
+                                email: user.email,
+                                role: 'admin',
+                                status: 'approved',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            _currentUser = user;
+                            _currentRole  = 'admin';
+                            _aplicarRoleUI();
+                            _ocultarLoginScreen();
+                            await _carregarDadosFirebase();
+                            return;
+                        } catch(bErr) {
+                            console.warn('Bootstrap bloqueado pelas regras Firestore:', bErr.message);
+                        }
+                    }
                     await _auth.signOut();
-                    _mostrarLoginScreen('Conta não configurada. Contate o administrador.');
+                    _mostrarLoginScreen('Conta não configurada. Aplique as regras Firestore e tente novamente.');
                     return;
                 }
                 const data = snap.data();
