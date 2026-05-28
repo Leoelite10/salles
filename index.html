@@ -1737,6 +1737,18 @@
             if (el) el.textContent = ts ? `Atualizado: ${_formatarDH(ts)}` : '';
         }
 
+        async function _salvarMetasAnuais(ano, metasObj) {
+            await _fsDB.collection('meta').doc('metas_regionais').set({
+                ano, ...metasObj,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        async function _carregarMetasAnuais() {
+            const snap = await _fsDB.collection('meta').doc('metas_regionais').get();
+            return snap.exists ? snap.data() : null;
+        }
+
         // ===== AUTH — Firebase Authentication =====
         const _auth = firebase.auth();
         let _currentUser  = null;
@@ -1877,10 +1889,36 @@
             document.getElementById('adminPanel').classList.add('hidden');
         });
 
-        async function _abrirPainelAdmin() {
+        async function _abrirPainelAdmin(tab) {
+            tab = tab || 'usuarios';
             document.getElementById('adminPanel').classList.remove('hidden');
-            document.getElementById('adminPanelContent').innerHTML =
+            const _tc = t => t === tab
+                ? 'flex-1 py-2.5 px-3 text-xs font-bold rounded-lg transition-colors bg-white text-blue-700 shadow-sm'
+                : 'flex-1 py-2.5 px-3 text-xs font-bold rounded-lg transition-colors text-slate-500 hover:text-slate-700';
+            const tabBar = `<div class="flex gap-1 mb-6 bg-slate-100 p-1 rounded-xl">
+                <button onclick="_abrirPainelAdmin('usuarios')" class="${_tc('usuarios')}">
+                    <span class="flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        Usuários
+                    </span>
+                </button>
+                <button onclick="_abrirPainelAdmin('metas')" class="${_tc('metas')}">
+                    <span class="flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        Metas Anuais
+                    </span>
+                </button>
+            </div>`;
+
+            document.getElementById('adminPanelContent').innerHTML = tabBar +
                 '<div class="flex justify-center py-10"><div class="loader"></div></div>';
+
+            if (tab === 'metas') {
+                const metas = await _carregarMetasAnuais();
+                document.getElementById('adminPanelContent').innerHTML = tabBar + _wizardMetasHtml(metas);
+                return;
+            }
+
             const snap  = await _fsDB.collection('users').get();
             const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             const pendentes  = users.filter(u => u.status === 'pending');
@@ -1956,7 +1994,116 @@
                 html += '</div>';
             }
 
-            document.getElementById('adminPanelContent').innerHTML = html || '<p class="text-slate-400 text-sm text-center py-6">Nenhum usuário cadastrado.</p>';
+            document.getElementById('adminPanelContent').innerHTML = tabBar + (html || '<p class="text-slate-400 text-sm text-center py-6">Nenhum usuário cadastrado.</p>');
+        }
+
+        function _wizardMetasHtml(metas) {
+            const anoAtual = new Date().getFullYear();
+            const v = k => (metas && metas[k] !== undefined && metas[k] !== null && metas[k] !== '') ? metas[k] : '';
+            const inp = (key, label) => `<div>
+                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">${label}</label>
+                <input type="number" id="wiz${key}" value="${v(key)}" min="0"
+                    class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                    placeholder="0" />
+            </div>`;
+            const banner = metas
+                ? `<div class="mb-5 p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-xs text-emerald-700 font-medium flex items-center gap-2"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Metas salvas para ${metas.ano || '—'}. Edite abaixo para atualizar.</div>`
+                : `<div class="mb-5 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 font-medium flex items-center gap-2"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Nenhuma meta configurada. Preencha o wizard abaixo.</div>`;
+            return banner + `
+            <div class="flex items-center mb-6">
+                <div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shadow-sm" id="wizIndCirc1">1</div><span class="text-xs font-bold text-blue-700" id="wizIndLbl1">Ano</span></div>
+                <div class="flex-1 mx-2 h-0.5 bg-slate-200"></div>
+                <div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-slate-200 text-slate-500 text-[11px] font-black flex items-center justify-center" id="wizIndCirc2">2</div><span class="text-xs font-bold text-slate-400" id="wizIndLbl2">RJ</span></div>
+                <div class="flex-1 mx-2 h-0.5 bg-slate-200"></div>
+                <div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-slate-200 text-slate-500 text-[11px] font-black flex items-center justify-center" id="wizIndCirc3">3</div><span class="text-xs font-bold text-slate-400" id="wizIndLbl3">SP</span></div>
+            </div>
+            <div id="wizS1">
+                <p class="text-xs text-slate-500 mb-4">Selecione o ano de referência para as metas de RJ e SP.</p>
+                <div class="mb-2">
+                    <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Ano de Referência</label>
+                    <input type="number" id="wizAno" value="${metas ? (metas.ano || anoAtual) : anoAtual}" min="2020" max="2099"
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none bg-white" />
+                </div>
+                <div class="flex justify-end mt-5">
+                    <button onclick="_wizGoto(2)" class="px-5 py-2.5 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-colors">Próximo →</button>
+                </div>
+            </div>
+            <div id="wizS2" class="hidden">
+                <p class="text-xs text-slate-500 mb-4">Informe as metas anuais para o <strong class="text-slate-700">Rio de Janeiro (RJ)</strong>.</p>
+                <div class="grid grid-cols-2 gap-3 mb-2">
+                    ${inp('Geral_RJ','Meta Geral')}${inp('Lojas_RJ','Meta Lojas')}${inp('MCV_RJ','Meta MCV')}${inp('PAP_RJ','Meta PAP')}
+                </div>
+                <div class="flex justify-between mt-5">
+                    <button onclick="_wizGoto(1)" class="px-4 py-2.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-200 transition-colors">← Voltar</button>
+                    <button onclick="_wizGoto(3)" class="px-5 py-2.5 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-colors">Próximo →</button>
+                </div>
+            </div>
+            <div id="wizS3" class="hidden">
+                <p class="text-xs text-slate-500 mb-4">Informe as metas anuais para <strong class="text-slate-700">São Paulo (SP)</strong>.</p>
+                <div class="grid grid-cols-2 gap-3 mb-2">
+                    ${inp('Geral_SP','Meta Geral')}${inp('Lojas_SP','Meta Lojas')}${inp('MCV_SP','Meta MCV')}${inp('PAP_SP','Meta PAP')}
+                </div>
+                <div class="flex justify-between mt-5">
+                    <button onclick="_wizGoto(2)" class="px-4 py-2.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-200 transition-colors">← Voltar</button>
+                    <button onclick="_wizSalvar()" id="wizBtnSalvar" class="px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Salvar Metas
+                    </button>
+                </div>
+            </div>`;
+        }
+
+        function _wizGoto(step) {
+            [1, 2, 3].forEach(n => {
+                const el = document.getElementById('wizS' + n);
+                if (el) el.classList.toggle('hidden', n !== step);
+                const circ = document.getElementById('wizIndCirc' + n);
+                const lbl  = document.getElementById('wizIndLbl'  + n);
+                if (circ && lbl) {
+                    if (n < step) {
+                        circ.className = 'w-7 h-7 rounded-full bg-emerald-500 text-white text-[11px] font-black flex items-center justify-center shadow-sm';
+                        lbl.className  = 'text-xs font-bold text-emerald-600';
+                    } else if (n === step) {
+                        circ.className = 'w-7 h-7 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shadow-sm';
+                        lbl.className  = 'text-xs font-bold text-blue-700';
+                    } else {
+                        circ.className = 'w-7 h-7 rounded-full bg-slate-200 text-slate-500 text-[11px] font-black flex items-center justify-center';
+                        lbl.className  = 'text-xs font-bold text-slate-400';
+                    }
+                }
+            });
+        }
+
+        async function _wizSalvar() {
+            const btn = document.getElementById('wizBtnSalvar');
+            if (btn) { btn.textContent = 'Salvando...'; btn.disabled = true; }
+            const getVal = key => {
+                const el = document.getElementById('wiz' + key);
+                return el && el.value !== '' ? Number(el.value) : '';
+            };
+            const ano = Number(document.getElementById('wizAno')?.value) || new Date().getFullYear();
+            const metasObj = {
+                Geral_RJ: getVal('Geral_RJ'), Lojas_RJ: getVal('Lojas_RJ'),
+                MCV_RJ:   getVal('MCV_RJ'),   PAP_RJ:   getVal('PAP_RJ'),
+                Geral_SP: getVal('Geral_SP'), Lojas_SP: getVal('Lojas_SP'),
+                MCV_SP:   getVal('MCV_SP'),   PAP_SP:   getVal('PAP_SP'),
+            };
+            try {
+                await _salvarMetasAnuais(ano, metasObj);
+                Object.keys(metasObj).forEach(k => {
+                    if (metasObj[k] !== '') _metasRegionais[k] = String(metasObj[k]);
+                });
+                if (typeof applyFilters === 'function') applyFilters();
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-5 right-5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-xl text-sm font-bold z-[300] flex items-center gap-2';
+                toast.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Metas salvas com sucesso!';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+                await _abrirPainelAdmin('metas');
+            } catch(e) {
+                console.error('Erro ao salvar metas:', e);
+                if (btn) { btn.innerHTML = '<svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Salvar Metas'; btn.disabled = false; }
+                alert('Erro ao salvar as metas. Tente novamente.');
+            }
         }
 
         async function _aprovarUsuario(uid) {
@@ -6246,6 +6393,17 @@
             document.getElementById('firebaseLoader').classList.remove('hidden');
             await _atualizarTimestamp();
             try {
+                const metas = await _carregarMetasAnuais();
+                if (metas) {
+                    ['Geral','Lojas','MCV','PAP'].forEach(canal => {
+                        ['RJ','SP'].forEach(uf => {
+                            const key = canal + '_' + uf;
+                            if (metas[key] !== undefined && metas[key] !== null && metas[key] !== '') {
+                                _metasRegionais[key] = String(metas[key]);
+                            }
+                        });
+                    });
+                }
                 const registros = await _dbCarregarTodos();
                 if (registros.length > 0) {
                     processRawObjects(registros);
