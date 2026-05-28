@@ -1737,15 +1737,19 @@
             if (el) el.textContent = ts ? `Atualizado: ${_formatarDH(ts)}` : '';
         }
 
+        function _docIdMetas(ano, mes) {
+            return 'metas_' + ano + '_' + String(mes).padStart(2, '0');
+        }
+
         async function _salvarMetasAnuais(ano, mes, metasObj) {
-            await _fsDB.collection('meta').doc('metas_regionais').set({
+            await _fsDB.collection('meta').doc(_docIdMetas(ano, mes)).set({
                 ano, mes, ...metasObj,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
 
-        async function _carregarMetasAnuais() {
-            const snap = await _fsDB.collection('meta').doc('metas_regionais').get();
+        async function _carregarMetasAnuais(ano, mes) {
+            const snap = await _fsDB.collection('meta').doc(_docIdMetas(ano, mes)).get();
             return snap.exists ? snap.data() : null;
         }
 
@@ -1914,7 +1918,8 @@
                 '<div class="flex justify-center py-10"><div class="loader"></div></div>';
 
             if (tab === 'metas') {
-                const metas = await _carregarMetasAnuais();
+                const agora = new Date();
+                const metas = await _carregarMetasAnuais(agora.getFullYear(), agora.getMonth() + 1);
                 document.getElementById('adminPanelContent').innerHTML = tabBar + _wizardMetasHtml(metas);
                 return;
             }
@@ -2004,7 +2009,7 @@
             const v = k => (metas && metas[k] !== undefined && metas[k] !== null && metas[k] !== '') ? metas[k] : '';
             const inp = (key, label) => `<div>
                 <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">${label}</label>
-                <input type="number" id="wiz${key}" value="${v(key)}" min="0"
+                <input type="number" id="wiz${key}" value="" min="0"
                     class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                     placeholder="0" />
             </div>`;
@@ -2038,7 +2043,7 @@
                     </div>
                 </div>
                 <div class="flex justify-end mt-5">
-                    <button onclick="_wizGoto(2)" class="px-5 py-2.5 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-colors">Próximo →</button>
+                    <button onclick="_wizGoto(2, true)" class="px-5 py-2.5 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-colors">Próximo →</button>
                 </div>
             </div>
             <div id="wizS2" class="hidden">
@@ -2065,7 +2070,17 @@
             </div>`;
         }
 
-        function _wizGoto(step) {
+        async function _wizGoto(step, carregarPeriodo) {
+            if (step === 2 && carregarPeriodo) {
+                const ano = Number(document.getElementById('wizAno')?.value) || new Date().getFullYear();
+                const mes = Number(document.getElementById('wizMes')?.value) || (new Date().getMonth() + 1);
+                const m = await _carregarMetasAnuais(ano, mes);
+                const fill = (key) => {
+                    const el = document.getElementById('wiz' + key);
+                    if (el) el.value = (m && m[key] !== undefined && m[key] !== null && m[key] !== '') ? m[key] : '';
+                };
+                ['Geral_RJ','Lojas_RJ','MCV_RJ','PAP_RJ','Geral_SP','Lojas_SP','MCV_SP','PAP_SP'].forEach(fill);
+            }
             [1, 2, 3].forEach(n => {
                 const el = document.getElementById('wizS' + n);
                 if (el) el.classList.toggle('hidden', n !== step);
@@ -6407,7 +6422,8 @@
             document.getElementById('firebaseLoader').classList.remove('hidden');
             await _atualizarTimestamp();
             try {
-                const metas = await _carregarMetasAnuais();
+                const _agora = new Date();
+                const metas = await _carregarMetasAnuais(_agora.getFullYear(), _agora.getMonth() + 1);
                 if (metas) {
                     ['Geral','Lojas','MCV','PAP'].forEach(canal => {
                         ['RJ','SP'].forEach(uf => {
