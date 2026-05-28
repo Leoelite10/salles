@@ -165,6 +165,114 @@
             }
             #tabMenuTrigger { display: flex; }
         }
+
+        /* ===== MOBILE — Header 2 linhas (≤ 767px) ===== */
+        @media (max-width: 767px) {
+            header {
+                flex-wrap: wrap !important;
+                padding-top: 10px !important;
+                padding-bottom: 10px !important;
+                gap: 8px !important;
+                align-items: flex-start !important;
+            }
+            header > div:first-child {
+                width: 100% !important;
+                flex: none !important;
+                align-items: center !important;
+            }
+            header > div:last-child {
+                width: 100% !important;
+                flex: none !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 6px !important;
+            }
+            #headerMeta { display: none !important; }
+            #fileNameDisplay { display: none !important; }
+            header label[for="csvFileInput"] {
+                font-size: 12px !important;
+                padding: 7px 12px !important;
+            }
+            #ultimaAtualizacao,
+            #importStats {
+                font-size: 10px !important;
+            }
+        }
+
+        /* ===== MOBILE — Layout principal (≤ 640px) ===== */
+        @media (max-width: 640px) {
+            #mainContent {
+                padding: 10px !important;
+            }
+            #areaRelatorios {
+                row-gap: 14px !important;
+            }
+            /* KPI grid: 2 colunas */
+            #kpisBasicos {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 10px !important;
+            }
+            /* Números grandes — reduzir */
+            .glass-card .text-3xl, .glass-card [class*="text-3xl"] {
+                font-size: 22px !important;
+                line-height: 1.2 !important;
+            }
+            .glass-card .text-2xl, .glass-card [class*="text-2xl"] {
+                font-size: 18px !important;
+                line-height: 1.2 !important;
+            }
+            /* Flex baseline → coluna no mobile */
+            .glass-card .flex.items-baseline {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 1px !important;
+            }
+            /* Esconder SVGs decorativos (filhos diretos dos cards) */
+            .glass-card > svg {
+                display: none !important;
+            }
+            /* word-break e overflow nos cards */
+            .glass-card {
+                word-break: break-word !important;
+                overflow-wrap: break-word !important;
+                white-space: normal !important;
+                padding: 12px !important;
+            }
+            /* Remover altura fixa */
+            .glass-card {
+                height: auto !important;
+                min-height: 0 !important;
+            }
+        }
+
+        /* ===== MOBILE — Telas muito pequenas 360-480px ===== */
+        @media (max-width: 480px) {
+            #mainContent {
+                padding: 8px 8px !important;
+            }
+            #kpisBasicos {
+                gap: 8px !important;
+            }
+            .glass-card {
+                padding: 10px !important;
+            }
+            .glass-card .text-3xl, .glass-card [class*="text-3xl"] {
+                font-size: 20px !important;
+            }
+            .glass-card .text-2xl, .glass-card [class*="text-2xl"] {
+                font-size: 16px !important;
+            }
+            /* Sidebar mais estreita em telas muito pequenas */
+            #asideFiltros {
+                width: 270px !important;
+                max-width: 91vw !important;
+            }
+            /* Tab bar sticky: reduzir padding */
+            #dashboardTabsBar {
+                padding: 6px !important;
+            }
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
@@ -185,7 +293,7 @@
                 <h1 class="text-xl md:text-3xl font-extrabold tracking-tight text-white">
                     Sales Intelligence <span class="text-blue-400">5.0</span>
                 </h1>
-                <div class="flex items-center gap-3 mt-1.5">
+                <div id="headerMeta" class="flex items-center gap-3 mt-1.5">
                     <span class="bg-blue-600/20 border border-blue-500/30 text-blue-300 text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full tracking-wider">
                         AVANCA PAR
                     </span>
