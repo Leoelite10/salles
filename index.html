@@ -566,9 +566,12 @@
                     </div>
 
                     <!-- MDULO EXPORTA!ÒO -->
-                    <div class="mt-6 border-t border-slate-200 pt-6">
-                        <h2 class="text-[11px] font-bold text-slate-500 mb-3 uppercase tracking-widest text-center">Exportar Resumo Executivo</h2>
-                        <div class="flex flex-col gap-2">
+                    <div class="mt-6 border-t border-slate-200 pt-4">
+                        <button onclick="(function(){var b=document.getElementById('exportBtnsBody');var ic=document.getElementById('exportChevron');var vis=b.style.display!=='none';b.style.display=vis?'none':'flex';ic.style.transform=vis?'rotate(0deg)':'rotate(180deg)';})()" class="w-full flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-widest py-1 hover:text-slate-700 transition-colors">
+                            <span>Exportar Resumo Executivo</span>
+                            <svg id="exportChevron" class="w-3.5 h-3.5 transition-transform duration-200" style="transform:rotate(0deg)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="exportBtnsBody" class="flex-col gap-2 mt-3" style="display:none">
                             <button id="btnExportPDF" class="w-full bg-white hover:bg-red-50 text-red-600 border border-red-200 py-2 rounded-lg font-bold transition-colors text-sm flex justify-center items-center gap-2 shadow-sm">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path></svg>
                                 Relatório PDF
@@ -1166,16 +1169,16 @@
                                 <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
                                     <thead class="bg-slate-50 sticky top-0 z-10">
                                         <tr>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Cliente</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Data Ativação</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Situação (Funil)</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Filial</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">UF</th>
+                                            <th onclick="_sortDT('cliente')" class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Cliente<span id="dtS_cliente" class="ml-1 text-blue-500"></span></th>
+                                            <th onclick="_sortDT('data')" class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Data Ativação<span id="dtS_data" class="ml-1 text-blue-500"></span></th>
+                                            <th onclick="_sortDT('situacao')" class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Situação (Funil)<span id="dtS_situacao" class="ml-1 text-blue-500"></span></th>
+                                            <th onclick="_sortDT('filial')" class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Filial<span id="dtS_filial" class="ml-1 text-blue-500"></span></th>
+                                            <th onclick="_sortDT('uf')" class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">UF<span id="dtS_uf" class="ml-1 text-blue-500"></span></th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Assunto</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Plano de Venda</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Valor Cheio</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Valor 1º Ano</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Status Contrato</th>
+                                            <th onclick="_sortDT('valorCheio')" class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Valor Cheio<span id="dtS_valorCheio" class="ml-1 text-blue-500"></span></th>
+                                            <th onclick="_sortDT('valor1ano')" class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Valor 1º Ano<span id="dtS_valor1ano" class="ml-1 text-blue-500"></span></th>
+                                            <th onclick="_sortDT('status')" class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Status Contrato<span id="dtS_status" class="ml-1 text-blue-500"></span></th>
                                         </tr>
                                     </thead>
                                     <tbody id="detailedTableBody" class="divide-y divide-slate-100">
@@ -3935,23 +3938,64 @@
             renderTop15(top15Fat, tbodyTop15Fat);
         }
 
+        let _dtSort = { col: null, dir: 'asc' };
+
+        function _sortDT(col) {
+            _dtSort.dir = _dtSort.col === col && _dtSort.dir === 'asc' ? 'desc' : 'asc';
+            _dtSort.col = col;
+            renderDetailedTable();
+        }
+
         function renderDetailedTable() {
             const tbody = document.getElementById('detailedTableBody');
             tbody.innerHTML = '';
-            
-            const limit = Math.min(filteredData.length, 300);
 
+            // Atualiza indicadores de ordenação nos cabeçalhos
+            ['cliente','data','situacao','filial','uf','valorCheio','valor1ano','status'].forEach(k => {
+                const el = document.getElementById('dtS_' + k);
+                if (!el) return;
+                el.textContent = _dtSort.col === k ? (_dtSort.dir === 'asc' ? ' ↑' : ' ↓') : '';
+            });
+
+            // Copia e ordena
+            let data = filteredData.slice();
+            if (_dtSort.col) {
+                const parseDate = s => {
+                    if (!s) return 0;
+                    const p = s.split('/');
+                    return p.length === 3 ? new Date(p[2], p[1]-1, p[0]).getTime() : (new Date(s).getTime() || 0);
+                };
+                data.sort((a, b) => {
+                    let va, vb;
+                    switch (_dtSort.col) {
+                        case 'cliente':   va = (a['Razão social/nome'] || '').toLowerCase(); vb = (b['Razão social/nome'] || '').toLowerCase(); break;
+                        case 'data':      va = parseDate(a['Data ativação']); vb = parseDate(b['Data ativação']); break;
+                        case 'situacao':  va = a._isConcluida ? 1 : 0; vb = b._isConcluida ? 1 : 0; break;
+                        case 'filial':    va = (a['Filial'] || '').toLowerCase(); vb = (b['Filial'] || '').toLowerCase(); break;
+                        case 'uf':        va = (a._ufOperacao || '').toLowerCase(); vb = (b._ufOperacao || '').toLowerCase(); break;
+                        case 'valorCheio':va = a._valorCheio || 0; vb = b._valorCheio || 0; break;
+                        case 'valor1ano': va = a._valorDesconto || 0; vb = b._valorDesconto || 0; break;
+                        case 'status':    va = (a['Status contrato'] || '').toLowerCase(); vb = (b['Status contrato'] || '').toLowerCase(); break;
+                        default: return 0;
+                    }
+                    if (va < vb) return _dtSort.dir === 'asc' ? -1 : 1;
+                    if (va > vb) return _dtSort.dir === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            const limit = Math.min(data.length, 300);
             for (let i = 0; i < limit; i++) {
-                const d = filteredData[i];
+                const d = data[i];
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-blue-50/50 transition-colors';
-                
-                const sitBadge = d._isConcluida 
+
+                const sitBadge = d._isConcluida
                     ? '<span class="bg-green-100 border border-green-200 text-green-700 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Concluída (340)</span>'
                     : '<span class="bg-amber-100 border border-amber-200 text-amber-700 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Pendente</span>';
 
-                const statusContrato = (d['Status contrato'] || '').toLowerCase() === 'ativo' 
-                    ? `<span class="text-green-600 font-bold flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>${d['Status contrato']}</span>` 
+                const statusContrato = (d['Status contrato'] || '').toLowerCase() === 'ativo'
+                    ? `<span class="text-green-600 font-bold flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>${d['Status contrato']}</span>`
                     : `<span class="text-red-500 font-bold flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>${d['Status contrato']}</span>`;
 
                 tr.innerHTML = `
@@ -3968,9 +4012,9 @@
                 `;
                 tbody.appendChild(tr);
             }
-            if (filteredData.length > limit) {
+            if (data.length > limit) {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td colspan="10" class="py-4 text-center text-xs text-slate-400 bg-slate-50 font-medium tracking-wide">Exibindo 300 de ${filteredData.length} registros. A exportação (Excel) contemplará a base completa.</td>`;
+                tr.innerHTML = `<td colspan="10" class="py-4 text-center text-xs text-slate-400 bg-slate-50 font-medium tracking-wide">Exibindo 300 de ${data.length} registros. A exportação (Excel) contemplará a base completa.</td>`;
                 tbody.appendChild(tr);
             }
         }
