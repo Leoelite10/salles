@@ -6565,9 +6565,23 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(r => console.log('SW registrado:', r.scope))
-                    .catch(e => console.warn('SW falhou:', e));
+                navigator.serviceWorker.register('/sw.js').then(reg => {
+                    console.log('SW registrado:', reg.scope);
+                    reg.update();
+                    reg.addEventListener('updatefound', () => {
+                        const sw = reg.installing;
+                        sw.addEventListener('statechange', () => {
+                            if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+                                window.location.reload();
+                            }
+                        });
+                    });
+                }).catch(e => console.warn('SW falhou:', e));
+
+                // Recarrega quando o novo SW assume o controle
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    window.location.reload();
+                });
             });
         }
     </script>
