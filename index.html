@@ -1698,7 +1698,20 @@
 
         async function _dbCarregarTodos() {
             const raw = localStorage.getItem(_LS_KEY);
-            return raw ? JSON.parse(raw) : [];
+            if (raw) return JSON.parse(raw);
+
+            // Migração única: Firestore → localStorage
+            try {
+                const snapshot = await _fsDB.collection('registros').get();
+                if (!snapshot.empty) {
+                    const dados = snapshot.docs.map(d => JSON.parse(d.data()._raw));
+                    localStorage.setItem(_LS_KEY, JSON.stringify(dados));
+                    return dados;
+                }
+            } catch(e) {
+                console.warn('Migração Firestore→localStorage falhou:', e);
+            }
+            return [];
         }
 
         async function _dbMerge(rawObjects) {
