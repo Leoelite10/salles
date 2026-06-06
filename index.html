@@ -601,7 +601,7 @@
                         <button type="button" data-tab="executivo" class="dashboard-tab-btn active px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Executivo</button>
                         <button type="button" data-tab="funil" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Funil</button>
                         <button type="button" data-tab="cancelados" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Cancelados</button>
-                        <button type="button" data-tab="canais" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Canais</button>
+                        <button type="button" data-tab="canais" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Leads</button>
                         <button type="button" data-tab="vendedores" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Vendedores</button>
                         <button type="button" data-tab="setores" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Canais Op.</button>
                         <button type="button" data-tab="cidades" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Cidades</button>
@@ -1521,8 +1521,8 @@
             { tabs: ['cancelados'] },
             { tabs: ['executivo'] },
             { tabs: ['executivo'] },
-            { tabs: ['setores'] },
             { tabs: ['canais'] },
+            { tabs: ['setores'] },
             { tabs: ['funil'] },
             { tabs: ['executivo'] },
             { tabs: ['cidades', 'vendedores'] },
@@ -1681,6 +1681,7 @@
             appId: "1:199378279027:web:959cc613a24d781b402806"
         });
         const _fsDB = firebase.firestore();
+        const _LS_KEY = 'sales50_registros';
 
         function _sanitizeDocId(id) {
             return id.replace(/\//g, '-');
@@ -1695,42 +1696,31 @@
             return snap.exists ? snap.data().value : null;
         }
 
-        async function _dbMerge(rawObjects) {
-            const snapshot = await _fsDB.collection('registros').get();
-            const existingIds = new Set(snapshot.docs.map(d => d.id));
-
-            const novos = rawObjects.filter(obj => {
-                const id = _sanitizeDocId((obj['ID O.S'] || '').trim());
-                return id && !existingIds.has(id);
-            });
-            const existentes = rawObjects.length - novos.length;
-
-            const chunkSize = 500;
-            for (let i = 0; i < novos.length; i += chunkSize) {
-                const batch = _fsDB.batch();
-                novos.slice(i, i + chunkSize).forEach(obj => {
-                    const id  = _sanitizeDocId((obj['ID O.S'] || '').trim());
-                    const ref = _fsDB.collection('registros').doc(id);
-                    batch.set(ref, { _raw: JSON.stringify(obj) });
-                });
-                await batch.commit();
-            }
-            return { novos: novos.length, existentes };
+        async function _dbCarregarTodos() {
+            const raw = localStorage.getItem(_LS_KEY);
+            return raw ? JSON.parse(raw) : [];
         }
 
-        async function _dbCarregarTodos() {
-            const snapshot = await _fsDB.collection('registros').get();
-            return snapshot.docs.map(d => JSON.parse(d.data()._raw));
+        async function _dbMerge(rawObjects) {
+            const existing = await _dbCarregarTodos();
+            const map = new Map(existing.map(obj => [
+                _sanitizeDocId((obj['ID O.S'] || '').trim()), obj
+            ]));
+
+            let novos = 0, existentes = 0;
+            for (const obj of rawObjects) {
+                const id = _sanitizeDocId((obj['ID O.S'] || '').trim());
+                if (!id) continue;
+                if (map.has(id)) existentes++; else novos++;
+                map.set(id, obj);
+            }
+
+            localStorage.setItem(_LS_KEY, JSON.stringify(Array.from(map.values())));
+            return { novos, existentes };
         }
 
         async function _dbLimpar() {
-            const snapshot = await _fsDB.collection('registros').get();
-            const chunkSize = 500;
-            for (let i = 0; i < snapshot.docs.length; i += chunkSize) {
-                const batch = _fsDB.batch();
-                snapshot.docs.slice(i, i + chunkSize).forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
-            }
+            localStorage.removeItem(_LS_KEY);
             await _fsDB.collection('meta').doc('ultima_atualizacao').delete().catch(() => {});
         }
 
@@ -2278,17 +2268,23 @@
 
             const reader = new FileReader();
             reader.onload = async function(event) {
-                const rawObjects = parseCSVParaObjetos(event.target.result);
-                if (!rawObjects) { loadingIndicator.classList.add('hidden'); return; }
-                const { novos, existentes } = await _dbMerge(rawObjects);
-                await _dbSalvarMeta('ultima_atualizacao', new Date().toISOString());
-                await _atualizarTimestamp();
-                const statsEl = document.getElementById('importStats');
-                statsEl.textContent = `+${novos} novos · ${existentes} já existiam`;
-                statsEl.classList.remove('hidden');
-                setTimeout(() => statsEl.classList.add('hidden'), 6000);
-                const todos = await _dbCarregarTodos();
-                processRawObjects(todos);
+                try {
+                    const rawObjects = parseCSVParaObjetos(event.target.result);
+                    if (!rawObjects) { loadingIndicator.classList.add('hidden'); return; }
+                    const { novos, existentes } = await _dbMerge(rawObjects);
+                    await _dbSalvarMeta('ultima_atualizacao', new Date().toISOString());
+                    await _atualizarTimestamp();
+                    const statsEl = document.getElementById('importStats');
+                    statsEl.textContent = `+${novos} novos · ${existentes} já existiam`;
+                    statsEl.classList.remove('hidden');
+                    setTimeout(() => statsEl.classList.add('hidden'), 6000);
+                    const todos = await _dbCarregarTodos();
+                    processRawObjects(todos);
+                } catch (err) {
+                    console.error('Erro ao importar arquivo:', err);
+                    alert('Erro ao importar: ' + (err.message || err));
+                    loadingIndicator.classList.add('hidden');
+                }
             };
             reader.onerror = () => { alert("Erro ao ler arquivo."); loadingIndicator.classList.add('hidden'); };
             reader.readAsText(file, 'utf-8');
@@ -2391,7 +2387,10 @@
         }
 
         function processRawObjects(rawObjects) {
-            if (!rawObjects || rawObjects.length === 0) return;
+            if (!rawObjects || rawObjects.length === 0) {
+                loadingIndicator.classList.add('hidden');
+                return;
+            }
 
             headersList = Object.keys(rawObjects[0]).filter(k => !k.startsWith('_'));
 
