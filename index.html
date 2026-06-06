@@ -1681,8 +1681,6 @@
             appId: "1:199378279027:web:959cc613a24d781b402806"
         });
         const _fsDB = firebase.firestore();
-        const _LS_KEY = 'sales50_registros';
-
         function _sanitizeDocId(id) {
             return id.replace(/\//g, '-');
         }
@@ -1696,68 +1694,41 @@
             return snap.exists ? snap.data().value : null;
         }
 
-        async function _dbCarregarTodos() {
-            const raw = localStorage.getItem(_LS_KEY);
-            if (raw) return JSON.parse(raw);
+        async function _dbMerge(rawObjects) {
+            const snapshot = await _fsDB.collection('registros').get();
+            const existingIds = new Set(snapshot.docs.map(d => d.id));
 
-            // Cache vazio: busca do Firestore e popula localStorage
-            try {
-                const snapshot = await _fsDB.collection('registros').get();
-                if (!snapshot.empty) {
-                    const dados = snapshot.docs.map(d => JSON.parse(d.data()._raw));
-                    localStorage.setItem(_LS_KEY, JSON.stringify(dados));
-                    return dados;
-                }
-            } catch(e) {
-                console.warn('Erro ao carregar do Firestore:', e);
+            const novos = rawObjects.filter(obj => {
+                const id = _sanitizeDocId((obj['ID O.S'] || '').trim());
+                return id && !existingIds.has(id);
+            });
+            const existentes = rawObjects.length - novos.length;
+
+            const chunkSize = 500;
+            for (let i = 0; i < novos.length; i += chunkSize) {
+                const batch = _fsDB.batch();
+                novos.slice(i, i + chunkSize).forEach(obj => {
+                    const id  = _sanitizeDocId((obj['ID O.S'] || '').trim());
+                    const ref = _fsDB.collection('registros').doc(id);
+                    batch.set(ref, { _raw: JSON.stringify(obj) });
+                });
+                await batch.commit();
             }
-            return [];
+            return { novos: novos.length, existentes };
         }
 
-        async function _dbMerge(rawObjects) {
-            // 1. Atualiza cache local imediatamente
-            const existing = await _dbCarregarTodos();
-            const map = new Map(existing.map(obj => [
-                _sanitizeDocId((obj['ID O.S'] || '').trim()), obj
-            ]));
-
-            const novosObjs = [];
-            let novos = 0, existentes = 0;
-            for (const obj of rawObjects) {
-                const id = _sanitizeDocId((obj['ID O.S'] || '').trim());
-                if (!id) continue;
-                if (map.has(id)) { existentes++; } else { novos++; novosObjs.push(obj); }
-                map.set(id, obj);
-            }
-            localStorage.setItem(_LS_KEY, JSON.stringify(Array.from(map.values())));
-
-            // 2. Persiste apenas os registros novos no Firestore (sincronização)
-            if (novosObjs.length > 0) {
-                const chunkSize = 500;
-                for (let i = 0; i < novosObjs.length; i += chunkSize) {
-                    const batch = _fsDB.batch();
-                    novosObjs.slice(i, i + chunkSize).forEach(obj => {
-                        const id  = _sanitizeDocId((obj['ID O.S'] || '').trim());
-                        const ref = _fsDB.collection('registros').doc(id);
-                        batch.set(ref, { _raw: JSON.stringify(obj) });
-                    });
-                    await batch.commit();
-                }
-            }
-
-            return { novos, existentes };
+        async function _dbCarregarTodos() {
+            const snapshot = await _fsDB.collection('registros').get();
+            return snapshot.docs.map(d => JSON.parse(d.data()._raw));
         }
 
         async function _dbLimpar() {
-            localStorage.removeItem(_LS_KEY);
-            const snapshot = await _fsDB.collection('registros').get().catch(() => null);
-            if (snapshot && !snapshot.empty) {
-                const chunkSize = 500;
-                for (let i = 0; i < snapshot.docs.length; i += chunkSize) {
-                    const batch = _fsDB.batch();
-                    snapshot.docs.slice(i, i + chunkSize).forEach(doc => batch.delete(doc.ref));
-                    await batch.commit();
-                }
+            const snapshot = await _fsDB.collection('registros').get();
+            const chunkSize = 500;
+            for (let i = 0; i < snapshot.docs.length; i += chunkSize) {
+                const batch = _fsDB.batch();
+                snapshot.docs.slice(i, i + chunkSize).forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
             }
             await _fsDB.collection('meta').doc('ultima_atualizacao').delete().catch(() => {});
         }
@@ -6590,23 +6561,9 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then(reg => {
-                    console.log('SW registrado:', reg.scope);
-                    reg.update();
-                    reg.addEventListener('updatefound', () => {
-                        const sw = reg.installing;
-                        sw.addEventListener('statechange', () => {
-                            if (sw.state === 'installed' && navigator.serviceWorker.controller) {
-                                window.location.reload();
-                            }
-                        });
-                    });
-                }).catch(e => console.warn('SW falhou:', e));
-
-                // Recarrega quando o novo SW assume o controle
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    window.location.reload();
-                });
+                navigator.serviceWorker.register('/sw.js')
+                    .then(r => console.log('SW registrado:', r.scope))
+                    .catch(e => console.warn('SW falhou:', e));
             });
         }
     </script>
