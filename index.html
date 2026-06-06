@@ -1700,7 +1700,7 @@
             const raw = localStorage.getItem(_LS_KEY);
             if (raw) return JSON.parse(raw);
 
-            // Migração única: Firestore → localStorage
+            // Cache vazio: busca do Firestore e popula localStorage
             try {
                 const snapshot = await _fsDB.collection('registros').get();
                 if (!snapshot.empty) {
@@ -1709,31 +1709,56 @@
                     return dados;
                 }
             } catch(e) {
-                console.warn('Migração Firestore→localStorage falhou:', e);
+                console.warn('Erro ao carregar do Firestore:', e);
             }
             return [];
         }
 
         async function _dbMerge(rawObjects) {
+            // 1. Atualiza cache local imediatamente
             const existing = await _dbCarregarTodos();
             const map = new Map(existing.map(obj => [
                 _sanitizeDocId((obj['ID O.S'] || '').trim()), obj
             ]));
 
+            const novosObjs = [];
             let novos = 0, existentes = 0;
             for (const obj of rawObjects) {
                 const id = _sanitizeDocId((obj['ID O.S'] || '').trim());
                 if (!id) continue;
-                if (map.has(id)) existentes++; else novos++;
+                if (map.has(id)) { existentes++; } else { novos++; novosObjs.push(obj); }
                 map.set(id, obj);
             }
-
             localStorage.setItem(_LS_KEY, JSON.stringify(Array.from(map.values())));
+
+            // 2. Persiste apenas os registros novos no Firestore (sincronização)
+            if (novosObjs.length > 0) {
+                const chunkSize = 500;
+                for (let i = 0; i < novosObjs.length; i += chunkSize) {
+                    const batch = _fsDB.batch();
+                    novosObjs.slice(i, i + chunkSize).forEach(obj => {
+                        const id  = _sanitizeDocId((obj['ID O.S'] || '').trim());
+                        const ref = _fsDB.collection('registros').doc(id);
+                        batch.set(ref, { _raw: JSON.stringify(obj) });
+                    });
+                    await batch.commit();
+                }
+            }
+
             return { novos, existentes };
         }
 
         async function _dbLimpar() {
             localStorage.removeItem(_LS_KEY);
+            const snapshot = await _fsDB.collection('registros').get().catch(() => null);
+            if (snapshot && !snapshot.empty) {
+                const chunkSize = 500;
+                for (let i = 0; i < snapshot.docs.length; i += chunkSize) {
+                    const batch = _fsDB.batch();
+                    snapshot.docs.slice(i, i + chunkSize).forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                }
+            }
             await _fsDB.collection('meta').doc('ultima_atualizacao').delete().catch(() => {});
         }
 
