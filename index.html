@@ -1698,23 +1698,21 @@
             const snapshot = await _fsDB.collection('registros').get();
             const existingIds = new Set(snapshot.docs.map(d => d.id));
 
-            const novos = rawObjects.filter(obj => {
-                const id = _sanitizeDocId((obj['ID O.S'] || '').trim());
-                return id && !existingIds.has(id);
-            });
-            const existentes = rawObjects.length - novos.length;
+            const validos = rawObjects.filter(obj => _sanitizeDocId((obj['ID O.S'] || '').trim()));
+            const novos = validos.filter(obj => !existingIds.has(_sanitizeDocId((obj['ID O.S'] || '').trim())));
+            const atualizados = validos.filter(obj => existingIds.has(_sanitizeDocId((obj['ID O.S'] || '').trim())));
 
             const chunkSize = 500;
-            for (let i = 0; i < novos.length; i += chunkSize) {
+            for (let i = 0; i < validos.length; i += chunkSize) {
                 const batch = _fsDB.batch();
-                novos.slice(i, i + chunkSize).forEach(obj => {
+                validos.slice(i, i + chunkSize).forEach(obj => {
                     const id  = _sanitizeDocId((obj['ID O.S'] || '').trim());
                     const ref = _fsDB.collection('registros').doc(id);
                     batch.set(ref, { _raw: JSON.stringify(obj) });
                 });
                 await batch.commit();
             }
-            return { novos: novos.length, existentes };
+            return { novos: novos.length, atualizados: atualizados.length };
         }
 
         async function _dbCarregarTodos() {
@@ -2280,11 +2278,11 @@
                 try {
                     const rawObjects = parseCSVParaObjetos(event.target.result);
                     if (!rawObjects) { loadingIndicator.classList.add('hidden'); return; }
-                    const { novos, existentes } = await _dbMerge(rawObjects);
+                    const { novos, atualizados } = await _dbMerge(rawObjects);
                     await _dbSalvarMeta('ultima_atualizacao', new Date().toISOString());
                     await _atualizarTimestamp();
                     const statsEl = document.getElementById('importStats');
-                    statsEl.textContent = `+${novos} novos · ${existentes} já existiam`;
+                    statsEl.textContent = `+${novos} novos · ${atualizados} atualizados`;
                     statsEl.classList.remove('hidden');
                     setTimeout(() => statsEl.classList.add('hidden'), 6000);
                     const todos = await _dbCarregarTodos();
