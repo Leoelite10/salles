@@ -6731,7 +6731,7 @@
         // =====================================================================
 
         function renderCrescimentoVendas(dataSet) {
-            const base = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
+            const base = dataSet;
             if (!base || base.length === 0) {
                 _crescLimpar();
                 return;
@@ -6850,11 +6850,11 @@
             const idxCidade = totalBrutas > 0 ? (top3CidBrutas / totalBrutas) * 100 : 0;
 
             // === RENDERIZAÇÕES ===
-            _crescRenderKpis(ultimoMes, penultimoMes, totalBrutas, totalAtivadas, serieMensal, tendencia3m);
+            _crescRenderKpis(ultimoMes, penultimoMes, totalBrutas, totalAtivadas, serieMensal, tendencia3m, base);
             _crescRenderGraficoMensal(serieMensal);
             _crescRenderTabelaMensal(serieMensal);
             _crescRenderCanais(canalData, totalBrutas, serieMensal);
-            _crescRenderGraficoCanal(serieMensal, canais);
+            _crescRenderGraficoCanal(serieMensal, canais, base);
             _crescRenderGraficoCanalPizza(canalData, totalBrutas);
             _crescRenderVendedores(vendedoresPorEvol, 'TODOS');
             _crescRenderCidades(cidades, totalBrutas);
@@ -6909,7 +6909,7 @@
 
         function _varIcon(val) { return val > 0 ? '▲' : (val < 0 ? '▼' : '='); }
 
-        function _crescRenderKpis(ultimo, penultimo, totalBrutas, totalAtivadas, serie, tendencia) {
+        function _crescRenderKpis(ultimo, penultimo, totalBrutas, totalAtivadas, serie, tendencia, baseDataset) {
             const el = document.getElementById('crescKpiCards');
             if (!el) return;
 
@@ -6919,8 +6919,7 @@
             const recTotal = serie.reduce((s, m) => s + m.receita, 0);
             const ticketMedio = totalAtivadas > 0 ? recTotal / totalAtivadas : 0;
             const prodMedVend = (() => {
-                const base = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
-                const vends = new Set(base.map(d => (d['Vendedor'] || '').trim()).filter(Boolean));
+                const vends = new Set((baseDataset || []).map(d => (d['Vendedor'] || '').trim()).filter(Boolean));
                 return vends.size > 0 ? totalBrutas / vends.size : 0;
             })();
 
@@ -7024,13 +7023,12 @@
             }).join('');
         }
 
-        function _crescRenderGraficoCanal(serieMensal, canais) {
-            const baseComp = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
+        function _crescRenderGraficoCanal(serieMensal, canais, baseComp) {
             const labels = serieMensal.map(m => m.mes);
             const cores = { PAP: '#2563eb', MCV: '#7c3aed', LOJAS: '#d97706' };
             const datasets = canais.map(canal => ({
                 label: canal,
-                data: serieMensal.map(m => baseComp.filter(d => (d['Setor'] || '').trim().toUpperCase() === canal && getMonthKeyFromRecord(d) === m.mes).length),
+                data: serieMensal.map(m => (baseComp || []).filter(d => (d['Setor'] || '').trim().toUpperCase() === canal && getMonthKeyFromRecord(d) === m.mes).length),
                 backgroundColor: (cores[canal] || '#64748b') + 'CC',
                 borderRadius: 4
             }));
