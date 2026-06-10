@@ -1467,12 +1467,32 @@
                         </div>
                     </div>
 
-                    <!-- KPI Cards Estratégicos -->
-                    <div>
-                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Indicadores Estratégicos
+                    <!-- Indicadores MTD — Mesmo Período -->
+                    <div class="space-y-5">
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            Comparativo Mesmo Período — Dia de Corte: <span id="crescMTDDiaCorte" class="text-emerald-600">—</span>
+                            <span class="text-[10px] font-medium text-slate-400 normal-case tracking-normal">(dia 01 até dia de corte em ambos os meses)</span>
                         </h4>
-                        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4" id="crescKpiCards">
+
+                        <!-- 4 cards principais: Bruto, Ativado, Anual Bruto, Anual Ativado -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5" id="crescKpiCards">
+                            <!-- JS Inject -->
+                        </div>
+
+                        <!-- Projeção Inteligente -->
+                        <div>
+                            <h5 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <span class="w-1 h-1 rounded-full bg-indigo-400"></span> Projeção Inteligente
+                                <span class="text-[10px] font-medium text-slate-400 normal-case tracking-normal">(Fechamento anterior × índice de crescimento atual)</span>
+                            </h5>
+                            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4" id="crescProjecaoCards">
+                                <!-- JS Inject -->
+                            </div>
+                        </div>
+
+                        <!-- Tendência Visual -->
+                        <div id="crescTendenciaBlock">
                             <!-- JS Inject -->
                         </div>
                     </div>
@@ -1667,12 +1687,14 @@
                                     <thead class="bg-slate-50 sticky top-0 z-10">
                                         <tr>
                                             <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">Cidade</th>
-                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Brutas</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-orange-600 text-center border-b border-slate-200">MTD Atual</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">MTD Ant.</th>
                                             <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Ativadas</th>
                                             <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Tx. Ativ.</th>
                                             <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Part. %</th>
-                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Var. Brutas</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Var. Abs.</th>
                                             <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Var. %</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-indigo-500 text-center border-b border-slate-200">Projeção</th>
                                             <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Status</th>
                                         </tr>
                                     </thead>
@@ -6844,89 +6866,24 @@
             const infoEl = document.getElementById('crescimentoInfoPeriodo');
             if (infoEl) infoEl.textContent = `${meses.length} mese(s) disponíveis • ${meses[0]} → ${meses[meses.length - 1]} • Referência: mês mais recente = ${ultimoMes.mes}`;
 
-            // --- Canais ---
+            // --- Canais (apenas para gráfico mensal por canal) ---
             const canais = ['PAP', 'MCV', 'LOJAS'];
-            const canalData = {};
-            canais.forEach(c => { canalData[c] = { brutas: 0, ativadas: 0, mesAtual: 0, mesAnterior: 0 }; });
-
-            const mesAtualKey = ultimoMes.mes;
-            const mesAntKey = penultimoMes ? penultimoMes.mes : null;
-
-            base.forEach(d => {
-                const setor = (d['Setor'] || '').trim().toUpperCase();
-                const mesD = getMonthKeyFromRecord(d);
-                if (!canalData[setor]) return;
-                canalData[setor].brutas++;
-                if (d._isConcluida) canalData[setor].ativadas++;
-                if (mesD === mesAtualKey) canalData[setor].mesAtual++;
-                if (mesAntKey && mesD === mesAntKey) canalData[setor].mesAnterior++;
-            });
-
-            // --- Vendedores ---
-            const vendMap = {};
-            base.forEach(d => {
-                const vend = (d['Vendedor'] || 'Não Identificado').trim();
-                const setor = (d['Setor'] || '').trim().toUpperCase();
-                const mesD = getMonthKeyFromRecord(d);
-                const key = vend + '||' + setor;
-                if (!vendMap[key]) vendMap[key] = { nome: vend, canal: setor, atual: 0, ativadaAtual: 0, anterior: 0 };
-                if (mesD === mesAtualKey) {
-                    vendMap[key].atual++;
-                    if (d._isConcluida) vendMap[key].ativadaAtual++;
-                }
-                if (mesAntKey && mesD === mesAntKey) vendMap[key].anterior++;
-            });
-
-            const vendedores = Object.values(vendMap).filter(v => v.atual > 0 || v.anterior > 0);
-            vendedores.forEach(v => {
-                v.varQtd = v.atual - v.anterior;
-                v.varPct = v.anterior > 0 ? ((v.atual - v.anterior) / v.anterior) * 100 : (v.atual > 0 ? 100 : 0);
-                v.txAtivacao = v.atual > 0 ? (v.ativadaAtual / v.atual) * 100 : 0;
-                v.status = v.varQtd > 0 ? 'Crescimento' : (v.varQtd < 0 ? 'Queda' : 'Estável');
-            });
-            const vendedoresPorEvol = [...vendedores].sort((a, b) => b.varPct - a.varPct || b.atual - a.atual);
-            const vendedoresPorVol = [...vendedores].sort((a, b) => b.atual - a.atual);
-            vendedores.forEach(v => { v.rankVol = vendedoresPorVol.indexOf(v) + 1; });
-
-            // --- Cidades ---
-            const cidadeMap = {};
-            base.forEach(d => {
-                const cidade = (d['Cidade'] || 'Não Identificada').trim() || 'Não Identificada';
-                const mesD = getMonthKeyFromRecord(d);
-                if (!cidadeMap[cidade]) cidadeMap[cidade] = { nome: cidade, brutas: 0, ativadas: 0, atual: 0, anterior: 0 };
-                cidadeMap[cidade].brutas++;
-                if (d._isConcluida) cidadeMap[cidade].ativadas++;
-                if (mesD === mesAtualKey) cidadeMap[cidade].atual++;
-                if (mesAntKey && mesD === mesAntKey) cidadeMap[cidade].anterior++;
-            });
-
-            const cidades = Object.values(cidadeMap);
-            cidades.forEach(c => {
-                c.varQtd = c.atual - c.anterior;
-                c.varPct = c.anterior > 0 ? ((c.atual - c.anterior) / c.anterior) * 100 : (c.atual > 0 ? 100 : 0);
-                c.participacao = totalBrutas > 0 ? (c.brutas / totalBrutas) * 100 : 0;
-                c.taxaAtivacao = c.brutas > 0 ? (c.ativadas / c.brutas) * 100 : 0;
-                c.status = c.varQtd > 0 ? 'Crescimento' : (c.varQtd < 0 ? 'Queda' : 'Estável');
-            });
-            cidades.sort((a, b) => b.brutas - a.brutas);
-
-            // --- Índices de dependência ---
-            const idxCanal = _calcHerfindahl(canais.map(c => canalData[c].brutas));
-            const top3CidBrutas = [...cidades].sort((a, b) => b.brutas - a.brutas).slice(0, 3).reduce((s, c) => s + c.brutas, 0);
-            const idxCidade = totalBrutas > 0 ? (top3CidBrutas / totalBrutas) * 100 : 0;
 
             // === RENDERIZAÇÕES ===
-            _crescRenderKpis(ultimoMes, penultimoMes, totalBrutas, totalAtivadas, serieMensal, tendencia3m, base);
+            const mtd = _calcMTDComparativo(base);
+            _crescRenderKpis(mtd);
+            _crescRenderProjecao(mtd);
+            _crescRenderTendencia(mtd);
             _crescRenderRitmoDiaDia(base);
             _crescRenderGraficoMensal(serieMensal);
             _crescRenderTabelaMensal(serieMensal);
-            _crescRenderCanais(canalData, totalBrutas, serieMensal);
+            _crescRenderCanais(mtd);
             _crescRenderGraficoCanal(serieMensal, canais, base);
-            _crescRenderGraficoCanalPizza(canalData, totalBrutas);
-            _crescRenderVendedores(vendedoresPorEvol, 'TODOS');
-            _crescRenderCidades(cidades, totalBrutas);
-            _crescRenderGraficoCidade(cidades);
-            _crescRenderDependencia(idxCanal, idxCidade, canalData, totalBrutas, cidades);
+            _crescRenderGraficoCanalPizza(mtd);
+            _crescRenderVendedores(mtd ? mtd.vendedoresMTDPorEvol : [], 'TODOS');
+            _crescRenderCidades(mtd);
+            _crescRenderGraficoCidade(mtd ? mtd.cidadesMTD.map(c => ({ ...c, brutas: c.atual })) : []);
+            if (mtd) { const idxC = _calcHerfindahl(['PAP','MCV','LOJAS'].map(c => mtd.canalMTD[c].atual)); const top3 = [...mtd.cidadesMTD].sort((a,b) => b.atual - a.atual).slice(0,3).reduce((s,c) => s + c.atual, 0); const idxCid = mtd.brutasAtual > 0 ? (top3 / mtd.brutasAtual) * 100 : 0; _crescRenderDependencia(idxC, idxCid, Object.fromEntries(['PAP','MCV','LOJAS'].map(c => [c, { brutas: mtd.canalMTD[c].atual }])), mtd.brutasAtual, mtd.cidadesMTD.map(c => ({ ...c, brutas: c.atual }))); }
 
             // Wiring dos botões de canal para vendedores
             document.querySelectorAll('.cresc-canal-btn').forEach(btn => {
@@ -6936,7 +6893,7 @@
                         b.classList.toggle('bg-sky-600', on); b.classList.toggle('text-white', on); b.classList.toggle('border-sky-300', on);
                         b.classList.toggle('bg-slate-50', !on); b.classList.toggle('text-slate-600', !on); b.classList.toggle('border-slate-200', !on);
                     });
-                    _crescRenderVendedores(vendedoresPorEvol, btn.dataset.canal);
+                    _crescRenderVendedores(mtd ? mtd.vendedoresMTDPorEvol : [], btn.dataset.canal);
                 };
             });
         }
@@ -6976,44 +6933,291 @@
 
         function _varIcon(val) { return val > 0 ? '▲' : (val < 0 ? '▼' : '='); }
 
-        function _crescRenderKpis(ultimo, penultimo, totalBrutas, totalAtivadas, serie, tendencia, baseDataset) {
+        // =====================================================================
+        // MTD: Cálculo central — mesmo período entre meses/anos
+        // =====================================================================
+        function _calcMTDComparativo(base) {
+            const meses = [...new Set(base.map(getMonthKeyFromRecord).filter(Boolean))]
+                .sort((a, b) => monthSortValue(a) - monthSortValue(b));
+            if (meses.length === 0) return null;
+
+            const mesAtualKey = meses[meses.length - 1];
+            const mesAntKey   = meses.length > 1 ? meses[meses.length - 2] : null;
+            const [mAtual, aAtual] = mesAtualKey.split('/').map(Number);
+            const anoAntKey = `${String(mAtual).padStart(2,'0')}/${aAtual - 1}`;
+
+            // Helper: filtra registros com dia <= diaLimite
+            const ateDia = (list, dia) => list.filter(d => {
+                const iso = d._dataISO; if (!iso) return false;
+                return parseInt(iso.split('-')[2]) <= dia;
+            });
+            // Helper: filtra registros com dia entre [ini, fim]
+            const entreDias = (list, ini, fim) => list.filter(d => {
+                const iso = d._dataISO; if (!iso) return false;
+                const dia = parseInt(iso.split('-')[2]);
+                return dia >= ini && dia <= fim;
+            });
+
+            // Dia de corte = último dia com dado no mês atual
+            const listaMesAtual = base.filter(d => getMonthKeyFromRecord(d) === mesAtualKey);
+            const diasComDados = listaMesAtual.map(d => {
+                const iso = d._dataISO; return iso ? parseInt(iso.split('-')[2]) : 0;
+            }).filter(v => v > 0);
+            const diaCorte = diasComDados.length > 0 ? Math.max(...diasComDados) : 0;
+            if (diaCorte === 0) return null;
+
+            // Listas MTD
+            const listaMesAnt    = mesAntKey ? base.filter(d => getMonthKeyFromRecord(d) === mesAntKey) : [];
+            const listaAtualMTD  = ateDia(listaMesAtual, diaCorte);
+            const listaAntMTD    = ateDia(listaMesAnt, diaCorte);
+
+            // Ano anterior — usa globalData com filtros (exceto mês) para ter histórico completo
+            const baseHistorica  = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
+            const listaMesAnoAnt = baseHistorica.filter(d => getMonthKeyFromRecord(d) === anoAntKey);
+            const listaAnoAntMTD = ateDia(listaMesAnoAnt, diaCorte);
+
+            // Métricas MTD brutas/ativadas
+            const brutasAtual     = listaAtualMTD.length;
+            const ativadasAtual   = listaAtualMTD.filter(d => d._isConcluida).length;
+            const brutasAnt       = listaAntMTD.length;
+            const ativadasAnt     = listaAntMTD.filter(d => d._isConcluida).length;
+            const brutasAntFull   = listaMesAnt.length;
+            const ativadasAntFull = listaMesAnt.filter(d => d._isConcluida).length;
+            const brutasAnoAnt    = listaAnoAntMTD.length;
+            const ativadasAnoAnt  = listaAnoAntMTD.filter(d => d._isConcluida).length;
+            const brutasAnoAntFull    = listaMesAnoAnt.length;
+            const ativadasAnoAntFull  = listaMesAnoAnt.filter(d => d._isConcluida).length;
+
+            // Projeção inteligente: fechamento anterior × (atual_MTD / ant_MTD)
+            const projBrutas   = brutasAnt > 0 ? Math.round(brutasAntFull * (brutasAtual / brutasAnt)) : null;
+            const projAtivadas = ativadasAnt > 0 ? Math.round(ativadasAntFull * (ativadasAtual / ativadasAnt)) : null;
+
+            // Canais MTD
+            const canais = ['PAP', 'MCV', 'LOJAS'];
+            const canalMTD = {};
+            canais.forEach(c => { canalMTD[c] = { atual: 0, ant: 0, full: 0 }; });
+            const acumCanal = (list, campo) => list.forEach(d => {
+                const s = (d['Setor'] || '').trim().toUpperCase();
+                if (canalMTD[s]) canalMTD[s][campo]++;
+            });
+            acumCanal(listaAtualMTD, 'atual');
+            acumCanal(listaAntMTD, 'ant');
+            acumCanal(listaMesAnt, 'full');
+            canais.forEach(c => {
+                const d = canalMTD[c];
+                d.varAbs = d.atual - d.ant;
+                d.varPct = d.ant > 0 ? ((d.atual - d.ant) / d.ant) * 100 : (d.atual > 0 ? 100 : 0);
+                d.proj   = d.ant > 0 ? Math.round(d.full * (d.atual / d.ant)) : null;
+                d.part   = brutasAtual > 0 ? (d.atual / brutasAtual) * 100 : 0;
+            });
+
+            // Cidades MTD
+            const cidadeMTDMap = {};
+            const acumCidade = (list, campo) => list.forEach(d => {
+                const cid = (d['Cidade'] || 'Não Identificada').trim() || 'Não Identificada';
+                if (!cidadeMTDMap[cid]) cidadeMTDMap[cid] = { nome: cid, atual: 0, ant: 0, full: 0, ativadasAtual: 0 };
+                cidadeMTDMap[cid][campo]++;
+                if (campo === 'atual' && d._isConcluida) cidadeMTDMap[cid].ativadasAtual++;
+            });
+            acumCidade(listaAtualMTD, 'atual');
+            acumCidade(listaAntMTD, 'ant');
+            acumCidade(listaMesAnt, 'full');
+            const cidadesMTD = Object.values(cidadeMTDMap);
+            cidadesMTD.forEach(c => {
+                c.varAbs = c.atual - c.ant;
+                c.varPct = c.ant > 0 ? ((c.atual - c.ant) / c.ant) * 100 : (c.atual > 0 ? 100 : 0);
+                c.proj   = c.ant > 0 ? Math.round(c.full * (c.atual / c.ant)) : null;
+                c.part   = brutasAtual > 0 ? (c.atual / brutasAtual) * 100 : 0;
+                c.txAtivacao = c.atual > 0 ? (c.ativadasAtual / c.atual) * 100 : 0;
+            });
+            cidadesMTD.sort((a, b) => b.atual - a.atual);
+
+            // Vendedores MTD
+            const vendMTDMap = {};
+            const acumVend = (list, campo) => list.forEach(d => {
+                const vend = (d['Vendedor'] || 'Não Identificado').trim();
+                const setor = (d['Setor'] || '').trim().toUpperCase();
+                const key = vend + '||' + setor;
+                if (!vendMTDMap[key]) vendMTDMap[key] = { nome: vend, canal: setor, atual: 0, ativadaAtual: 0, ant: 0 };
+                vendMTDMap[key][campo]++;
+                if (campo === 'atual' && d._isConcluida) vendMTDMap[key].ativadaAtual++;
+            });
+            acumVend(listaAtualMTD, 'atual');
+            acumVend(listaAntMTD, 'ant');
+            const vendedoresMTD = Object.values(vendMTDMap).filter(v => v.atual > 0 || v.ant > 0);
+            vendedoresMTD.forEach(v => {
+                v.varQtd = v.atual - v.ant;
+                v.varPct = v.ant > 0 ? ((v.atual - v.ant) / v.ant) * 100 : (v.atual > 0 ? 100 : 0);
+                v.txAtivacao = v.atual > 0 ? (v.ativadaAtual / v.atual) * 100 : 0;
+                v.status = v.varQtd > 0 ? 'Crescimento' : (v.varQtd < 0 ? 'Queda' : 'Estável');
+                v.anterior = v.ant;
+            });
+            const vendPorVol = [...vendedoresMTD].sort((a, b) => b.atual - a.atual);
+            vendedoresMTD.forEach(v => { v.rankVol = vendPorVol.indexOf(v) + 1; });
+            const vendedoresMTDPorEvol = [...vendedoresMTD].sort((a, b) => b.varPct - a.varPct || b.atual - a.atual);
+
+            // Tendência (acumulado, 7d, 15d)
+            const t7dAtual = entreDias(listaMesAtual, Math.max(1, diaCorte - 6), diaCorte).length;
+            const t7dAnt   = entreDias(listaMesAnt,   Math.max(1, diaCorte - 6), diaCorte).length;
+            const t15dAtual = entreDias(listaMesAtual, Math.max(1, diaCorte - 14), diaCorte).length;
+            const t15dAnt   = entreDias(listaMesAnt,   Math.max(1, diaCorte - 14), diaCorte).length;
+
+            const sinal = (a, b) => a > b ? 'acima' : (a < b ? 'abaixo' : 'igual');
+            const tendAcum = sinal(brutasAtual, brutasAnt);
+            const tend7d   = sinal(t7dAtual, t7dAnt);
+            const tend15d  = sinal(t15dAtual, t15dAnt);
+            const votos = [tendAcum, tend7d, tend15d];
+            const cnt = { acima: 0, abaixo: 0, igual: 0 };
+            votos.forEach(v => cnt[v]++);
+            const tendenciaGeral = cnt.acima >= 2 ? 'acima' : (cnt.abaixo >= 2 ? 'abaixo' : 'igual');
+
+            const pct = (a, b) => b > 0 ? ((a - b) / b * 100).toFixed(1) + '%' : (a > 0 ? '+100%' : '0%');
+
+            return {
+                diaCorte, mesAtualKey, mesAntKey, anoAntKey,
+                brutasAtual, ativadasAtual,
+                brutasAnt, ativadasAnt, brutasAntFull, ativadasAntFull,
+                brutasAnoAnt, ativadasAnoAnt, brutasAnoAntFull, ativadasAnoAntFull,
+                crescBrutasAbs: brutasAtual - brutasAnt,
+                crescBrutasPct: brutasAnt > 0 ? ((brutasAtual - brutasAnt) / brutasAnt) * 100 : (brutasAtual > 0 ? 100 : 0),
+                crescAtivAbs: ativadasAtual - ativadasAnt,
+                crescAtivPct: ativadasAnt > 0 ? ((ativadasAtual - ativadasAnt) / ativadasAnt) * 100 : (ativadasAtual > 0 ? 100 : 0),
+                crescAnualBrutasAbs: brutasAtual - brutasAnoAnt,
+                crescAnualBrutasPct: brutasAnoAnt > 0 ? ((brutasAtual - brutasAnoAnt) / brutasAnoAnt) * 100 : null,
+                crescAnualAtivAbs: ativadasAtual - ativadasAnoAnt,
+                crescAnualAtivPct: ativadasAnoAnt > 0 ? ((ativadasAtual - ativadasAnoAnt) / ativadasAnoAnt) * 100 : null,
+                projBrutas, projAtivadas,
+                canalMTD, cidadesMTD, vendedoresMTDPorEvol,
+                tendenciaGeral, tendAcum, tend7d, tend15d,
+                t7dAtual, t7dAnt, t15dAtual, t15dAnt,
+                pct
+            };
+        }
+
+        function _crescRenderKpis(mtd) {
             const el = document.getElementById('crescKpiCards');
-            if (!el) return;
+            const diaEl = document.getElementById('crescMTDDiaCorte');
+            if (!el || !mtd) return;
+            if (diaEl) diaEl.textContent = `Dia ${mtd.diaCorte}`;
 
-            const txAtivGeral = totalBrutas > 0 ? (totalAtivadas / totalBrutas) * 100 : 0;
-            const crescBruto = penultimo ? ultimo.brutas - penultimo.brutas : 0;
-            const crescAtiv = penultimo ? ultimo.ativadas - penultimo.ativadas : 0;
-            const recTotal = serie.reduce((s, m) => s + m.receita, 0);
-            const ticketMedio = totalAtivadas > 0 ? recTotal / totalAtivadas : 0;
-            const prodMedVend = (() => {
-                const vends = new Set((baseDataset || []).map(d => (d['Vendedor'] || '').trim()).filter(Boolean));
-                return vends.size > 0 ? totalBrutas / vends.size : 0;
-            })();
+            const _card = (titulo, atual, ant, absVal, pctVal, corBorda, subAtual, subAnt, semComparacao) => {
+                const positivo = absVal > 0;
+                const negativo = absVal < 0;
+                const cor = positivo ? 'text-green-600' : (negativo ? 'text-red-600' : 'text-slate-400');
+                const bg  = positivo ? 'bg-green-50 border-green-100 text-green-700' : (negativo ? 'bg-red-50 border-red-100 text-red-700' : 'bg-slate-50 border-slate-100 text-slate-500');
+                const icon = positivo ? '▲' : (negativo ? '▼' : '=');
+                const pctStr = semComparacao ? '—' : `${pctVal >= 0 ? '+' : ''}${pctVal.toFixed(1)}%`;
+                const absStr = semComparacao ? '—' : `${absVal >= 0 ? '+' : ''}${absVal}`;
+                return `<div class="glass-card p-5 border-l-4 ${corBorda}">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">${titulo}</span>
+                    <div class="flex items-end justify-between mt-2 gap-2">
+                        <span class="text-2xl font-black text-slate-800">${atual}</span>
+                        ${!semComparacao ? `<span class="px-2 py-0.5 rounded-lg border text-[10px] font-black ${bg}">${icon} ${pctStr}</span>` : ''}
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-[10px]">
+                        <div><span class="text-slate-400 font-bold uppercase block">${subAtual}</span><span class="font-black text-slate-700">${atual}</span></div>
+                        <div><span class="text-slate-400 font-bold uppercase block">${subAnt}</span><span class="font-bold text-slate-500">${ant}</span></div>
+                    </div>
+                    ${!semComparacao ? `<div class="mt-2 text-[10px] font-bold ${cor}">${icon} ${absStr} (${pctStr})</div>` : ''}
+                </div>`;
+            };
 
-            const kpis = [
-                { label: 'Taxa de Ativação Geral', valor: `${txAtivGeral.toFixed(1)}%`, cor: 'border-l-purple-500', trend: txAtivGeral >= 50 ? '▲' : '▼', trendCor: txAtivGeral >= 50 ? 'text-green-600' : 'text-red-500' },
-                { label: 'Var. Brutas (últ. mês)', valor: (crescBruto >= 0 ? '+' : '') + crescBruto, cor: crescBruto >= 0 ? 'border-l-green-500' : 'border-l-red-500', trend: _varIcon(crescBruto), trendCor: crescBruto >= 0 ? 'text-green-600' : 'text-red-500' },
-                { label: 'Var. Ativadas (últ. mês)', valor: (crescAtiv >= 0 ? '+' : '') + crescAtiv, cor: crescAtiv >= 0 ? 'border-l-emerald-500' : 'border-l-orange-500', trend: _varIcon(crescAtiv), trendCor: crescAtiv >= 0 ? 'text-green-600' : 'text-red-500' },
-                { label: 'Total Brutas (período)', valor: totalBrutas.toLocaleString('pt-BR'), cor: 'border-l-blue-500', trend: '—', trendCor: 'text-slate-400' },
-                { label: 'Total Ativadas (período)', valor: totalAtivadas.toLocaleString('pt-BR'), cor: 'border-l-sky-500', trend: '—', trendCor: 'text-slate-400' },
-                { label: 'Receita Estimada', valor: formatBRL(recTotal), cor: 'border-l-yellow-500', trend: '—', trendCor: 'text-slate-400' },
-                { label: 'Ticket Médio', valor: formatBRL(ticketMedio), cor: 'border-l-indigo-500', trend: '—', trendCor: 'text-slate-400' },
-                { label: 'Produt. Média/Vendedor', valor: prodMedVend.toFixed(1), cor: 'border-l-cyan-500', trend: '—', trendCor: 'text-slate-400' },
-                { label: 'Brutas Últ. Mês', valor: ultimo.brutas.toLocaleString('pt-BR'), cor: 'border-l-slate-400', trend: '—', trendCor: 'text-slate-400' },
-                { label: 'Ativadas Últ. Mês', valor: ultimo.ativadas.toLocaleString('pt-BR'), cor: 'border-l-teal-500', trend: '—', trendCor: 'text-slate-400' },
-                { label: 'Meses Analisados', valor: serie.length, cor: 'border-l-rose-400', trend: '—', trendCor: 'text-slate-400' },
-                { label: 'Tendência 3 Meses', valor: tendencia, cor: tendencia === 'Alta' ? 'border-l-green-500' : (tendencia === 'Queda' ? 'border-l-red-500' : 'border-l-slate-400'), trend: tendencia === 'Alta' ? '▲' : (tendencia === 'Queda' ? '▼' : '='), trendCor: tendencia === 'Alta' ? 'text-green-600' : (tendencia === 'Queda' ? 'text-red-500' : 'text-slate-400') }
-            ];
+            const semAnoAnt = mtd.crescAnualBrutasPct === null;
+            const semAnoAntAtiv = mtd.crescAnualAtivPct === null;
 
-            el.innerHTML = kpis.map(k => `
-                <div class="glass-card p-4 border-l-4 ${k.cor}">
-                    <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest block leading-tight">${k.label}</span>
-                    <div class="flex items-center justify-between mt-2">
-                        <span class="text-xl font-black text-slate-800 leading-none">${k.valor}</span>
-                        <span class="text-base font-black ${k.trendCor}">${k.trend}</span>
+            el.innerHTML = [
+                _card('Crescimento Bruto MTD', mtd.brutasAtual, mtd.brutasAnt, mtd.crescBrutasAbs, mtd.crescBrutasPct, 'border-l-blue-500', `Dia 01–${mtd.diaCorte} ${mtd.mesAtualKey}`, `Dia 01–${mtd.diaCorte} ${mtd.mesAntKey || '—'}`, !mtd.mesAntKey),
+                _card('Crescimento Ativado MTD', mtd.ativadasAtual, mtd.ativadasAnt, mtd.crescAtivAbs, mtd.crescAtivPct, 'border-l-green-500', `Dia 01–${mtd.diaCorte} ${mtd.mesAtualKey}`, `Dia 01–${mtd.diaCorte} ${mtd.mesAntKey || '—'}`, !mtd.mesAntKey),
+                _card('Comparação Anual — Brutas', mtd.brutasAtual, mtd.brutasAnoAnt, mtd.crescAnualBrutasAbs, mtd.crescAnualBrutasPct || 0, 'border-l-indigo-500', `Dia 01–${mtd.diaCorte} ${mtd.mesAtualKey}`, `Dia 01–${mtd.diaCorte} ${mtd.anoAntKey}`, semAnoAnt),
+                _card('Comparação Anual — Ativadas', mtd.ativadasAtual, mtd.ativadasAnoAnt, mtd.crescAnualAtivAbs, mtd.crescAnualAtivPct || 0, 'border-l-violet-500', `Dia 01–${mtd.diaCorte} ${mtd.mesAtualKey}`, `Dia 01–${mtd.diaCorte} ${mtd.anoAntKey}`, semAnoAntAtiv)
+            ].join('');
+        }
+
+        function _crescRenderProjecao(mtd) {
+            const el = document.getElementById('crescProjecaoCards');
+            if (!el || !mtd) return;
+
+            const semProj = mtd.projBrutas === null;
+            const varProjB = !semProj && mtd.brutasAntFull > 0 ? mtd.projBrutas - mtd.brutasAntFull : null;
+            const varProjA = mtd.projAtivadas !== null && mtd.ativadasAntFull > 0 ? mtd.projAtivadas - mtd.ativadasAntFull : null;
+
+            const _projCard = (titulo, valor, base, varAbs, corB, nota) => {
+                const cor = varAbs === null ? 'border-l-slate-300' : (varAbs >= 0 ? corB : 'border-l-red-400');
+                const badge = varAbs === null ? '' : `<span class="text-[10px] font-black ${varAbs >= 0 ? 'text-green-600' : 'text-red-600'}">${varAbs >= 0 ? '+' : ''}${varAbs}</span>`;
+                return `<div class="glass-card p-4 border-l-4 ${cor}">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">${titulo}</span>
+                    <div class="flex items-center justify-between gap-1 mt-2">
+                        <span class="text-xl font-black text-slate-800">${valor !== null ? valor.toLocaleString('pt-BR') : '—'}</span>
+                        ${badge}
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-medium mt-1">Ant. fechou: ${base.toLocaleString('pt-BR')}</div>
+                    ${nota ? `<div class="text-[10px] text-slate-400 italic mt-0.5">${nota}</div>` : ''}
+                </div>`;
+            };
+
+            const canais = ['PAP', 'MCV', 'LOJAS'];
+            const coresCanal = { PAP: 'border-l-blue-500', MCV: 'border-l-violet-500', LOJAS: 'border-l-amber-500' };
+            const projCanais = canais.map(c => {
+                const d = mtd.canalMTD[c];
+                const varC = d.proj !== null && d.full > 0 ? d.proj - d.full : null;
+                return _projCard(`Projeção ${c}`, d.proj, d.full, varC, coresCanal[c] || 'border-l-slate-400', null);
+            });
+
+            el.innerHTML = [
+                _projCard('Projeção Brutas', mtd.projBrutas, mtd.brutasAntFull, varProjB, 'border-l-blue-500', semProj ? 'Sem mês anterior' : null),
+                _projCard('Projeção Ativadas', mtd.projAtivadas, mtd.ativadasAntFull, varProjA, 'border-l-green-500', mtd.projAtivadas === null ? 'Sem mês anterior' : null),
+                ...projCanais
+            ].join('');
+        }
+
+        function _crescRenderTendencia(mtd) {
+            const el = document.getElementById('crescTendenciaBlock');
+            if (!el || !mtd) return;
+
+            const cfg = {
+                acima: { icon: '🟢', label: 'Acima do Mês Anterior', cor: 'border-green-200 bg-green-50', titulo: 'text-green-700', badge: 'bg-green-100 text-green-700 border-green-200' },
+                abaixo: { icon: '🔴', label: 'Abaixo do Mês Anterior', cor: 'border-red-200 bg-red-50', titulo: 'text-red-700', badge: 'bg-red-100 text-red-700 border-red-200' },
+                igual: { icon: '🟡', label: 'Dentro da Média Histórica', cor: 'border-amber-200 bg-amber-50', titulo: 'text-amber-700', badge: 'bg-amber-100 text-amber-700 border-amber-200' }
+            };
+            const c = cfg[mtd.tendenciaGeral] || cfg.igual;
+
+            const _subBadge = (label, tend, atualV, antV) => {
+                const sc = cfg[tend] || cfg.igual;
+                const pct = antV > 0 ? ((atualV - antV) / antV * 100).toFixed(1) : (atualV > 0 ? '+100' : '0');
+                return `<div class="flex items-center justify-between gap-3 py-2.5 border-b border-white/60 last:border-0">
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">${label}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black text-slate-700">${atualV} vs ${antV}</span>
+                        <span class="px-2 py-0.5 rounded-lg border text-[10px] font-black ${sc.badge}">${sc.icon} ${pct}%</span>
+                    </div>
+                </div>`;
+            };
+
+            el.innerHTML = `<div class="glass-card p-5 border-2 ${c.cor}">
+                <div class="flex flex-col xl:flex-row xl:items-center gap-5">
+                    <div class="flex items-center gap-4 flex-1">
+                        <span class="text-4xl">${c.icon}</span>
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Tendência Geral</span>
+                            <span class="text-lg font-black ${c.titulo} block mt-0.5">${c.label}</span>
+                            <span class="text-[10px] text-slate-400 font-medium">${mtd.mesAtualKey} (dia 01–${mtd.diaCorte}) vs ${mtd.mesAntKey || '—'} (dia 01–${mtd.diaCorte})</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 space-y-0">
+                        ${_subBadge('Acumulado MTD (dia 01–' + mtd.diaCorte + ')', mtd.tendAcum, mtd.brutasAtual, mtd.brutasAnt)}
+                        ${_subBadge('Últimos 7 dias (dia ' + Math.max(1, mtd.diaCorte-6) + '–' + mtd.diaCorte + ')', mtd.tend7d, mtd.t7dAtual, mtd.t7dAnt)}
+                        ${_subBadge('Últimos 15 dias (dia ' + Math.max(1, mtd.diaCorte-14) + '–' + mtd.diaCorte + ')', mtd.tend15d, mtd.t15dAtual, mtd.t15dAnt)}
                     </div>
                 </div>
-            `).join('');
+            </div>`;
+
+            // Atualiza badge do cabeçalho também
+            const tendBadge = document.getElementById('crescTendenciaBadge');
+            if (tendBadge) {
+                const badgeCfg = { acima: 'bg-green-50 text-green-700 border-green-200', abaixo: 'bg-red-50 text-red-700 border-red-200', igual: 'bg-amber-50 text-amber-700 border-amber-200' };
+                tendBadge.className = `px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-wider ${badgeCfg[mtd.tendenciaGeral] || badgeCfg.igual}`;
+                tendBadge.textContent = `${c.icon} ${c.label}`;
+            }
         }
 
         // =====================================================================
@@ -7276,33 +7480,33 @@
             }).join('');
         }
 
-        function _crescRenderCanais(canalData, totalBrutas, serieMensal) {
+        function _crescRenderCanais(mtd) {
             const el = document.getElementById('crescCanalCards');
-            if (!el) return;
-            const cores = { PAP: { border: 'border-l-blue-500', badge: 'bg-blue-50 text-blue-700 border-blue-100' }, MCV: { border: 'border-l-violet-500', badge: 'bg-violet-50 text-violet-700 border-violet-100' }, LOJAS: { border: 'border-l-amber-500', badge: 'bg-amber-50 text-amber-700 border-amber-100' } };
+            if (!el || !mtd) return;
+            const cores = {
+                PAP:   { border: 'border-l-blue-500',   badge: 'bg-blue-50 text-blue-700 border-blue-100' },
+                MCV:   { border: 'border-l-violet-500', badge: 'bg-violet-50 text-violet-700 border-violet-100' },
+                LOJAS: { border: 'border-l-amber-500',  badge: 'bg-amber-50 text-amber-700 border-amber-100' }
+            };
             el.innerHTML = ['PAP', 'MCV', 'LOJAS'].map(canal => {
-                const d = canalData[canal];
-                const tx = d.brutas > 0 ? (d.ativadas / d.brutas) * 100 : 0;
-                const part = totalBrutas > 0 ? (d.brutas / totalBrutas) * 100 : 0;
-                const varQtd = d.mesAtual - d.mesAnterior;
-                const varPct = d.mesAnterior > 0 ? ((varQtd / d.mesAnterior) * 100).toFixed(1) : (d.mesAtual > 0 ? '+100' : '0');
-                const sc = varQtd > 0 ? 'text-green-600 bg-green-50 border-green-100' : (varQtd < 0 ? 'text-red-600 bg-red-50 border-red-100' : 'text-slate-500 bg-slate-50 border-slate-100');
+                const d = mtd.canalMTD[canal];
                 const c = cores[canal] || { border: 'border-l-slate-400', badge: 'bg-slate-50 text-slate-600 border-slate-100' };
+                const sc = d.varAbs > 0 ? 'text-green-600 bg-green-50 border-green-100' : (d.varAbs < 0 ? 'text-red-600 bg-red-50 border-red-100' : 'text-slate-500 bg-slate-50 border-slate-100');
                 return `<div class="glass-card p-5 border-l-4 ${c.border}">
                     <div class="flex items-start justify-between gap-2">
                         <div>
                             <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">${canal}</span>
-                            <span class="block text-2xl font-black text-slate-800 mt-1">${d.brutas.toLocaleString('pt-BR')} <span class="text-sm font-bold text-slate-400">brutas</span></span>
-                            <span class="text-xs text-green-600 font-bold">${d.ativadas.toLocaleString('pt-BR')} ativadas</span>
+                            <span class="block text-2xl font-black text-slate-800 mt-1">${d.atual} <span class="text-sm font-bold text-slate-400">MTD</span></span>
+                            <span class="text-xs text-slate-400 font-medium">Ant. mesmo período: ${d.ant}</span>
                         </div>
-                        <span class="px-2.5 py-1 rounded-lg border text-[10px] font-black ${c.badge} mt-1">${part.toFixed(1)}%</span>
+                        <span class="px-2.5 py-1 rounded-lg border text-[10px] font-black ${c.badge} mt-1">${d.part.toFixed(1)}%</span>
                     </div>
                     <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
-                        <div><span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Tx. Ativ.</span><span class="text-sm font-black text-purple-600">${tx.toFixed(1)}%</span></div>
-                        <div><span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Últ. mês</span><span class="text-sm font-black text-slate-700">${d.mesAtual}</span></div>
-                        <div><span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Var.</span><span class="text-sm font-black ${varQtd >= 0 ? 'text-green-600' : 'text-red-600'}">${varQtd >= 0 ? '+' : ''}${varQtd}</span></div>
+                        <div><span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Var. Abs.</span><span class="text-sm font-black ${d.varAbs >= 0 ? 'text-green-600' : 'text-red-600'}">${d.varAbs >= 0 ? '+' : ''}${d.varAbs}</span></div>
+                        <div><span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Var. %</span><span class="text-sm font-black ${d.varAbs >= 0 ? 'text-green-600' : 'text-red-600'}">${d.varAbs >= 0 ? '+' : ''}${d.varPct.toFixed(1)}%</span></div>
+                        <div><span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Projeção</span><span class="text-sm font-black text-indigo-600">${d.proj !== null ? d.proj : '—'}</span></div>
                     </div>
-                    <div class="mt-2 flex justify-end"><span class="px-2 py-0.5 rounded-lg border text-[10px] font-black ${sc}">${_varIcon(varQtd)} ${varPct}%</span></div>
+                    <div class="mt-2 flex justify-end"><span class="px-2 py-0.5 rounded-lg border text-[10px] font-black ${sc}">${_varIcon(d.varAbs)} MTD: ${mtd.mesAtualKey} vs ${mtd.mesAntKey || '—'}</span></div>
                 </div>`;
             }).join('');
         }
@@ -7327,19 +7531,21 @@
             });
         }
 
-        function _crescRenderGraficoCanalPizza(canalData, totalBrutas) {
+        function _crescRenderGraficoCanalPizza(mtd) {
+            if (!mtd) return;
             const canais = ['PAP', 'MCV', 'LOJAS'];
+            const totalMTD = canais.reduce((s, c) => s + mtd.canalMTD[c].atual, 0);
             criarOuAtualizarChart('chartCrescCanalPizza', {
                 type: 'doughnut',
                 data: {
                     labels: canais,
-                    datasets: [{ data: canais.map(c => canalData[c].brutas), backgroundColor: ['#2563eb', '#7c3aed', '#d97706'], borderWidth: 2, borderColor: '#fff' }]
+                    datasets: [{ data: canais.map(c => mtd.canalMTD[c].atual), backgroundColor: ['#2563eb', '#7c3aed', '#d97706'], borderWidth: 2, borderColor: '#fff' }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'bottom', labels: { font: { size: 11, weight: 'bold' }, padding: 14 } },
-                        tooltip: { callbacks: { label: ctx => { const pct = totalBrutas > 0 ? ((ctx.raw / totalBrutas) * 100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.raw} (${pct}%)`; } } }
+                        tooltip: { callbacks: { label: ctx => { const pct = totalMTD > 0 ? ((ctx.raw / totalMTD) * 100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.raw} MTD (${pct}%)`; } } }
                     }
                 }
             });
@@ -7372,23 +7578,26 @@
             }).join('');
         }
 
-        function _crescRenderCidades(cidades, totalBrutas) {
+        function _crescRenderCidades(mtd) {
             const tbody = document.getElementById('crescCidadeTableBody');
-            if (!tbody) return;
+            if (!tbody || !mtd) return;
+            const cidades = mtd.cidadesMTD;
             tbody.innerHTML = cidades.map(c => {
-                const sc = _crescStatusBadge(c.status);
-                const vcor = c.varQtd > 0 ? 'text-green-600 font-black' : (c.varQtd < 0 ? 'text-red-600 font-black' : 'text-slate-400');
+                const sc = _crescStatusBadge(c.varAbs > 0 ? 'Crescimento' : (c.varAbs < 0 ? 'Queda' : 'Estável'));
+                const vcor = c.varAbs > 0 ? 'text-green-600 font-black' : (c.varAbs < 0 ? 'text-red-600 font-black' : 'text-slate-400');
                 return `<tr class="hover:bg-slate-50/60 transition-colors">
                     <td class="py-2.5 px-4 text-slate-800 font-bold text-xs">${c.nome}</td>
-                    <td class="py-2.5 px-4 text-blue-700 text-center font-bold">${c.brutas}</td>
-                    <td class="py-2.5 px-4 text-green-600 text-center font-bold">${c.ativadas}</td>
-                    <td class="py-2.5 px-4 text-purple-600 text-center font-bold">${c.taxaAtivacao.toFixed(1)}%</td>
-                    <td class="py-2.5 px-4 text-slate-600 text-center font-bold">${c.participacao.toFixed(1)}%</td>
-                    <td class="py-2.5 px-4 text-center ${vcor}">${_varIcon(c.varQtd)} ${c.varQtd > 0 ? '+' : ''}${c.varQtd}</td>
-                    <td class="py-2.5 px-4 text-center ${vcor}">${c.varPct > 0 ? '+' : ''}${c.varPct.toFixed(1)}%</td>
-                    <td class="py-2.5 px-4 text-center"><span class="px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wider ${sc}">${c.status}</span></td>
+                    <td class="py-2.5 px-4 text-orange-600 text-center font-bold">${c.atual}</td>
+                    <td class="py-2.5 px-4 text-slate-500 text-center font-bold">${c.ant}</td>
+                    <td class="py-2.5 px-4 text-green-600 text-center font-bold">${c.ativadasAtual}</td>
+                    <td class="py-2.5 px-4 text-purple-600 text-center font-bold">${c.txAtivacao.toFixed(1)}%</td>
+                    <td class="py-2.5 px-4 text-slate-600 text-center font-bold">${c.part.toFixed(1)}%</td>
+                    <td class="py-2.5 px-4 text-center ${vcor}">${_varIcon(c.varAbs)} ${c.varAbs >= 0 ? '+' : ''}${c.varAbs}</td>
+                    <td class="py-2.5 px-4 text-center ${vcor}">${c.varPct >= 0 ? '+' : ''}${c.varPct.toFixed(1)}%</td>
+                    <td class="py-2.5 px-4 text-center font-bold text-indigo-600">${c.proj !== null ? c.proj : '—'}</td>
+                    <td class="py-2.5 px-4 text-center"><span class="px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wider ${sc}">${c.varAbs > 0 ? 'Crescimento' : (c.varAbs < 0 ? 'Queda' : 'Estável')}</span></td>
                 </tr>`;
-            }).join('') || '<tr><td colspan="8" class="py-4 text-center text-xs text-slate-400">Sem dados de cidades.</td></tr>';
+            }).join('') || '<tr><td colspan="10" class="py-4 text-center text-xs text-slate-400">Sem dados de cidades.</td></tr>';
         }
 
         function _crescRenderGraficoCidade(cidades) {
