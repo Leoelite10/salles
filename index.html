@@ -609,6 +609,7 @@
                         <button type="button" data-tab="cruzamentos" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Cruzamentos</button>
                         <button type="button" data-tab="qualidade" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Qualidade</button>
                         <button type="button" data-tab="bairros" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Mapa de Calor</button>
+                        <button type="button" data-tab="crescimento" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">Crescimento</button>
                     </div>
                 </div>
                 
@@ -1450,6 +1451,196 @@
                     </div>
                 </div>
 
+                <!-- ===== ABA: CRESCIMENTO DE VENDAS ===== -->
+                <div id="secaoCrescimentoVendas" class="space-y-8 dashboard-section-hidden">
+
+                    <!-- Cabeçalho da aba -->
+                    <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Crescimento de Vendas — Evolução Comercial
+                            </h3>
+                            <p class="text-xs text-slate-400 font-medium mt-1" id="crescimentoInfoPeriodo">Análise mês a mês baseada em todos os dados disponíveis.</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span id="crescTendenciaBadge" class="px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-wider bg-slate-50 text-slate-500 border-slate-200">Tendência: —</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI Cards Estratégicos -->
+                    <div>
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Indicadores Estratégicos
+                        </h4>
+                        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4" id="crescKpiCards">
+                            <!-- JS Inject -->
+                        </div>
+                    </div>
+
+                    <!-- Gráfico mês a mês + Tabela resumo -->
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <!-- Gráfico -->
+                        <div class="glass-card p-5 flex flex-col gap-4">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Evolução Mensal
+                                </h4>
+                            </div>
+                            <div class="chart-box" style="position:relative;height:280px;">
+                                <canvas id="chartCrescimentoMensal"></canvas>
+                            </div>
+                        </div>
+                        <!-- Tabela comparativo mês a mês -->
+                        <div class="glass-card overflow-hidden flex flex-col">
+                            <div class="p-4 border-b border-slate-100 bg-white">
+                                <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Comparativo Mês a Mês
+                                </h4>
+                            </div>
+                            <div class="overflow-x-auto table-container flex-1" style="max-height:320px;">
+                                <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
+                                    <thead class="bg-slate-50 sticky top-0 z-10">
+                                        <tr>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">Mês</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Brutas</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Ativadas</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Tx. Ativ.</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Var. Brutas</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Var. Ativ.</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="crescMesTableBody" class="divide-y divide-slate-100">
+                                        <!-- JS Inject -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Análise por Canal -->
+                    <div>
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-violet-500"></span> Análise por Canal (PAP / MCV / LOJAS)
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="crescCanalCards">
+                            <!-- JS Inject -->
+                        </div>
+                    </div>
+
+                    <!-- Gráfico canal + dependência -->
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <div class="glass-card p-5 flex flex-col gap-4">
+                            <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-violet-400"></span> Crescimento por Canal — Mês a Mês
+                            </h4>
+                            <div class="chart-box" style="position:relative;height:260px;">
+                                <canvas id="chartCrescCanal"></canvas>
+                            </div>
+                        </div>
+                        <div class="glass-card p-5 flex flex-col gap-4">
+                            <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Participação dos Canais (Brutas Totais)
+                            </h4>
+                            <div class="chart-box" style="position:relative;height:260px;">
+                                <canvas id="chartCrescCanalPizza"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance dos Vendedores -->
+                    <div>
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> Performance & Crescimento — Vendedores
+                        </h4>
+                        <div class="glass-card overflow-hidden">
+                            <div class="p-4 border-b border-slate-100 bg-white flex flex-wrap gap-2 items-center justify-between">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ranking por Evolução vs Mês Anterior • Todos os Canais</span>
+                                <div class="flex gap-1.5 flex-wrap" id="crescCanalFiltroVend">
+                                    <button type="button" data-canal="TODOS" class="cresc-canal-btn px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider bg-sky-600 text-white border-sky-300 transition-colors">Todos</button>
+                                    <button type="button" data-canal="PAP" class="cresc-canal-btn px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider bg-slate-50 text-slate-600 border-slate-200 hover:bg-sky-50 hover:text-sky-700 transition-colors">PAP</button>
+                                    <button type="button" data-canal="MCV" class="cresc-canal-btn px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider bg-slate-50 text-slate-600 border-slate-200 hover:bg-sky-50 hover:text-sky-700 transition-colors">MCV</button>
+                                    <button type="button" data-canal="LOJAS" class="cresc-canal-btn px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider bg-slate-50 text-slate-600 border-slate-200 hover:bg-sky-50 hover:text-sky-700 transition-colors">LOJAS</button>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto table-container" style="max-height:420px;">
+                                <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
+                                    <thead class="bg-slate-50 sticky top-0 z-10">
+                                        <tr>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">Rank</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">Canal</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Brutas (Atual)</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Ativadas (Atual)</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Tx. Ativação</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Brutas (Ant.)</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Var. Qtd.</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Var. %</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Rank Vol.</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="crescVendedorTableBody" class="divide-y divide-slate-100">
+                                        <!-- JS Inject -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Crescimento por Cidade -->
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <!-- Tabela cidades -->
+                        <div class="glass-card overflow-hidden flex flex-col">
+                            <div class="p-4 border-b border-slate-100 bg-white">
+                                <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span> Ranking de Cidades — Crescimento
+                                </h4>
+                            </div>
+                            <div class="overflow-x-auto table-container flex-1" style="max-height:380px;">
+                                <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
+                                    <thead class="bg-slate-50 sticky top-0 z-10">
+                                        <tr>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">Cidade</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Brutas</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Ativadas</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Tx. Ativ.</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Part. %</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Var. Brutas</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Var. %</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="crescCidadeTableBody" class="divide-y divide-slate-100">
+                                        <!-- JS Inject -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Gráfico cidades -->
+                        <div class="glass-card p-5 flex flex-col gap-4">
+                            <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span> Top 10 Cidades — Vendas Brutas
+                            </h4>
+                            <div class="chart-box" style="position:relative;height:320px;">
+                                <canvas id="chartCrescCidade"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Índices de dependência -->
+                    <div>
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Índices de Dependência e Risco
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="crescDependenciaCards">
+                            <!-- JS Inject -->
+                        </div>
+                    </div>
+
+                </div>
+                <!-- ===== FIM ABA: CRESCIMENTO DE VENDAS ===== -->
+
             </div>
         </div>
     </main>
@@ -1529,7 +1720,8 @@
             { tabs: ['cruzamentos'] },
             { tabs: ['planos'] },
             { tabs: ['bairros'] },
-            { tabs: ['funil', 'qualidade'] }
+            { tabs: ['funil', 'qualidade'] },
+            { tabs: ['crescimento'] }
         ];
 
         function setupDashboardTabs() {
@@ -3735,6 +3927,7 @@
             renderCruzamentosAnaliticos(filteredData);
             renderDataQuality();
             renderMapaCalorBairros();
+            renderCrescimentoVendas(filteredData);
         }
 
         function renderCidadeSummary() {
@@ -6531,6 +6724,455 @@
                 console.error('Erro ao carregar Firebase:', e);
             }
             document.getElementById('firebaseLoader').classList.add('hidden');
+        }
+
+        // =====================================================================
+        // ABA: CRESCIMENTO DE VENDAS
+        // =====================================================================
+
+        function renderCrescimentoVendas(dataSet) {
+            const base = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
+            if (!base || base.length === 0) {
+                _crescLimpar();
+                return;
+            }
+
+            const meses = [...new Set(base.map(getMonthKeyFromRecord).filter(Boolean))]
+                .sort((a, b) => monthSortValue(a) - monthSortValue(b));
+
+            if (meses.length === 0) { _crescLimpar(); return; }
+
+            // --- Construir série mensal completa ---
+            const serieMensal = meses.map(mes => {
+                const lista = base.filter(d => getMonthKeyFromRecord(d) === mes);
+                const brutas = lista.length;
+                const ativadas = lista.filter(d => d._isConcluida).length;
+                const receita = lista.filter(d => d._isConcluida).reduce((s, d) => s + (d._valorDesconto || 0), 0);
+                const taxaAtivacao = brutas > 0 ? (ativadas / brutas) * 100 : 0;
+                return { mes, brutas, ativadas, receita, taxaAtivacao };
+            });
+
+            serieMensal.forEach((m, i) => {
+                const ant = i > 0 ? serieMensal[i - 1] : null;
+                m.varBrutas = ant ? m.brutas - ant.brutas : 0;
+                m.varBrutasPct = ant && ant.brutas > 0 ? ((m.brutas - ant.brutas) / ant.brutas) * 100 : 0;
+                m.varAtivadas = ant ? m.ativadas - ant.ativadas : 0;
+                m.varAtivadaPct = ant && ant.ativadas > 0 ? ((m.ativadas - ant.ativadas) / ant.ativadas) * 100 : 0;
+                m.status = !ant ? 'Base' : (m.varBrutas > 0 ? 'Crescimento' : (m.varBrutas < 0 ? 'Queda' : 'Estável'));
+            });
+
+            const ultimoMes = serieMensal[serieMensal.length - 1];
+            const penultimoMes = serieMensal.length > 1 ? serieMensal[serieMensal.length - 2] : null;
+            const totalBrutas = serieMensal.reduce((s, m) => s + m.brutas, 0);
+            const totalAtivadas = serieMensal.reduce((s, m) => s + m.ativadas, 0);
+
+            // --- Tendência 3 meses ---
+            const tendencia3m = _calcTendencia3m(serieMensal);
+            const tendBadge = document.getElementById('crescTendenciaBadge');
+            if (tendBadge) {
+                const cfg = { 'Alta': 'bg-green-50 text-green-700 border-green-200', 'Queda': 'bg-red-50 text-red-700 border-red-200', 'Estável': 'bg-slate-50 text-slate-600 border-slate-200' };
+                tendBadge.className = `px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-wider ${cfg[tendencia3m] || cfg['Estável']}`;
+                tendBadge.textContent = `Tendência 3m: ${tendencia3m}`;
+            }
+
+            const infoEl = document.getElementById('crescimentoInfoPeriodo');
+            if (infoEl) infoEl.textContent = `${meses.length} mese(s) disponíveis • ${meses[0]} → ${meses[meses.length - 1]} • Referência: mês mais recente = ${ultimoMes.mes}`;
+
+            // --- Canais ---
+            const canais = ['PAP', 'MCV', 'LOJAS'];
+            const canalData = {};
+            canais.forEach(c => { canalData[c] = { brutas: 0, ativadas: 0, mesAtual: 0, mesAnterior: 0 }; });
+
+            const mesAtualKey = ultimoMes.mes;
+            const mesAntKey = penultimoMes ? penultimoMes.mes : null;
+
+            base.forEach(d => {
+                const setor = (d['Setor'] || '').trim().toUpperCase();
+                const mesD = getMonthKeyFromRecord(d);
+                if (!canalData[setor]) return;
+                canalData[setor].brutas++;
+                if (d._isConcluida) canalData[setor].ativadas++;
+                if (mesD === mesAtualKey) canalData[setor].mesAtual++;
+                if (mesAntKey && mesD === mesAntKey) canalData[setor].mesAnterior++;
+            });
+
+            // --- Vendedores ---
+            const vendMap = {};
+            base.forEach(d => {
+                const vend = (d['Vendedor'] || 'Não Identificado').trim();
+                const setor = (d['Setor'] || '').trim().toUpperCase();
+                const mesD = getMonthKeyFromRecord(d);
+                const key = vend + '||' + setor;
+                if (!vendMap[key]) vendMap[key] = { nome: vend, canal: setor, atual: 0, ativadaAtual: 0, anterior: 0 };
+                if (mesD === mesAtualKey) {
+                    vendMap[key].atual++;
+                    if (d._isConcluida) vendMap[key].ativadaAtual++;
+                }
+                if (mesAntKey && mesD === mesAntKey) vendMap[key].anterior++;
+            });
+
+            const vendedores = Object.values(vendMap).filter(v => v.atual > 0 || v.anterior > 0);
+            vendedores.forEach(v => {
+                v.varQtd = v.atual - v.anterior;
+                v.varPct = v.anterior > 0 ? ((v.atual - v.anterior) / v.anterior) * 100 : (v.atual > 0 ? 100 : 0);
+                v.txAtivacao = v.atual > 0 ? (v.ativadaAtual / v.atual) * 100 : 0;
+                v.status = v.varQtd > 0 ? 'Crescimento' : (v.varQtd < 0 ? 'Queda' : 'Estável');
+            });
+            const vendedoresPorEvol = [...vendedores].sort((a, b) => b.varPct - a.varPct || b.atual - a.atual);
+            const vendedoresPorVol = [...vendedores].sort((a, b) => b.atual - a.atual);
+            vendedores.forEach(v => { v.rankVol = vendedoresPorVol.indexOf(v) + 1; });
+
+            // --- Cidades ---
+            const cidadeMap = {};
+            base.forEach(d => {
+                const cidade = (d['Cidade'] || 'Não Identificada').trim() || 'Não Identificada';
+                const mesD = getMonthKeyFromRecord(d);
+                if (!cidadeMap[cidade]) cidadeMap[cidade] = { nome: cidade, brutas: 0, ativadas: 0, atual: 0, anterior: 0 };
+                cidadeMap[cidade].brutas++;
+                if (d._isConcluida) cidadeMap[cidade].ativadas++;
+                if (mesD === mesAtualKey) cidadeMap[cidade].atual++;
+                if (mesAntKey && mesD === mesAntKey) cidadeMap[cidade].anterior++;
+            });
+
+            const cidades = Object.values(cidadeMap);
+            cidades.forEach(c => {
+                c.varQtd = c.atual - c.anterior;
+                c.varPct = c.anterior > 0 ? ((c.atual - c.anterior) / c.anterior) * 100 : (c.atual > 0 ? 100 : 0);
+                c.participacao = totalBrutas > 0 ? (c.brutas / totalBrutas) * 100 : 0;
+                c.taxaAtivacao = c.brutas > 0 ? (c.ativadas / c.brutas) * 100 : 0;
+                c.status = c.varQtd > 0 ? 'Crescimento' : (c.varQtd < 0 ? 'Queda' : 'Estável');
+            });
+            cidades.sort((a, b) => b.brutas - a.brutas);
+
+            // --- Índices de dependência ---
+            const idxCanal = _calcHerfindahl(canais.map(c => canalData[c].brutas));
+            const top3CidBrutas = [...cidades].sort((a, b) => b.brutas - a.brutas).slice(0, 3).reduce((s, c) => s + c.brutas, 0);
+            const idxCidade = totalBrutas > 0 ? (top3CidBrutas / totalBrutas) * 100 : 0;
+
+            // === RENDERIZAÇÕES ===
+            _crescRenderKpis(ultimoMes, penultimoMes, totalBrutas, totalAtivadas, serieMensal, tendencia3m);
+            _crescRenderGraficoMensal(serieMensal);
+            _crescRenderTabelaMensal(serieMensal);
+            _crescRenderCanais(canalData, totalBrutas, serieMensal);
+            _crescRenderGraficoCanal(serieMensal, canais);
+            _crescRenderGraficoCanalPizza(canalData, totalBrutas);
+            _crescRenderVendedores(vendedoresPorEvol, 'TODOS');
+            _crescRenderCidades(cidades, totalBrutas);
+            _crescRenderGraficoCidade(cidades);
+            _crescRenderDependencia(idxCanal, idxCidade, canalData, totalBrutas, cidades);
+
+            // Wiring dos botões de canal para vendedores
+            document.querySelectorAll('.cresc-canal-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.cresc-canal-btn').forEach(b => {
+                        const on = b === btn;
+                        b.classList.toggle('bg-sky-600', on); b.classList.toggle('text-white', on); b.classList.toggle('border-sky-300', on);
+                        b.classList.toggle('bg-slate-50', !on); b.classList.toggle('text-slate-600', !on); b.classList.toggle('border-slate-200', !on);
+                    });
+                    _crescRenderVendedores(vendedoresPorEvol, btn.dataset.canal);
+                };
+            });
+        }
+
+        function _crescLimpar() {
+            ['crescKpiCards','crescMesTableBody','crescCanalCards','crescVendedorTableBody','crescCidadeTableBody','crescDependenciaCards'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = '<div class="col-span-full text-center text-xs text-slate-400 py-6 font-bold tracking-wide">Nenhum dado disponível.</div>';
+            });
+        }
+
+        function _calcTendencia3m(serie) {
+            if (serie.length < 2) return 'Estável';
+            const ult = serie.slice(-3);
+            const soma = ult.slice(1).reduce((s, m, i) => s + (m.brutas - ult[i].brutas), 0);
+            if (soma > 0) return 'Alta';
+            if (soma < 0) return 'Queda';
+            return 'Estável';
+        }
+
+        function _calcHerfindahl(valores) {
+            const total = valores.reduce((s, v) => s + v, 0);
+            if (total === 0) return 0;
+            return valores.reduce((s, v) => s + Math.pow(v / total, 2), 0) * 100;
+        }
+
+        function _crescStatusBadge(status) {
+            const map = {
+                'Crescimento': 'bg-green-50 text-green-700 border-green-100',
+                'Queda':       'bg-red-50 text-red-700 border-red-100',
+                'Estável':     'bg-slate-50 text-slate-600 border-slate-100',
+                'Estabilidade':'bg-slate-50 text-slate-600 border-slate-100',
+                'Base':        'bg-blue-50 text-blue-700 border-blue-100'
+            };
+            return map[status] || map['Estável'];
+        }
+
+        function _varIcon(val) { return val > 0 ? '▲' : (val < 0 ? '▼' : '='); }
+
+        function _crescRenderKpis(ultimo, penultimo, totalBrutas, totalAtivadas, serie, tendencia) {
+            const el = document.getElementById('crescKpiCards');
+            if (!el) return;
+
+            const txAtivGeral = totalBrutas > 0 ? (totalAtivadas / totalBrutas) * 100 : 0;
+            const crescBruto = penultimo ? ultimo.brutas - penultimo.brutas : 0;
+            const crescAtiv = penultimo ? ultimo.ativadas - penultimo.ativadas : 0;
+            const recTotal = serie.reduce((s, m) => s + m.receita, 0);
+            const ticketMedio = totalAtivadas > 0 ? recTotal / totalAtivadas : 0;
+            const prodMedVend = (() => {
+                const base = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
+                const vends = new Set(base.map(d => (d['Vendedor'] || '').trim()).filter(Boolean));
+                return vends.size > 0 ? totalBrutas / vends.size : 0;
+            })();
+
+            const kpis = [
+                { label: 'Taxa de Ativação Geral', valor: `${txAtivGeral.toFixed(1)}%`, cor: 'border-l-purple-500', trend: txAtivGeral >= 50 ? '▲' : '▼', trendCor: txAtivGeral >= 50 ? 'text-green-600' : 'text-red-500' },
+                { label: 'Var. Brutas (últ. mês)', valor: (crescBruto >= 0 ? '+' : '') + crescBruto, cor: crescBruto >= 0 ? 'border-l-green-500' : 'border-l-red-500', trend: _varIcon(crescBruto), trendCor: crescBruto >= 0 ? 'text-green-600' : 'text-red-500' },
+                { label: 'Var. Ativadas (últ. mês)', valor: (crescAtiv >= 0 ? '+' : '') + crescAtiv, cor: crescAtiv >= 0 ? 'border-l-emerald-500' : 'border-l-orange-500', trend: _varIcon(crescAtiv), trendCor: crescAtiv >= 0 ? 'text-green-600' : 'text-red-500' },
+                { label: 'Total Brutas (período)', valor: totalBrutas.toLocaleString('pt-BR'), cor: 'border-l-blue-500', trend: '—', trendCor: 'text-slate-400' },
+                { label: 'Total Ativadas (período)', valor: totalAtivadas.toLocaleString('pt-BR'), cor: 'border-l-sky-500', trend: '—', trendCor: 'text-slate-400' },
+                { label: 'Receita Estimada', valor: formatBRL(recTotal), cor: 'border-l-yellow-500', trend: '—', trendCor: 'text-slate-400' },
+                { label: 'Ticket Médio', valor: formatBRL(ticketMedio), cor: 'border-l-indigo-500', trend: '—', trendCor: 'text-slate-400' },
+                { label: 'Produt. Média/Vendedor', valor: prodMedVend.toFixed(1), cor: 'border-l-cyan-500', trend: '—', trendCor: 'text-slate-400' },
+                { label: 'Brutas Últ. Mês', valor: ultimo.brutas.toLocaleString('pt-BR'), cor: 'border-l-slate-400', trend: '—', trendCor: 'text-slate-400' },
+                { label: 'Ativadas Últ. Mês', valor: ultimo.ativadas.toLocaleString('pt-BR'), cor: 'border-l-teal-500', trend: '—', trendCor: 'text-slate-400' },
+                { label: 'Meses Analisados', valor: serie.length, cor: 'border-l-rose-400', trend: '—', trendCor: 'text-slate-400' },
+                { label: 'Tendência 3 Meses', valor: tendencia, cor: tendencia === 'Alta' ? 'border-l-green-500' : (tendencia === 'Queda' ? 'border-l-red-500' : 'border-l-slate-400'), trend: tendencia === 'Alta' ? '▲' : (tendencia === 'Queda' ? '▼' : '='), trendCor: tendencia === 'Alta' ? 'text-green-600' : (tendencia === 'Queda' ? 'text-red-500' : 'text-slate-400') }
+            ];
+
+            el.innerHTML = kpis.map(k => `
+                <div class="glass-card p-4 border-l-4 ${k.cor}">
+                    <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest block leading-tight">${k.label}</span>
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="text-xl font-black text-slate-800 leading-none">${k.valor}</span>
+                        <span class="text-base font-black ${k.trendCor}">${k.trend}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function _crescRenderGraficoMensal(serie) {
+            criarOuAtualizarChart('chartCrescimentoMensal', {
+                type: 'bar',
+                data: {
+                    labels: serie.map(m => m.mes),
+                    datasets: [
+                        { label: 'Vendas Brutas', data: serie.map(m => m.brutas), backgroundColor: 'rgba(37,99,235,0.75)', borderRadius: 5, order: 2 },
+                        { label: 'Ativadas', data: serie.map(m => m.ativadas), backgroundColor: 'rgba(22,163,74,0.75)', borderRadius: 5, order: 2 },
+                        { label: 'Var. % Brutas', data: serie.map(m => parseFloat(m.varBrutasPct.toFixed(1))), type: 'line', borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#f59e0b', yAxisID: 'yPct', tension: 0.3, order: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' }, padding: 12 } }, tooltip: { mode: 'index', intersect: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+                        yPct: { position: 'right', grid: { display: false }, ticks: { font: { size: 10 }, callback: v => v + '%' } }
+                    }
+                }
+            });
+        }
+
+        function _crescRenderTabelaMensal(serie) {
+            const tbody = document.getElementById('crescMesTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = serie.map((m, i) => {
+                const sc = _crescStatusBadge(m.status);
+                const vcor = m.varBrutas > 0 ? 'text-green-600 font-black' : (m.varBrutas < 0 ? 'text-red-600 font-black' : 'text-slate-400');
+                const vacor = m.varAtivadas > 0 ? 'text-green-600 font-black' : (m.varAtivadas < 0 ? 'text-red-600 font-black' : 'text-slate-400');
+                const isUlt = i === serie.length - 1;
+                return `<tr class="${isUlt ? 'bg-emerald-50/60' : 'hover:bg-slate-50/60'} transition-colors">
+                    <td class="py-2.5 px-4 text-slate-800 font-black text-xs">${m.mes}${isUlt ? ' <span class="text-[9px] text-emerald-600 font-black bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100 ml-1">ATUAL</span>' : ''}</td>
+                    <td class="py-2.5 px-4 text-blue-700 text-center font-bold">${m.brutas}</td>
+                    <td class="py-2.5 px-4 text-green-700 text-center font-bold">${m.ativadas}</td>
+                    <td class="py-2.5 px-4 text-purple-600 text-center font-bold">${m.taxaAtivacao.toFixed(1)}%</td>
+                    <td class="py-2.5 px-4 text-center ${vcor}">${_varIcon(m.varBrutas)} ${m.varBrutas > 0 ? '+' : ''}${m.varBrutas}</td>
+                    <td class="py-2.5 px-4 text-center ${vacor}">${_varIcon(m.varAtivadas)} ${m.varAtivadas > 0 ? '+' : ''}${m.varAtivadas}</td>
+                    <td class="py-2.5 px-4 text-center"><span class="px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wider ${sc}">${m.status}</span></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function _crescRenderCanais(canalData, totalBrutas, serieMensal) {
+            const el = document.getElementById('crescCanalCards');
+            if (!el) return;
+            const cores = { PAP: { border: 'border-l-blue-500', badge: 'bg-blue-50 text-blue-700 border-blue-100' }, MCV: { border: 'border-l-violet-500', badge: 'bg-violet-50 text-violet-700 border-violet-100' }, LOJAS: { border: 'border-l-amber-500', badge: 'bg-amber-50 text-amber-700 border-amber-100' } };
+            el.innerHTML = ['PAP', 'MCV', 'LOJAS'].map(canal => {
+                const d = canalData[canal];
+                const tx = d.brutas > 0 ? (d.ativadas / d.brutas) * 100 : 0;
+                const part = totalBrutas > 0 ? (d.brutas / totalBrutas) * 100 : 0;
+                const varQtd = d.mesAtual - d.mesAnterior;
+                const varPct = d.mesAnterior > 0 ? ((varQtd / d.mesAnterior) * 100).toFixed(1) : (d.mesAtual > 0 ? '+100' : '0');
+                const sc = varQtd > 0 ? 'text-green-600 bg-green-50 border-green-100' : (varQtd < 0 ? 'text-red-600 bg-red-50 border-red-100' : 'text-slate-500 bg-slate-50 border-slate-100');
+                const c = cores[canal] || { border: 'border-l-slate-400', badge: 'bg-slate-50 text-slate-600 border-slate-100' };
+                return `<div class="glass-card p-5 border-l-4 ${c.border}">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">${canal}</span>
+                            <span class="block text-2xl font-black text-slate-800 mt-1">${d.brutas.toLocaleString('pt-BR')} <span class="text-sm font-bold text-slate-400">brutas</span></span>
+                            <span class="text-xs text-green-600 font-bold">${d.ativadas.toLocaleString('pt-BR')} ativadas</span>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg border text-[10px] font-black ${c.badge} mt-1">${part.toFixed(1)}%</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
+                        <div><span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Tx. Ativ.</span><span class="text-sm font-black text-purple-600">${tx.toFixed(1)}%</span></div>
+                        <div><span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Últ. mês</span><span class="text-sm font-black text-slate-700">${d.mesAtual}</span></div>
+                        <div><span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Var.</span><span class="text-sm font-black ${varQtd >= 0 ? 'text-green-600' : 'text-red-600'}">${varQtd >= 0 ? '+' : ''}${varQtd}</span></div>
+                    </div>
+                    <div class="mt-2 flex justify-end"><span class="px-2 py-0.5 rounded-lg border text-[10px] font-black ${sc}">${_varIcon(varQtd)} ${varPct}%</span></div>
+                </div>`;
+            }).join('');
+        }
+
+        function _crescRenderGraficoCanal(serieMensal, canais) {
+            const baseComp = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
+            const labels = serieMensal.map(m => m.mes);
+            const cores = { PAP: '#2563eb', MCV: '#7c3aed', LOJAS: '#d97706' };
+            const datasets = canais.map(canal => ({
+                label: canal,
+                data: serieMensal.map(m => baseComp.filter(d => (d['Setor'] || '').trim().toUpperCase() === canal && getMonthKeyFromRecord(d) === m.mes).length),
+                backgroundColor: (cores[canal] || '#64748b') + 'CC',
+                borderRadius: 4
+            }));
+            criarOuAtualizarChart('chartCrescCanal', {
+                type: 'bar',
+                data: { labels, datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' }, padding: 10 } }, tooltip: { mode: 'index', intersect: false } },
+                    scales: { x: { stacked: false, grid: { display: false }, ticks: { font: { size: 10 } } }, y: { stacked: false, beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } } }
+                }
+            });
+        }
+
+        function _crescRenderGraficoCanalPizza(canalData, totalBrutas) {
+            const canais = ['PAP', 'MCV', 'LOJAS'];
+            criarOuAtualizarChart('chartCrescCanalPizza', {
+                type: 'doughnut',
+                data: {
+                    labels: canais,
+                    datasets: [{ data: canais.map(c => canalData[c].brutas), backgroundColor: ['#2563eb', '#7c3aed', '#d97706'], borderWidth: 2, borderColor: '#fff' }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 11, weight: 'bold' }, padding: 14 } },
+                        tooltip: { callbacks: { label: ctx => { const pct = totalBrutas > 0 ? ((ctx.raw / totalBrutas) * 100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.raw} (${pct}%)`; } } }
+                    }
+                }
+            });
+        }
+
+        function _crescRenderVendedores(todos, filtroCanal) {
+            const tbody = document.getElementById('crescVendedorTableBody');
+            if (!tbody) return;
+            const lista = filtroCanal === 'TODOS' ? todos : todos.filter(v => v.canal === filtroCanal);
+            if (lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" class="py-4 px-4 text-center text-xs text-slate-400">Sem vendedores para o filtro selecionado.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = lista.map((v, i) => {
+                const sc = _crescStatusBadge(v.status);
+                const vcor = v.varQtd > 0 ? 'text-green-600 font-black' : (v.varQtd < 0 ? 'text-red-600 font-black' : 'text-slate-400');
+                return `<tr class="hover:bg-slate-50/60 transition-colors">
+                    <td class="py-2 px-4 text-slate-500 text-center font-bold text-xs">${i + 1}</td>
+                    <td class="py-2 px-4 text-slate-800 font-bold text-xs">${v.nome}</td>
+                    <td class="py-2 px-4 text-[10px]"><span class="px-2 py-0.5 rounded-md border font-black uppercase tracking-wider ${v.canal === 'PAP' ? 'bg-blue-50 text-blue-700 border-blue-100' : (v.canal === 'MCV' ? 'bg-violet-50 text-violet-700 border-violet-100' : 'bg-amber-50 text-amber-700 border-amber-100')}">${v.canal || '—'}</span></td>
+                    <td class="py-2 px-4 text-blue-700 text-center font-bold">${v.atual}</td>
+                    <td class="py-2 px-4 text-green-600 text-center font-bold">${v.ativadaAtual}</td>
+                    <td class="py-2 px-4 text-purple-600 text-center font-bold">${v.txAtivacao.toFixed(1)}%</td>
+                    <td class="py-2 px-4 text-slate-500 text-center font-bold">${v.anterior}</td>
+                    <td class="py-2 px-4 text-center ${vcor}">${_varIcon(v.varQtd)} ${v.varQtd > 0 ? '+' : ''}${v.varQtd}</td>
+                    <td class="py-2 px-4 text-center ${vcor}">${v.varPct > 0 ? '+' : ''}${v.varPct.toFixed(1)}%</td>
+                    <td class="py-2 px-4 text-center text-slate-600 font-bold">#${v.rankVol}</td>
+                    <td class="py-2 px-4 text-center"><span class="px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wider ${sc}">${v.status}</span></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function _crescRenderCidades(cidades, totalBrutas) {
+            const tbody = document.getElementById('crescCidadeTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = cidades.map(c => {
+                const sc = _crescStatusBadge(c.status);
+                const vcor = c.varQtd > 0 ? 'text-green-600 font-black' : (c.varQtd < 0 ? 'text-red-600 font-black' : 'text-slate-400');
+                return `<tr class="hover:bg-slate-50/60 transition-colors">
+                    <td class="py-2.5 px-4 text-slate-800 font-bold text-xs">${c.nome}</td>
+                    <td class="py-2.5 px-4 text-blue-700 text-center font-bold">${c.brutas}</td>
+                    <td class="py-2.5 px-4 text-green-600 text-center font-bold">${c.ativadas}</td>
+                    <td class="py-2.5 px-4 text-purple-600 text-center font-bold">${c.taxaAtivacao.toFixed(1)}%</td>
+                    <td class="py-2.5 px-4 text-slate-600 text-center font-bold">${c.participacao.toFixed(1)}%</td>
+                    <td class="py-2.5 px-4 text-center ${vcor}">${_varIcon(c.varQtd)} ${c.varQtd > 0 ? '+' : ''}${c.varQtd}</td>
+                    <td class="py-2.5 px-4 text-center ${vcor}">${c.varPct > 0 ? '+' : ''}${c.varPct.toFixed(1)}%</td>
+                    <td class="py-2.5 px-4 text-center"><span class="px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wider ${sc}">${c.status}</span></td>
+                </tr>`;
+            }).join('') || '<tr><td colspan="8" class="py-4 text-center text-xs text-slate-400">Sem dados de cidades.</td></tr>';
+        }
+
+        function _crescRenderGraficoCidade(cidades) {
+            const top10 = [...cidades].sort((a, b) => b.brutas - a.brutas).slice(0, 10);
+            criarOuAtualizarChart('chartCrescCidade', {
+                type: 'bar',
+                data: {
+                    labels: top10.map(c => c.nome),
+                    datasets: [
+                        { label: 'Brutas', data: top10.map(c => c.brutas), backgroundColor: 'rgba(20,184,166,0.75)', borderRadius: 5 },
+                        { label: 'Ativadas', data: top10.map(c => c.ativadas), backgroundColor: 'rgba(16,185,129,0.75)', borderRadius: 5 }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' }, padding: 10 } }, tooltip: { mode: 'index', intersect: false } },
+                    scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } }
+                }
+            });
+        }
+
+        function _crescRenderDependencia(idxCanal, idxCidade, canalData, totalBrutas, cidades) {
+            const el = document.getElementById('crescDependenciaCards');
+            if (!el) return;
+
+            const herfCanal = idxCanal.toFixed(1);
+            const nivelCanal = idxCanal > 60 ? 'Alto' : (idxCanal > 35 ? 'Moderado' : 'Baixo');
+            const corCanal = idxCanal > 60 ? 'border-l-red-500' : (idxCanal > 35 ? 'border-l-amber-500' : 'border-l-green-500');
+            const badgeCanal = idxCanal > 60 ? 'bg-red-50 text-red-700 border-red-100' : (idxCanal > 35 ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-green-50 text-green-700 border-green-100');
+
+            const top3Cid = [...cidades].sort((a, b) => b.brutas - a.brutas).slice(0, 3);
+            const cidPart = idxCidade.toFixed(1);
+            const nivelCid = idxCidade > 80 ? 'Alto' : (idxCidade > 50 ? 'Moderado' : 'Baixo');
+            const corCid = idxCidade > 80 ? 'border-l-red-500' : (idxCidade > 50 ? 'border-l-amber-500' : 'border-l-green-500');
+            const badgeCid = idxCidade > 80 ? 'bg-red-50 text-red-700 border-red-100' : (idxCidade > 50 ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-green-50 text-green-700 border-green-100');
+
+            const dominanteCanal = Object.entries(canalData).sort((a, b) => b[1].brutas - a[1].brutas)[0];
+
+            el.innerHTML = `
+                <div class="glass-card p-5 border-l-4 ${corCanal}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Índice de Dependência de Canal</span>
+                            <span class="block text-3xl font-black text-slate-800 mt-2">${herfCanal}<span class="text-sm font-bold text-slate-400 ml-1">HHI %</span></span>
+                            <p class="text-xs text-slate-400 mt-1 font-medium">Quanto maior, mais concentrado em um canal. Canal dominante: <strong>${dominanteCanal ? dominanteCanal[0] : '—'}</strong> (${dominanteCanal ? (totalBrutas > 0 ? ((dominanteCanal[1].brutas / totalBrutas) * 100).toFixed(1) : 0) : 0}%)</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-xl border text-[10px] font-black ${badgeCanal} mt-1 whitespace-nowrap">${nivelCanal}</span>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2">
+                        ${['PAP','MCV','LOJAS'].map(c => `<div class="text-center"><span class="text-[10px] font-bold text-slate-400 uppercase block">${c}</span><span class="text-sm font-black text-slate-700">${totalBrutas > 0 ? ((canalData[c].brutas / totalBrutas) * 100).toFixed(1) : 0}%</span></div>`).join('')}
+                    </div>
+                </div>
+                <div class="glass-card p-5 border-l-4 ${corCid}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Índice de Dependência de Cidade</span>
+                            <span class="block text-3xl font-black text-slate-800 mt-2">${cidPart}<span class="text-sm font-bold text-slate-400 ml-1">% (top 3)</span></span>
+                            <p class="text-xs text-slate-400 mt-1 font-medium">Participação das 3 cidades com mais vendas no total geral.</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-xl border text-[10px] font-black ${badgeCid} mt-1 whitespace-nowrap">${nivelCid}</span>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2">
+                        ${top3Cid.map(c => `<div class="text-center"><span class="text-[9px] font-bold text-slate-400 uppercase block truncate max-w-[80px] mx-auto" title="${c.nome}">${c.nome}</span><span class="text-xs font-black text-slate-700">${totalBrutas > 0 ? ((c.brutas / totalBrutas) * 100).toFixed(1) : 0}%</span></div>`).join('')}
+                    </div>
+                </div>
+            `;
         }
 
     </script>
