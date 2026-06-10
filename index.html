@@ -6702,8 +6702,8 @@
         // ===== Inicialização: chamada pelo auth state listener após login aprovado =====
         async function _carregarDadosFirebase() {
             document.getElementById('firebaseLoader').classList.remove('hidden');
-            await _atualizarTimestamp();
             try {
+                await _atualizarTimestamp();
                 const _agora = new Date();
                 const metas = await _carregarMetasAnuais(_agora.getFullYear(), _agora.getMonth() + 1);
                 if (metas) {
@@ -6722,8 +6722,9 @@
                 }
             } catch(e) {
                 console.error('Erro ao carregar Firebase:', e);
+            } finally {
+                document.getElementById('firebaseLoader').classList.add('hidden');
             }
-            document.getElementById('firebaseLoader').classList.add('hidden');
         }
 
         // =====================================================================
@@ -7179,9 +7180,17 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(r => console.log('SW registrado:', r.scope))
-                    .catch(e => console.warn('SW falhou:', e));
+                navigator.serviceWorker.register('/sw.js').then(registration => {
+                    // Detecta nova versão do SW e recarrega para garantir conteúdo atualizado
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                                window.location.reload();
+                            }
+                        });
+                    });
+                }).catch(e => console.warn('SW falhou:', e));
             });
         }
     </script>

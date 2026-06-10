@@ -1,4 +1,4 @@
-const CACHE  = 'sales-intel-v7';
+const CACHE  = 'sales-intel-v8';
 const ALWAYS_NETWORK = [
   'firestore.googleapis.com',
   'identitytoolkit.googleapis.com',
