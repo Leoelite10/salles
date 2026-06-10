@@ -2197,6 +2197,12 @@
                         Metas Anuais
                     </span>
                 </button>
+                <button onclick="_abrirPainelAdmin('acessos')" class="${_tc('acessos')}">
+                    <span class="flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                        Logs de Acesso
+                    </span>
+                </button>
             </div>`;
 
             document.getElementById('adminPanelContent').innerHTML = tabBar +
@@ -2206,6 +2212,78 @@
                 const agora = new Date();
                 const metas = await _carregarMetasAnuais(agora.getFullYear(), agora.getMonth() + 1);
                 document.getElementById('adminPanelContent').innerHTML = tabBar + _wizardMetasHtml(metas);
+                return;
+            }
+
+            if (tab === 'acessos') {
+                const logs = await _carregarLogsAcesso();
+                const _fmt = ts => {
+                    if (!ts) return '—';
+                    const d = ts.toDate ? ts.toDate() : new Date(ts);
+                    return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                };
+                // Resumo: usuários únicos e sessões por dia
+                const uniqueUsers = [...new Set(logs.map(l => l.email))].length;
+                const hoje = new Date().toLocaleDateString('pt-BR');
+                const acessosHoje = logs.filter(l => {
+                    if (!l.timestamp) return false;
+                    const d = l.timestamp.toDate ? l.timestamp.toDate() : new Date(l.timestamp);
+                    return d.toLocaleDateString('pt-BR') === hoje;
+                }).length;
+
+                const rows = logs.map(l => {
+                    const badgeRole = l.role === 'admin'
+                        ? 'bg-blue-50 text-blue-700 border-blue-100'
+                        : 'bg-slate-50 text-slate-600 border-slate-200';
+                    const badgeDev = l.dispositivo === 'Mobile'
+                        ? 'bg-orange-50 text-orange-700 border-orange-100'
+                        : 'bg-green-50 text-green-700 border-green-100';
+                    return `<tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
+                        <td class="py-2.5 px-3 text-xs text-slate-500 font-medium whitespace-nowrap">${_fmt(l.timestamp)}</td>
+                        <td class="py-2.5 px-3">
+                            <p class="text-xs font-bold text-slate-800">${escapeHTML(l.nome || l.email)}</p>
+                            <p class="text-[10px] text-slate-400">${escapeHTML(l.email)}</p>
+                        </td>
+                        <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-md border text-[10px] font-black uppercase ${badgeRole}">${l.role === 'admin' ? 'Admin' : 'Usuário'}</span></td>
+                        <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-md border text-[10px] font-bold ${badgeDev}">${l.dispositivo || '—'}</span></td>
+                        <td class="py-2.5 px-3 text-[10px] text-slate-500 text-center">${l.navegador || '—'}</td>
+                        <td class="py-2.5 px-3 text-[10px] text-slate-400 text-center">${l.resolucao || '—'}</td>
+                    </tr>`;
+                }).join('');
+
+                const logsHtml = `
+                    <div class="grid grid-cols-3 gap-3 mb-5">
+                        <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
+                            <span class="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">Total de Acessos</span>
+                            <span class="text-2xl font-black text-blue-700">${logs.length}</span>
+                        </div>
+                        <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center">
+                            <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block">Usuários Únicos</span>
+                            <span class="text-2xl font-black text-emerald-700">${uniqueUsers}</span>
+                        </div>
+                        <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 text-center">
+                            <span class="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">Acessos Hoje</span>
+                            <span class="text-2xl font-black text-amber-700">${acessosHoje}</span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="w-full min-w-[600px]">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-left">Data/Hora</th>
+                                    <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-left">Usuário</th>
+                                    <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Perfil</th>
+                                    <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Dispositivo</th>
+                                    <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Navegador</th>
+                                    <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Resolução</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows || '<tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">Nenhum acesso registrado ainda.</td></tr>'}</tbody>
+                        </table>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-2 text-right">Últimos 200 registros • ordem decrescente</p>`;
+
+                document.getElementById('adminPanelContent').innerHTML = tabBar + logsHtml;
                 return;
             }
 
@@ -2473,6 +2551,38 @@
             }
         }
 
+        // ===== LOGS DE ACESSO =====
+        async function _registrarAcesso(user, userData) {
+            const ua = navigator.userAgent;
+            let dispositivo = 'Desktop';
+            if (/Android|iPhone|iPad|iPod/i.test(ua)) dispositivo = 'Mobile';
+            else if (/Tablet|iPad/i.test(ua)) dispositivo = 'Tablet';
+            let navegador = 'Outro';
+            if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) navegador = 'Chrome';
+            else if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) navegador = 'Safari';
+            else if (/Firefox\//.test(ua)) navegador = 'Firefox';
+            else if (/Edg\//.test(ua)) navegador = 'Edge';
+
+            await _fsDB.collection('logs_acesso').add({
+                uid:        user.uid,
+                email:      user.email,
+                nome:       userData.nome || user.email,
+                role:       userData.role || 'user',
+                timestamp:  firebase.firestore.FieldValue.serverTimestamp(),
+                dispositivo,
+                navegador,
+                resolucao:  `${screen.width}x${screen.height}`
+            });
+        }
+
+        async function _carregarLogsAcesso() {
+            const snap = await _fsDB.collection('logs_acesso')
+                .orderBy('timestamp', 'desc')
+                .limit(200)
+                .get();
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+
         // — Auth state listener —
         _auth.onAuthStateChanged(async (user) => {
             if (!user) {
@@ -2503,6 +2613,8 @@
                 _currentRole = data.role;
                 _aplicarRoleUI();
                 _ocultarLoginScreen();
+                // Grava log de acesso (fire-and-forget, não bloqueia carregamento)
+                _registrarAcesso(user, data).catch(() => {});
                 await _carregarDadosFirebase();
             } catch(e) {
                 console.error('Auth check error:', e);

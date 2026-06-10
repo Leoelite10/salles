@@ -44,5 +44,13 @@ service cloud.firestore {
       allow read: if isApproved();
       allow write: if isAdmin();
     }
+
+    // Logs de acesso: usuário aprovado cria o próprio registro; somente admin lê
+    match /logs_acesso/{id} {
+      allow create: if isApproved()
+                    && request.resource.data.uid == request.auth.uid;
+      allow read, list: if isAdmin();
+      allow update, delete: if false;
+    }
   }
 }
