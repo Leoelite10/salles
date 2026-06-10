@@ -1497,6 +1497,16 @@
                         </div>
                     </div>
 
+                    <!-- ===== COMPARATIVO DE PERÍODO FILTRADO ===== -->
+                    <div id="crescComparativoPeriodoSection" class="hidden">
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                            Comparativo do Período Filtrado
+                            <span class="text-[10px] font-medium text-slate-400 normal-case tracking-normal" id="crescComparativoPeriodoLabel">—</span>
+                        </h4>
+                        <div id="crescComparativoPeriodoCards"><!-- JS Inject --></div>
+                    </div>
+
                     <!-- ===== RITMO DIA A DIA ===== -->
                     <div>
                         <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -7023,21 +7033,30 @@
             // --- Canais (apenas para gráfico mensal por canal) ---
             const canais = ['PAP', 'MCV', 'LOJAS'];
 
-            // === RENDERIZAÇÕES ===
-            const mtd = _calcMTDComparativo(base);
-            _crescRenderKpis(mtd);
-            _crescRenderProjecao(mtd);
-            _crescRenderTendencia(mtd);
-            _crescRenderRitmoDiaDia(base);
-            _crescRenderGraficoMensal(serieMensal);
-            _crescRenderTabelaMensal(serieMensal);
-            _crescRenderCanais(mtd);
-            _crescRenderGraficoCanal(serieMensal, canais, base);
-            _crescRenderGraficoCanalPizza(mtd);
-            _crescRenderVendedores(mtd ? mtd.vendedoresMTDPorEvol : [], 'TODOS');
-            _crescRenderCidades(mtd);
-            _crescRenderGraficoCidade(mtd ? mtd.cidadesMTD.map(c => ({ ...c, brutas: c.atual })) : []);
-            if (mtd) { const idxC = _calcHerfindahl(['PAP','MCV','LOJAS'].map(c => mtd.canalMTD[c].atual)); const top3 = [...mtd.cidadesMTD].sort((a,b) => b.atual - a.atual).slice(0,3).reduce((s,c) => s + c.atual, 0); const idxCid = mtd.brutasAtual > 0 ? (top3 / mtd.brutasAtual) * 100 : 0; _crescRenderDependencia(idxC, idxCid, Object.fromEntries(['PAP','MCV','LOJAS'].map(c => [c, { brutas: mtd.canalMTD[c].atual }])), mtd.brutasAtual, mtd.cidadesMTD.map(c => ({ ...c, brutas: c.atual }))); }
+            // === RENDERIZAÇÕES (cada chamada isolada para não bloquear as demais) ===
+            let mtd = null;
+            try { mtd = _calcMTDComparativo(base); } catch(e) { console.error('[Crescimento] _calcMTDComparativo:', e); }
+            try { _crescRenderKpis(mtd); } catch(e) { console.error('[Crescimento] _crescRenderKpis:', e); }
+            try { _crescRenderProjecao(mtd); } catch(e) { console.error('[Crescimento] _crescRenderProjecao:', e); }
+            try { _crescRenderTendencia(mtd); } catch(e) { console.error('[Crescimento] _crescRenderTendencia:', e); }
+            try { _crescRenderComparativoPeriodo(base); } catch(e) { console.error('[Crescimento] _crescRenderComparativoPeriodo:', e); }
+            try { _crescRenderRitmoDiaDia(base); } catch(e) { console.error('[Crescimento] _crescRenderRitmoDiaDia:', e); }
+            try { _crescRenderGraficoMensal(serieMensal); } catch(e) { console.error('[Crescimento] _crescRenderGraficoMensal:', e); }
+            try { _crescRenderTabelaMensal(serieMensal); } catch(e) { console.error('[Crescimento] _crescRenderTabelaMensal:', e); }
+            try { _crescRenderCanais(mtd); } catch(e) { console.error('[Crescimento] _crescRenderCanais:', e); }
+            try { _crescRenderGraficoCanal(serieMensal, canais, base); } catch(e) { console.error('[Crescimento] _crescRenderGraficoCanal:', e); }
+            try { _crescRenderGraficoCanalPizza(mtd); } catch(e) { console.error('[Crescimento] _crescRenderGraficoCanalPizza:', e); }
+            try { _crescRenderVendedores(mtd ? mtd.vendedoresMTDPorEvol : [], 'TODOS'); } catch(e) { console.error('[Crescimento] _crescRenderVendedores:', e); }
+            try { _crescRenderCidades(mtd); } catch(e) { console.error('[Crescimento] _crescRenderCidades:', e); }
+            try { _crescRenderGraficoCidade(mtd ? mtd.cidadesMTD.map(c => ({ ...c, brutas: c.atual })) : []); } catch(e) { console.error('[Crescimento] _crescRenderGraficoCidade:', e); }
+            try {
+                if (mtd) {
+                    const idxC = _calcHerfindahl(['PAP','MCV','LOJAS'].map(c => mtd.canalMTD[c].atual));
+                    const top3 = [...mtd.cidadesMTD].sort((a,b) => b.atual - a.atual).slice(0,3).reduce((s,c) => s + c.atual, 0);
+                    const idxCid = mtd.brutasAtual > 0 ? (top3 / mtd.brutasAtual) * 100 : 0;
+                    _crescRenderDependencia(idxC, idxCid, Object.fromEntries(['PAP','MCV','LOJAS'].map(c => [c, { brutas: mtd.canalMTD[c].atual }])), mtd.brutasAtual, mtd.cidadesMTD.map(c => ({ ...c, brutas: c.atual })));
+                }
+            } catch(e) { console.error('[Crescimento] _crescRenderDependencia:', e); }
 
             // Wiring dos botões de canal para vendedores
             document.querySelectorAll('.cresc-canal-btn').forEach(btn => {
@@ -7372,6 +7391,134 @@
                 tendBadge.className = `px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-wider ${badgeCfg[mtd.tendenciaGeral] || badgeCfg.igual}`;
                 tendBadge.textContent = `${c.icon} ${c.label}`;
             }
+        }
+
+        // =====================================================================
+        // COMPARATIVO DE PERÍODO FILTRADO
+        // =====================================================================
+
+        function _crescRenderComparativoPeriodo(base) {
+            const section = document.getElementById('crescComparativoPeriodoSection');
+            const el      = document.getElementById('crescComparativoPeriodoCards');
+            const lblEl   = document.getElementById('crescComparativoPeriodoLabel');
+            if (!section || !el) return;
+
+            const ini = filterDataInicio && filterDataInicio.value ? filterDataInicio.value : null;
+            const fim = filterDataFim    && filterDataFim.value    ? filterDataFim.value    : null;
+
+            // Só exibe se houver filtro de período ativo
+            if (!ini && !fim) { section.classList.add('hidden'); return; }
+            section.classList.remove('hidden');
+
+            // --- Parse das datas ---
+            const dtIni = ini ? new Date(ini + 'T00:00:00') : null;
+            const dtFim = fim ? new Date(fim + 'T23:59:59') : null;
+
+            // Datas efetivas (usa extremos do base se um lado estiver vazio)
+            const isoList = base.map(d => d._dataISO).filter(Boolean).sort();
+            const dtIniEf = dtIni || (isoList.length ? new Date(isoList[0]  + 'T00:00:00') : null);
+            const dtFimEf = dtFim || (isoList.length ? new Date(isoList[isoList.length-1] + 'T23:59:59') : null);
+            if (!dtIniEf || !dtFimEf) { section.classList.add('hidden'); return; }
+
+            // --- Período anterior: mesma amplitude, 1 mês antes ---
+            const desloca = dt => {
+                const d = new Date(dt);
+                const mesAntes = d.getMonth() - 1;
+                if (mesAntes < 0) { d.setFullYear(d.getFullYear() - 1); d.setMonth(11); }
+                else              { d.setMonth(mesAntes); }
+                // Ajusta último dia do mês (ex: 31/03 → 28/02)
+                const ultimoDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+                if (d.getDate() > ultimoDia) d.setDate(ultimoDia);
+                return d;
+            };
+            const dtIniAnt = desloca(dtIniEf);
+            const dtFimAnt = desloca(dtFimEf);
+
+            const isoStr = d => d.toISOString().split('T')[0];
+            const fmtBR  = d => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+            // --- Filtra registros de cada período ---
+            const dentroDoIntervalo = (d, dtA, dtB) => {
+                const iso = d._dataISO; if (!iso) return false;
+                return iso >= isoStr(dtA) && iso <= isoStr(dtB);
+            };
+
+            const listaAtual = base.filter(d => dentroDoIntervalo(d, dtIniEf, dtFimEf));
+            const baseHist   = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
+            const listaAnt   = baseHist.filter(d => dentroDoIntervalo(d, dtIniAnt, dtFimAnt));
+
+            const brutasAt  = listaAtual.length;
+            const ativAt    = listaAtual.filter(d => d._isConcluida).length;
+            const brutasAnt = listaAnt.length;
+            const ativAnt   = listaAnt.filter(d => d._isConcluida).length;
+
+            const varB = brutasAt - brutasAnt;
+            const varA = ativAt   - ativAnt;
+            const pctB = brutasAnt > 0 ? ((varB / brutasAnt) * 100).toFixed(1) : (brutasAt > 0 ? '+100' : '0');
+            const pctA = ativAnt   > 0 ? ((varA / ativAnt)   * 100).toFixed(1) : (ativAt   > 0 ? '+100' : '0');
+
+            const periodoAtStr  = `${fmtBR(dtIniEf)} a ${fmtBR(dtFimEf)}`;
+            const periodoAntStr = `${fmtBR(dtIniAnt)} a ${fmtBR(dtFimAnt)}`;
+            if (lblEl) lblEl.textContent = `${periodoAtStr} vs ${periodoAntStr}`;
+
+            const _varBadge = (varVal, pct) => {
+                const pos = varVal > 0;
+                const neg = varVal < 0;
+                const cl  = pos ? 'bg-green-50 text-green-700 border-green-100' : (neg ? 'bg-red-50 text-red-700 border-red-100' : 'bg-slate-50 text-slate-500 border-slate-200');
+                const ic  = pos ? '▲' : (neg ? '▼' : '=');
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[10px] font-black ${cl}">${ic} ${varVal >= 0 ? '+' : ''}${varVal} (${varVal >= 0 ? '+' : ''}${pct}%)</span>`;
+            };
+
+            el.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Período Atual -->
+                <div class="glass-card p-5 border-l-4 border-l-sky-500">
+                    <span class="text-[10px] font-bold text-sky-500 uppercase tracking-widest block">Período Filtrado</span>
+                    <span class="text-[10px] text-slate-400 font-medium block mt-0.5">${periodoAtStr}</span>
+                    <div class="mt-3 grid grid-cols-2 gap-3">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Brutas</span>
+                            <span class="text-2xl font-black text-slate-800">${brutasAt}</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Ativadas</span>
+                            <span class="text-2xl font-black text-green-600">${ativAt}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Período Anterior -->
+                <div class="glass-card p-5 border-l-4 border-l-slate-300">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Mesmo Período — Mês Anterior</span>
+                    <span class="text-[10px] text-slate-400 font-medium block mt-0.5">${periodoAntStr}</span>
+                    <div class="mt-3 grid grid-cols-2 gap-3">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Brutas</span>
+                            <span class="text-2xl font-black text-slate-600">${brutasAnt}</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Ativadas</span>
+                            <span class="text-2xl font-black text-slate-500">${ativAnt}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variação -->
+                <div class="glass-card p-5 border-l-4 ${varB > 0 ? 'border-l-green-500' : (varB < 0 ? 'border-l-red-500' : 'border-l-slate-300')}">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Variação</span>
+                    <span class="text-[10px] text-slate-400 font-medium block mt-0.5">${periodoAtStr} vs ${periodoAntStr}</span>
+                    <div class="mt-3 space-y-2.5">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Brutas</span>
+                            ${_varBadge(varB, pctB)}
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Ativadas</span>
+                            ${_varBadge(varA, pctA)}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
         }
 
         // =====================================================================
