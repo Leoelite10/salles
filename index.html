@@ -2042,6 +2042,7 @@
         const _auth = firebase.auth();
         let _currentUser  = null;
         let _currentRole  = null;
+        let _currentCanais = null; // null = todos; ['PAP','MCV','LOJAS'] = restrição
 
         function _loginMsg(msg, tipo) {
             const el = document.getElementById('loginMsg');
@@ -2339,7 +2340,19 @@
                 <div class="space-y-2 mb-6">`;
                 aprovados.forEach(u => {
                     const isSelf = _currentUser && u.id === _currentUser.uid;
-                    html += `<div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    const uCanais = Array.isArray(u.canais) ? u.canais.map(c => c.toUpperCase()) : [];
+                    const isAdmin = u.role === 'admin';
+                    const _ck = (c) => {
+                        const checked = uCanais.length === 0 || uCanais.includes(c) ? 'checked' : '';
+                        const disabled = isAdmin ? 'disabled title="Admin sempre vê todos os canais"' : '';
+                        const cor = { PAP: 'blue', MCV: 'violet', LOJAS: 'amber' }[c] || 'slate';
+                        return `<label class="flex items-center gap-1 cursor-pointer select-none ${isAdmin ? 'opacity-40' : ''}">
+                            <input type="checkbox" id="canal_${c}_${u.id}" ${checked} ${disabled}
+                                class="w-3.5 h-3.5 accent-${cor}-600 rounded cursor-pointer">
+                            <span class="text-[10px] font-black text-${cor}-700 uppercase tracking-wider">${c}</span>
+                        </label>`;
+                    };
+                    html += `<div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2.5">
                         <div class="flex items-center justify-between gap-2 flex-wrap">
                             <div class="min-w-0 flex-1">
                                 <p class="font-bold text-slate-800 text-sm truncate">${escapeHTML(u.nome) || '—'}${isSelf ? ' <span class="text-[10px] font-normal text-slate-400">(você)</span>' : ''}</p>
@@ -2350,9 +2363,19 @@
                                     <option value="user" ${u.role === 'user' ? 'selected' : ''}>Usuário</option>
                                     <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
                                 </select>
-                                <button onclick="_salvarRoleUsuario('${u.id}')" class="px-2.5 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors">Salvar</button>
+                                <button onclick="_salvarRoleUsuario('${u.id}')" class="px-2.5 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors">Salvar perfil</button>
                                 ${!isSelf ? `<button onclick="_excluirUsuario('${u.id}')" class="px-2.5 py-1.5 bg-red-50 text-red-600 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors">Excluir</button>` : ''}
                             </div>
+                        </div>
+                        <div class="flex items-center justify-between gap-3 pt-2 border-t border-slate-200">
+                            <div class="flex items-center gap-1 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+                                Canais visíveis:
+                            </div>
+                            <div class="flex items-center gap-3">
+                                ${_ck('PAP')}${_ck('MCV')}${_ck('LOJAS')}
+                            </div>
+                            ${!isAdmin ? `<button onclick="_salvarCanaisUsuario('${u.id}')" class="px-2.5 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition-colors">Salvar canais</button>` : '<span class="text-[10px] text-slate-400 italic">todos (admin)</span>'}
                         </div>
                     </div>`;
                 });
@@ -2544,6 +2567,16 @@
             _abrirPainelAdmin();
         }
 
+        async function _salvarCanaisUsuario(uid) {
+            const canais = ['PAP', 'MCV', 'LOJAS'].filter(c => {
+                const el = document.getElementById(`canal_${c}_${uid}`);
+                return el && el.checked;
+            });
+            // canais vazio = acesso a todos
+            await _fsDB.collection('users').doc(uid).update({ canais });
+            _abrirPainelAdmin();
+        }
+
         async function _excluirUsuario(uid) {
             if (confirm('Excluir permanentemente este usuário? Esta ação não pode ser desfeita.')) {
                 await _fsDB.collection('users').doc(uid).delete();
@@ -2611,6 +2644,10 @@
                 }
                 _currentUser = user;
                 _currentRole = data.role;
+                // Canais permitidos: null = todos (admin sempre vê tudo)
+                _currentCanais = (data.role === 'admin' || !data.canais || data.canais.length === 0)
+                    ? null
+                    : data.canais.map(c => c.toUpperCase());
                 _aplicarRoleUI();
                 _ocultarLoginScreen();
                 // Grava log de acesso (fire-and-forget, não bloqueia carregamento)
@@ -2830,6 +2867,11 @@
                 rawData.push(obj);
 
                 if (!isConcluida && !isVazia) {
+                    continue;
+                }
+
+                // Restrição de canal: filtra dados do usuário se configurado
+                if (_currentCanais && !_currentCanais.includes(obj._setorUpper)) {
                     continue;
                 }
 
