@@ -1,10 +1,19 @@
-const CACHE  = 'sales-intel-v8';
+const CACHE  = 'sales-intel-v9';
+
+// Recursos que NUNCA devem ser cacheados pelo SW:
+// - Firebase (autenticação e dados)
+// - Tailwind Play CDN: sem versão na URL, a cópia cacheada fica obsoleta
+//   e faz os ícones aparecerem enormes pois as classes Tailwind param de funcionar
+// - Google Fonts CSS: referencia arquivos de fonte que precisam ser resolvidos na rede
 const ALWAYS_NETWORK = [
   'firestore.googleapis.com',
   'identitytoolkit.googleapis.com',
   'securetoken.googleapis.com',
   'firebase',
   'gstatic.com/firebasejs',
+  'cdn.tailwindcss.com',
+  'fonts.googleapis.com',
+  'fonts.gstatic.com',
 ];
 
 // Instala: pré-cacheia o shell da aplicação
