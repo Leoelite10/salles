@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isApproved() {
+      return isSignedIn() && getUserData().status == 'approved';
+    }
+
+    function isAdmin() {
+      return isApproved() && getUserData().role == 'admin';
+    }
+
+    // Coleção de usuários
+    match /users/{uid} {
+      // Usuário lê o próprio doc; admin lê qualquer um
+      allow get: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      // Listagem completa: apenas admin (painel de gerenciamento)
+      allow list: if isAdmin();
+      // Novo cadastro: usuário cria o próprio doc, mas sem poder se auto-promover
+      allow create: if isSignedIn()
+                    && request.auth.uid == uid
+                    && request.resource.data.role == 'user'
+                    && request.resource.data.status == 'pending';
+      // Atualização e exclusão: apenas admin
+      allow update, delete: if isAdmin();
+    }
+
+    // Registros de vendas
+    match /registros/{id} {
+      allow read: if isApproved();
+      allow write: if isAdmin();
+    }
+
+    // Metadados (timestamps, metas anuais)
+    match /meta/{id} {
+      allow read: if isApproved();
+      allow write: if isAdmin();
+    }
+  }
+}

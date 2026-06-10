@@ -27,7 +27,7 @@
     <!-- Bibliotecas para Exportação (Excel e PDF) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
     <!-- Leaflet.js: Mapa Interativo OpenStreetMap -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -1682,7 +1682,7 @@
         });
         const _fsDB = firebase.firestore();
         function _sanitizeDocId(id) {
-            return id.replace(/\//g, '-');
+            return (id.replace(/[\/\.#$\[\]]/g, '_') || '_vazio').substring(0, 500);
         }
 
         async function _dbSalvarMeta(key, value) {
@@ -1950,8 +1950,8 @@
                 pendentes.forEach(u => {
                     html += `<div class="flex items-center justify-between gap-3 p-3 bg-orange-50 rounded-xl border border-orange-100 flex-wrap">
                         <div class="flex-1 min-w-0">
-                            <p class="font-bold text-slate-800 text-sm truncate">${u.nome || '—'}</p>
-                            <p class="text-slate-500 text-xs truncate">${u.email}</p>
+                            <p class="font-bold text-slate-800 text-sm truncate">${escapeHTML(u.nome) || '—'}</p>
+                            <p class="text-slate-500 text-xs truncate">${escapeHTML(u.email)}</p>
                         </div>
                         <div class="flex items-center gap-2 flex-shrink-0">
                             <select id="roleSelect_${u.id}"
@@ -1985,8 +1985,8 @@
                     html += `<div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
                         <div class="flex items-center justify-between gap-2 flex-wrap">
                             <div class="min-w-0 flex-1">
-                                <p class="font-bold text-slate-800 text-sm truncate">${u.nome || '—'}${isSelf ? ' <span class="text-[10px] font-normal text-slate-400">(você)</span>' : ''}</p>
-                                <p class="text-slate-500 text-xs truncate">${u.email}</p>
+                                <p class="font-bold text-slate-800 text-sm truncate">${escapeHTML(u.nome) || '—'}${isSelf ? ' <span class="text-[10px] font-normal text-slate-400">(você)</span>' : ''}</p>
+                                <p class="text-slate-500 text-xs truncate">${escapeHTML(u.email)}</p>
                             </div>
                             <div class="flex items-center gap-1.5 flex-shrink-0">
                                 <select id="roleEdit_${u.id}" class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-blue-400 outline-none">
@@ -2009,8 +2009,8 @@
                 <div class="space-y-2">`;
                 rejeitados.forEach(u => {
                     html += `<div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 opacity-60">
-                        <div><p class="font-bold text-slate-700 text-sm">${u.nome || '—'}</p>
-                        <p class="text-slate-500 text-xs">${u.email}</p></div>
+                        <div><p class="font-bold text-slate-700 text-sm">${escapeHTML(u.nome) || '—'}</p>
+                        <p class="text-slate-500 text-xs">${escapeHTML(u.email)}</p></div>
                         <div class="flex items-center gap-1.5">
                             <button onclick="_aprovarUsuario('${u.id}')" class="px-3 py-1.5 bg-green-50 text-green-700 text-xs font-bold rounded-lg hover:bg-green-100 transition-colors">Liberar</button>
                             <button onclick="_excluirUsuario('${u.id}')" class="px-2.5 py-1.5 bg-red-50 text-red-600 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors">Excluir</button>
@@ -2205,28 +2205,8 @@
             try {
                 const snap = await _fsDB.collection('users').doc(user.uid).get();
                 if (!snap.exists) {
-                    // Auto-bootstrap: cria documento admin na primeira vez
-                    if (user.email === 'leonardo.amaral@amointernet.com.br') {
-                        try {
-                            await _fsDB.collection('users').doc(user.uid).set({
-                                nome: 'Leonardo Amaral',
-                                email: user.email,
-                                role: 'admin',
-                                status: 'approved',
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                            _currentUser = user;
-                            _currentRole  = 'admin';
-                            _aplicarRoleUI();
-                            _ocultarLoginScreen();
-                            await _carregarDadosFirebase();
-                            return;
-                        } catch(bErr) {
-                            console.warn('Bootstrap bloqueado pelas regras Firestore:', bErr.message);
-                        }
-                    }
                     await _auth.signOut();
-                    _mostrarLoginScreen('Conta não configurada. Aplique as regras Firestore e tente novamente.');
+                    _mostrarLoginScreen('Conta não cadastrada. Solicite acesso ao administrador.', 'erro');
                     return;
                 }
                 const data = snap.data();
