@@ -1477,6 +1477,71 @@
                         </div>
                     </div>
 
+                    <!-- ===== RITMO DIA A DIA ===== -->
+                    <div>
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Ritmo Dia a Dia — Mês Atual vs Mês Anterior
+                        </h4>
+
+                        <!-- Cards de ritmo -->
+                        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-6" id="crescRitmoCards">
+                            <!-- JS Inject -->
+                        </div>
+
+                        <!-- Gráficos: curva acumulada + barras diárias -->
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+                            <div class="glass-card p-5 flex flex-col gap-3">
+                                <div class="flex items-start justify-between gap-2">
+                                    <h5 class="text-xs font-extrabold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span> Curva Acumulada (dia a dia)
+                                    </h5>
+                                    <span class="text-[10px] text-slate-400 font-bold">Cada linha = 1 mês</span>
+                                </div>
+                                <div style="position:relative;height:280px;">
+                                    <canvas id="chartRitmoCumulativo"></canvas>
+                                </div>
+                            </div>
+                            <div class="glass-card p-5 flex flex-col gap-3">
+                                <h5 class="text-xs font-extrabold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span> Vendas por Dia — Mês Atual vs Anterior
+                                </h5>
+                                <div style="position:relative;height:280px;">
+                                    <canvas id="chartRitmoDiario"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabela dia a dia -->
+                        <div class="glass-card overflow-hidden">
+                            <div class="p-4 border-b border-slate-100 bg-white flex items-center justify-between flex-wrap gap-2">
+                                <h5 class="text-xs font-extrabold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span> Detalhe Dia a Dia
+                                </h5>
+                                <span class="text-[10px] text-slate-400 font-bold" id="crescRitmoLegenda">—</span>
+                            </div>
+                            <div class="overflow-x-auto table-container" style="max-height:360px;">
+                                <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
+                                    <thead class="bg-slate-50 sticky top-0 z-10">
+                                        <tr>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">Dia</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-orange-600 text-center border-b border-slate-200" id="crescRitmoColAtual">Mês Atual</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" id="crescRitmoColAnterior">Mês Anterior</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Variação Dia</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-orange-600 text-center border-b border-slate-200">Acum. Atual</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Acum. Anterior</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Var. Acum. %</th>
+                                            <th class="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Ritmo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="crescRitmoTableBody" class="divide-y divide-slate-100">
+                                        <!-- JS Inject -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ===== FIM RITMO DIA A DIA ===== -->
+
                     <!-- Gráfico mês a mês + Tabela resumo -->
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                         <!-- Gráfico -->
@@ -6852,6 +6917,7 @@
 
             // === RENDERIZAÇÕES ===
             _crescRenderKpis(ultimoMes, penultimoMes, totalBrutas, totalAtivadas, serieMensal, tendencia3m, base);
+            _crescRenderRitmoDiaDia(base);
             _crescRenderGraficoMensal(serieMensal);
             _crescRenderTabelaMensal(serieMensal);
             _crescRenderCanais(canalData, totalBrutas, serieMensal);
@@ -6948,6 +7014,223 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        // =====================================================================
+        // RITMO DIA A DIA
+        // =====================================================================
+
+        function _crescRenderRitmoDiaDia(base) {
+            if (!base || base.length === 0) return;
+
+            // Agrupa vendas brutas por mês e por dia do mês
+            // mapDia[mesKey][dia] = count
+            const mapDia = {};
+            base.forEach(d => {
+                const iso = d._dataISO;
+                if (!iso) return;
+                const [ano, mes, dia] = iso.split('-').map(Number);
+                if (!ano || !mes || !dia) return;
+                const mesKey = `${String(mes).padStart(2,'0')}/${ano}`;
+                if (!mapDia[mesKey]) mapDia[mesKey] = {};
+                mapDia[mesKey][dia] = (mapDia[mesKey][dia] || 0) + 1;
+            });
+
+            const meses = Object.keys(mapDia).sort((a, b) => monthSortValue(a) - monthSortValue(b));
+            if (meses.length === 0) return;
+
+            const mesAtualKey = meses[meses.length - 1];
+            const mesAntKey   = meses.length > 1 ? meses[meses.length - 2] : null;
+
+            const diasAtual = mapDia[mesAtualKey] || {};
+            const diasAnt   = mesAntKey ? (mapDia[mesAntKey] || {}) : {};
+
+            // Dia de corte = último dia com dados no mês atual
+            const diaCorte = Math.max(...Object.keys(diasAtual).map(Number), 0);
+
+            // Total de dias do mês atual
+            const [mAtual, aAtual] = mesAtualKey.split('/').map(Number);
+            const totalDiasMes = new Date(aAtual, mAtual, 0).getDate();
+
+            // Acumulados até o dia de corte
+            let acumAtual = 0, acumAnt = 0;
+            for (let d = 1; d <= diaCorte; d++) {
+                acumAtual += diasAtual[d] || 0;
+                acumAnt   += diasAnt[d]   || 0;
+            }
+
+            // Projeção: ritmo médio até diaCorte × total dias
+            const ritmoMedio = diaCorte > 0 ? acumAtual / diaCorte : 0;
+            const projecao   = Math.round(ritmoMedio * totalDiasMes);
+            const projecaoAnt = mesAntKey
+                ? Object.values(mapDia[mesAntKey]).reduce((s, v) => s + v, 0)
+                : null;
+
+            const varAcum     = acumAtual - acumAnt;
+            const varAcumPct  = acumAnt > 0 ? (varAcum / acumAnt) * 100 : (acumAtual > 0 ? 100 : 0);
+            const varProj     = projecaoAnt !== null ? projecao - projecaoAnt : null;
+            const varProjPct  = projecaoAnt && projecaoAnt > 0 ? ((projecao - projecaoAnt) / projecaoAnt) * 100 : null;
+
+            // --- Cards ---
+            const cardsEl = document.getElementById('crescRitmoCards');
+            if (cardsEl) {
+                const frente = varAcum >= 0;
+                const projFrente = varProj !== null ? varProj >= 0 : null;
+                const cards = [
+                    { label: 'Dia de Corte', valor: `Dia ${diaCorte}`, cor: 'border-l-orange-400', sub: `de ${totalDiasMes} dias`, icon: '📅' },
+                    { label: 'Acum. Mês Atual', valor: acumAtual.toLocaleString('pt-BR'), cor: 'border-l-orange-500', sub: `até dia ${diaCorte}`, icon: '▶' },
+                    { label: 'Acum. Mês Anterior', valor: acumAnt.toLocaleString('pt-BR'), cor: 'border-l-slate-400', sub: mesAntKey ? `${mesAntKey} (mesmo dia)` : '—', icon: '◀' },
+                    { label: 'Variação Acumulada', valor: (varAcum >= 0 ? '+' : '') + varAcum + ` (${varAcumPct.toFixed(1)}%)`, cor: frente ? 'border-l-green-500' : 'border-l-red-500', sub: frente ? 'Mês atual à frente' : 'Mês atual atrás', icon: frente ? '▲' : '▼' },
+                    { label: 'Projeção Fechamento', valor: projecao.toLocaleString('pt-BR'), cor: 'border-l-indigo-500', sub: `${ritmoMedio.toFixed(1)} vend./dia`, icon: '🎯' },
+                    { label: 'Proj. vs Mês Anterior', valor: varProj !== null ? (varProj >= 0 ? '+' : '') + varProj.toLocaleString('pt-BR') : '—', cor: projFrente === null ? 'border-l-slate-300' : (projFrente ? 'border-l-green-500' : 'border-l-red-500'), sub: varProjPct !== null ? `${varProjPct.toFixed(1)}% vs fechamento ant.` : 'Sem mês anterior', icon: projFrente ? '▲' : '▼' }
+                ];
+                cardsEl.innerHTML = cards.map(c => `
+                    <div class="glass-card p-4 border-l-4 ${c.cor}">
+                        <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest block leading-tight">${c.label}</span>
+                        <span class="block text-lg font-black text-slate-800 mt-2 leading-tight">${c.valor}</span>
+                        <span class="text-[10px] text-slate-400 font-medium mt-1 block">${c.sub}</span>
+                    </div>
+                `).join('');
+            }
+
+            // --- Legenda e cabeçalhos da tabela ---
+            const legEl = document.getElementById('crescRitmoLegenda');
+            const colAt = document.getElementById('crescRitmoColAtual');
+            const colAn = document.getElementById('crescRitmoColAnterior');
+            if (legEl) legEl.textContent = `${mesAtualKey}${mesAntKey ? ' vs ' + mesAntKey : ''} • Dia de corte: ${diaCorte}`;
+            if (colAt) colAt.textContent = mesAtualKey;
+            if (colAn) colAn.textContent = mesAntKey || 'Mês Anterior';
+
+            // --- Gráfico 1: Curva Acumulada (linhas, dia a dia) ---
+            const mesesParaGrafico = meses.slice(-4); // últimos 4 meses
+            const coresLinhas = ['#94a3b8', '#60a5fa', '#f59e0b', '#f97316'];
+            const datasetsAcum = mesesParaGrafico.map((mes, i) => {
+                const diasMes = mapDia[mes] || {};
+                const [m, a] = mes.split('/').map(Number);
+                const totalDias = new Date(a, m, 0).getDate();
+                const isAtual = mes === mesAtualKey;
+                const acum = [];
+                let soma = 0;
+                for (let d = 1; d <= totalDias; d++) {
+                    soma += diasMes[d] || 0;
+                    acum.push(soma);
+                }
+                const cor = coresLinhas[i] || '#64748b';
+                return {
+                    label: mes,
+                    data: acum.map((v, idx) => ({ x: idx + 1, y: v })),
+                    borderColor: isAtual ? '#f97316' : cor,
+                    backgroundColor: 'transparent',
+                    borderWidth: isAtual ? 3 : 1.5,
+                    borderDash: isAtual ? [] : [4, 3],
+                    pointRadius: isAtual ? 3 : 1,
+                    pointBackgroundColor: isAtual ? '#f97316' : cor,
+                    tension: 0.3,
+                    order: isAtual ? 0 : 1
+                };
+            });
+
+            criarOuAtualizarChart('chartRitmoCumulativo', {
+                type: 'line',
+                data: { datasets: datasetsAcum },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' }, padding: 10 } },
+                        tooltip: { mode: 'index', intersect: false, callbacks: {
+                            title: ctx => `Dia ${ctx[0].parsed.x}`,
+                            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} acumulado`
+                        }}
+                    },
+                    scales: {
+                        x: { type: 'linear', title: { display: true, text: 'Dia do Mês', font: { size: 10 } }, ticks: { font: { size: 10 }, stepSize: 1 }, grid: { color: '#f1f5f9' } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Vendas Acumuladas', font: { size: 10 } }, ticks: { font: { size: 10 } }, grid: { color: '#f1f5f9' } }
+                    }
+                }
+            });
+
+            // --- Gráfico 2: Barras diárias (mês atual vs anterior) ---
+            const maxDia = Math.max(
+                ...Object.keys(diasAtual).map(Number),
+                ...(mesAntKey ? Object.keys(diasAnt).map(Number) : [0])
+            );
+            const labelsBarras = Array.from({ length: maxDia }, (_, i) => i + 1);
+
+            criarOuAtualizarChart('chartRitmoDiario', {
+                type: 'bar',
+                data: {
+                    labels: labelsBarras,
+                    datasets: [
+                        {
+                            label: mesAtualKey,
+                            data: labelsBarras.map(d => diasAtual[d] || 0),
+                            backgroundColor: labelsBarras.map(d => {
+                                const ant = diasAnt[d] || 0;
+                                const at  = diasAtual[d] || 0;
+                                return at > ant ? 'rgba(34,197,94,0.75)' : (at < ant ? 'rgba(239,68,68,0.75)' : 'rgba(148,163,184,0.6)');
+                            }),
+                            borderRadius: 3
+                        },
+                        ...(mesAntKey ? [{
+                            label: mesAntKey,
+                            data: labelsBarras.map(d => diasAnt[d] || 0),
+                            backgroundColor: 'rgba(148,163,184,0.35)',
+                            borderColor: 'rgba(148,163,184,0.7)',
+                            borderWidth: 1,
+                            borderRadius: 3,
+                            type: 'bar'
+                        }] : [])
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' }, padding: 10 } },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 9 } }, title: { display: true, text: 'Dia do Mês', font: { size: 10 } } },
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+
+            // --- Tabela dia a dia ---
+            const tbody = document.getElementById('crescRitmoTableBody');
+            if (!tbody) return;
+
+            let acumA = 0, acumB = 0;
+            const rows = [];
+            for (let dia = 1; dia <= Math.max(diaCorte, maxDia); dia++) {
+                const vAtual = diasAtual[dia] || 0;
+                const vAnt   = diasAnt[dia]   || 0;
+                acumA += vAtual;
+                acumB += vAnt;
+                const varDia  = vAtual - vAnt;
+                const varAcPct = acumB > 0 ? ((acumA - acumB) / acumB) * 100 : (acumA > 0 ? 100 : 0);
+                const ritmo = varDia > 0 ? 'Frente' : (varDia < 0 ? 'Atrás' : 'Igual');
+                const sc = ritmo === 'Frente' ? 'bg-green-50 text-green-700 border-green-100' : (ritmo === 'Atrás' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-slate-50 text-slate-500 border-slate-100');
+                const isCorte = dia === diaCorte;
+                rows.push({ dia, vAtual, vAnt, varDia, acumA, acumB, varAcPct, ritmo, sc, isCorte });
+            }
+
+            tbody.innerHTML = rows.map(r => {
+                const vcor = r.varDia > 0 ? 'text-green-600 font-black' : (r.varDia < 0 ? 'text-red-600 font-black' : 'text-slate-400');
+                const acorte = r.isCorte ? 'font-black bg-orange-50/60' : 'hover:bg-slate-50/60';
+                return `<tr class="${acorte} transition-colors">
+                    <td class="py-2 px-4 text-slate-700 font-black text-xs">
+                        ${String(r.dia).padStart(2,'0')}
+                        ${r.isCorte ? '<span class="ml-1 text-[9px] bg-orange-100 text-orange-700 font-black px-1.5 py-0.5 rounded border border-orange-200">HOJE</span>' : ''}
+                    </td>
+                    <td class="py-2 px-4 text-orange-600 text-center font-bold">${r.vAtual || '—'}</td>
+                    <td class="py-2 px-4 text-slate-500 text-center font-bold">${r.vAnt || '—'}</td>
+                    <td class="py-2 px-4 text-center ${vcor}">${_varIcon(r.varDia)} ${r.varDia > 0 ? '+' : ''}${r.varDia || 0}</td>
+                    <td class="py-2 px-4 text-orange-700 text-center font-black">${r.acumA}</td>
+                    <td class="py-2 px-4 text-slate-500 text-center font-bold">${r.acumB}</td>
+                    <td class="py-2 px-4 text-center font-bold ${r.varAcPct >= 0 ? 'text-green-600' : 'text-red-600'}">${r.varAcPct >= 0 ? '+' : ''}${r.varAcPct.toFixed(1)}%</td>
+                    <td class="py-2 px-4 text-center"><span class="px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wider ${r.sc}">${r.ritmo}</span></td>
+                </tr>`;
+            }).join('') || '<tr><td colspan="8" class="py-4 text-center text-xs text-slate-400">Sem dados diários disponíveis.</td></tr>';
         }
 
         function _crescRenderGraficoMensal(serie) {
