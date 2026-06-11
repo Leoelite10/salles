@@ -2913,6 +2913,11 @@
                 let uniqueValues = [...seen];
                 if (c.col === '_mes') {
                     uniqueValues.sort((a, b) => monthSortValue(a) - monthSortValue(b));
+                } else if (c.col === 'Setor') {
+                    const CANAIS_RELEVANTES = ['PAP', 'MCV', 'LOJAS'];
+                    uniqueValues = uniqueValues
+                        .filter(v => CANAIS_RELEVANTES.includes(v.trim().toUpperCase()))
+                        .sort((a, b) => CANAIS_RELEVANTES.indexOf(a.toUpperCase()) - CANAIS_RELEVANTES.indexOf(b.toUpperCase()));
                 } else {
                     uniqueValues.sort();
                 }
