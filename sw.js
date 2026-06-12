@@ -1,4 +1,4 @@
-const CACHE  = 'sales-intel-v9';
+const CACHE  = 'sales-intel-v10';
 
 // Recursos que NUNCA devem ser cacheados pelo SW:
 // - Firebase (autenticação e dados)
@@ -14,6 +14,9 @@ const ALWAYS_NETWORK = [
   'cdn.tailwindcss.com',
   'fonts.googleapis.com',
   'fonts.gstatic.com',
+  'cdnjs.cloudflare.com',   // xlsx e html2pdf
+  'cdn.jsdelivr.net',        // chart.js
+  'unpkg.com',               // leaflet
 ];
 
 // Instala: pré-cacheia o shell da aplicação
