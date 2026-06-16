@@ -1411,6 +1411,40 @@
                     </div>
                 </div>
 
+                <!-- ===== CARD (ABA FUNIL): MELHORES DIAS DE VENDA ===== -->
+                <div id="secaoMelhoresDias" class="space-y-8 dashboard-section-hidden">
+
+                    <!-- Cabeçalho do card -->
+                    <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-sky-500"></span> Melhores Dias de Venda — Por Dia da Semana
+                            </h3>
+                            <p class="text-xs text-slate-400 font-medium mt-1">Identifica os dias da semana que mais vendem (vendas brutas) em cada canal: MCV, LOJAS e PAP. Respeita os filtros e o período selecionados.</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span id="melhoresDiasBadge" class="px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-wider bg-slate-50 text-slate-500 border-slate-200">Melhor dia geral: —</span>
+                        </div>
+                    </div>
+
+                    <!-- Cards por canal -->
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6" id="melhoresDiasCards">
+                        <!-- JS Inject -->
+                    </div>
+
+                    <!-- Gráfico comparativo -->
+                    <div class="glass-card p-5 flex flex-col gap-4">
+                        <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span> Comparativo de Vendas por Dia da Semana — MCV · LOJAS · PAP
+                        </h4>
+                        <div class="chart-box" style="position:relative;height:340px;">
+                            <canvas id="chartMelhoresDias"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- ===== FIM CARD: MELHORES DIAS DE VENDA ===== -->
+
                 <div id="secaoQualidadeDados" class="space-y-6 dashboard-section-hidden">
                     <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-red-500"></span> Qualidade dos Dados
@@ -1817,6 +1851,7 @@
             { tabs: ['cruzamentos'] },
             { tabs: ['planos'] },
             { tabs: ['bairros'] },
+            { tabs: ['funil'] },
             { tabs: ['funil', 'qualidade'] },
             { tabs: ['crescimento'] }
         ];
@@ -4184,6 +4219,7 @@
             renderDataQuality();
             renderMapaCalorBairros();
             renderCrescimentoVendas(filteredData);
+            renderMelhoresDias(filteredData);
         }
 
         function renderCidadeSummary() {
@@ -5050,6 +5086,120 @@
 
             if (analyticCharts[chartId]) analyticCharts[chartId].destroy();
             analyticCharts[chartId] = new Chart(canvas, config);
+        }
+
+        // ===========================================================
+        // ABA: MELHORES DIAS DE VENDA (por dia da semana e canal)
+        // ===========================================================
+        const MELHORES_DIAS_CANAIS = [
+            { key: 'MCV',   label: 'MCV',   cor: '#7c3aed', corSuave: 'rgba(124,58,237,0.10)' },
+            { key: 'LOJAS', label: 'LOJAS', cor: '#d97706', corSuave: 'rgba(217,119,6,0.10)' },
+            { key: 'PAP',   label: 'PAP',   cor: '#2563eb', corSuave: 'rgba(37,99,235,0.10)' }
+        ];
+        // getDay(): 0=Dom..6=Sáb. Exibição na ordem Seg..Dom.
+        const MELHORES_DIAS_SEMANA = [
+            { idx: 1, nome: 'Segunda', curto: 'Seg' },
+            { idx: 2, nome: 'Terça',   curto: 'Ter' },
+            { idx: 3, nome: 'Quarta',  curto: 'Qua' },
+            { idx: 4, nome: 'Quinta',  curto: 'Qui' },
+            { idx: 5, nome: 'Sexta',   curto: 'Sex' },
+            { idx: 6, nome: 'Sábado',  curto: 'Sáb' },
+            { idx: 0, nome: 'Domingo', curto: 'Dom' }
+        ];
+
+        function renderMelhoresDias(dataSet) {
+            const cont = document.getElementById('melhoresDiasCards');
+            if (!cont) return;
+
+            // contagem[canal][getDay 0..6] = qtd de vendas brutas
+            const contagem = {};
+            MELHORES_DIAS_CANAIS.forEach(c => { contagem[c.key] = [0, 0, 0, 0, 0, 0, 0]; });
+
+            (dataSet || []).forEach(d => {
+                const canal = d._setorUpper;
+                if (!contagem[canal]) return;
+                const iso = d._dataISO;
+                if (!iso) return;
+                const p = iso.split('-');
+                if (p.length !== 3) return;
+                // Constrói data local (evita deslocamento de fuso ao usar getDay)
+                const wd = new Date(+p[0], +p[1] - 1, +p[2]).getDay();
+                contagem[canal][wd]++;
+            });
+
+            // Melhor dia geral (somando todos os canais) para o badge
+            const totaisDia = MELHORES_DIAS_SEMANA.map(s => ({
+                nome: s.nome,
+                qtd: MELHORES_DIAS_CANAIS.reduce((acc, c) => acc + contagem[c.key][s.idx], 0)
+            }));
+            const totalGeral = totaisDia.reduce((a, b) => a + b.qtd, 0);
+            const melhorGeral = totaisDia.reduce((a, b) => (b.qtd > a.qtd ? b : a), totaisDia[0]);
+            const badge = document.getElementById('melhoresDiasBadge');
+            if (badge) {
+                badge.textContent = totalGeral ? `Melhor dia geral: ${melhorGeral.nome}` : 'Melhor dia geral: —';
+                badge.className = totalGeral
+                    ? 'px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-wider bg-sky-50 text-sky-700 border-sky-200'
+                    : 'px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-wider bg-slate-50 text-slate-500 border-slate-200';
+            }
+
+            // Cards por canal
+            cont.innerHTML = MELHORES_DIAS_CANAIS.map(c => {
+                const counts = contagem[c.key];
+                const total = counts.reduce((a, b) => a + b, 0);
+                const dias = MELHORES_DIAS_SEMANA.map(s => ({ ...s, qtd: counts[s.idx] }));
+                const max = Math.max(1, ...dias.map(x => x.qtd));
+                const melhorQtd = Math.max(...dias.map(x => x.qtd));
+                const melhor = dias.find(x => x.qtd === melhorQtd) || dias[0];
+
+                const linhas = dias.map(s => {
+                    const pct = Math.round((s.qtd / max) * 100);
+                    const destaque = total > 0 && s.qtd === melhorQtd;
+                    return `
+                      <div class="flex items-center gap-2">
+                        <span class="w-9 text-[11px] font-bold ${destaque ? 'text-slate-800' : 'text-slate-400'}">${s.curto}</span>
+                        <div class="flex-1 h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                          <div class="h-full rounded-full transition-all duration-700" style="width:${pct}%;background:${c.cor};opacity:${destaque ? 1 : 0.45}"></div>
+                        </div>
+                        <span class="w-8 text-right text-[11px] font-black ${destaque ? 'text-slate-800' : 'text-slate-500'}">${s.qtd}</span>
+                      </div>`;
+                }).join('');
+
+                return `
+                  <div class="glass-card p-5 flex flex-col gap-4">
+                    <div class="flex items-center justify-between">
+                      <h4 class="text-xs font-extrabold uppercase tracking-widest flex items-center gap-2" style="color:${c.cor}">
+                        <span class="w-2 h-2 rounded-full" style="background:${c.cor}"></span> ${c.label}
+                      </h4>
+                      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${total} brutas</span>
+                    </div>
+                    <div class="rounded-xl p-4" style="background:${c.corSuave}">
+                      <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500">Melhor dia</span>
+                      <span class="block text-2xl font-black mt-0.5" style="color:${c.cor}">${total ? melhor.nome : '—'}</span>
+                      <span class="text-[11px] font-bold text-slate-500">${total ? melhor.qtd + ' vendas brutas' : 'Sem dados no período'}</span>
+                    </div>
+                    <div class="flex flex-col gap-2">${linhas}</div>
+                  </div>`;
+            }).join('');
+
+            // Gráfico comparativo agrupado
+            criarOuAtualizarChart('chartMelhoresDias', {
+                type: 'bar',
+                data: {
+                    labels: MELHORES_DIAS_SEMANA.map(s => s.curto),
+                    datasets: MELHORES_DIAS_CANAIS.map(c => ({
+                        label: c.label,
+                        data: MELHORES_DIAS_SEMANA.map(s => contagem[c.key][s.idx]),
+                        backgroundColor: c.cor,
+                        borderRadius: 6
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
         }
 
         function renderCruzamentosAnaliticos(dataSet) {
