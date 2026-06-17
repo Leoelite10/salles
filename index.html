@@ -677,6 +677,17 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Tempo Médio de Instalação por Canal (da venda até a ativação 340) -->
+                    <div class="mt-6">
+                        <h4 class="text-xs font-extrabold text-slate-700 mb-3 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span> Tempo Médio de Instalação por Canal
+                            <span class="text-[10px] font-medium text-slate-400 normal-case tracking-normal">(da venda até a ativação 340)</span>
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="tempoInstalacaoCards">
+                            <!-- JS Inject -->
+                        </div>
+                    </div>
                 </div>
 
                 <!-- BLOCO 2: Retenção e Forecast -->
@@ -4220,6 +4231,7 @@
             renderMapaCalorBairros();
             renderCrescimentoVendas(filteredData);
             renderMelhoresDias(filteredData);
+            renderTempoInstalacao(filteredData);
         }
 
         function renderCidadeSummary() {
@@ -5200,6 +5212,52 @@
                     scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
                 }
             });
+        }
+
+        // ===========================================================
+        // CARD (ABA EXECUTIVO): TEMPO MÉDIO DE INSTALAÇÃO POR CANAL
+        // Tempo = Data ativação − Data Abertura O.S (em dias),
+        // somente vendas concluídas (340), segmentado por canal.
+        // ===========================================================
+        function renderTempoInstalacao(dataSet) {
+            const cont = document.getElementById('tempoInstalacaoCards');
+            if (!cont) return;
+
+            const acc = {};
+            MELHORES_DIAS_CANAIS.forEach(c => { acc[c.key] = { soma: 0, qtd: 0 }; });
+
+            (dataSet || []).forEach(d => {
+                const canal = d._setorUpper;
+                if (!acc[canal]) return;
+                if (!d._isConcluida) return;                 // só instaladas (340)
+                if (!d._dataAberturaISO || !d._dataISO) return;
+                const ini = dateFromISO(d._dataAberturaISO);
+                const fim = dateFromISO(d._dataISO);
+                if (!ini || !fim) return;
+                const diff = Math.round((fim - ini) / 86400000);
+                if (diff < 0) return;                        // data inconsistente
+                acc[canal].soma += diff;
+                acc[canal].qtd++;
+            });
+
+            cont.innerHTML = MELHORES_DIAS_CANAIS.map(c => {
+                const a = acc[c.key];
+                const media = a.qtd > 0 ? (a.soma / a.qtd) : null;
+                const mediaTxt = media === null ? '—' : media.toFixed(1).replace('.', ',');
+                return `
+                  <div class="glass-card p-5 flex flex-col gap-3 border-l-4" style="border-left-color:${c.cor}">
+                    <div class="flex items-center justify-between">
+                      <h4 class="text-xs font-extrabold uppercase tracking-widest flex items-center gap-2" style="color:${c.cor}">
+                        <span class="w-2 h-2 rounded-full" style="background:${c.cor}"></span> ${c.label}
+                      </h4>
+                      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${a.qtd} instaladas</span>
+                    </div>
+                    <div>
+                      <span class="block text-3xl font-black" style="color:${c.cor}">${mediaTxt}<span class="text-base font-bold text-slate-400 ml-1">dias</span></span>
+                      <span class="text-[11px] font-bold text-slate-500">${a.qtd > 0 ? 'Tempo médio da venda até a instalação' : 'Sem instalações no período'}</span>
+                    </div>
+                  </div>`;
+            }).join('');
         }
 
         function renderCruzamentosAnaliticos(dataSet) {
