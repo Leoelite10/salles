@@ -4276,7 +4276,7 @@
             renderCrescimentoVendas(filteredData);
             renderMelhoresDias(filteredData);
             renderTempoInstalacao(filteredData);
-            renderForecastInteligente();
+            renderForecastInteligente(filteredData);
         }
 
         function renderCidadeSummary() {
@@ -7269,7 +7269,7 @@
             }));
             return achou ? total : null;
         }
-        function renderForecastInteligente() {
+        function renderForecastInteligente(dataSet) {
             const base = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
             const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
             const elMes = document.getElementById('fcMesRef');
@@ -7287,7 +7287,7 @@
                 mesRef = meses.sort((a, b) => monthSortValue(a) - monthSortValue(b)).pop() || null;
             }
 
-            if (!mesRef || base.length === 0) {
+            if (!mesRef || dataSet.length === 0) {
                 ['fcTotal', 'fcBrutas', 'fcAtivadas', 'fcRunRate', 'fcGap', 'fcNecessidade', 'fcEvolucao'].forEach(id => setTxt(id, '—'));
                 ['fcTotalDet', 'fcBrutasDet', 'fcAtivadasDet', 'fcGapDet', 'fcNecessidadeDet', 'fcEvolucaoDet'].forEach(id => setTxt(id, ''));
                 if (elMes) elMes.textContent = 'Sem dados para projetar';
@@ -7315,8 +7315,18 @@
             }
             diaCorte = Math.min(diaCorte, ultimoDia);
 
-            // Contagens
-            const brutasAtuais = _fcContarPorAbertura(base, mesRef, diaCorte);
+            // Brutas reais = TODOS os registros do filtro (igual ao KPI "Vol. Vendas Brutas").
+            // Com mês/período filtrado, dataSet já está restrito; sem filtro, restringe ao mês de referência.
+            const temFiltroPeriodo = (activeFilters._mes || []).length >= 1 || filterDataInicio.value || filterDataFim.value;
+            const brutasAtuais = temFiltroPeriodo
+                ? dataSet.length
+                : dataSet.filter(d => {
+                    const iso = d._dataISO || d._dataAberturaISO;
+                    if (!iso) return false;
+                    const p = iso.split('-'); return `${p[1]}/${p[0]}` === mesRef;
+                }).length;
+            // Contagem pelo mesmo método dos meses anteriores, p/ a comparação de evolução ser consistente
+            const accumAtual = _fcContarPorAbertura(base, mesRef, diaCorte);
             const ativadasHist = base.filter(d => d._isConcluida).length;
             const taxaAtiv = base.length > 0 ? ativadasHist / base.length : 0;
 
@@ -7356,7 +7366,7 @@
             // Evolução vs mês anterior (mesmo dia de corte)
             const mesAnt1 = previousMonthKey(mesRef);
             const accumAnt = mesAnt1 ? _fcContarPorAbertura(base, mesAnt1, diaCorte) : 0;
-            const evol = accumAnt > 0 ? ((brutasAtuais - accumAnt) / accumAnt * 100) : null;
+            const evol = accumAnt > 0 ? ((accumAtual - accumAnt) / accumAnt * 100) : null;
 
             // Meta / Gap / Necessidade
             const metaTotal = _fcMetaTotal();
@@ -7386,7 +7396,7 @@
             }
             if (evol !== null) {
                 setTxt('fcEvolucao', (evol >= 0 ? '+' : '') + evol.toFixed(1) + '%');
-                setTxt('fcEvolucaoDet', `${accumAnt} → ${brutasAtuais} (mesmo dia ${diaCorte})`);
+                setTxt('fcEvolucaoDet', `${accumAnt} → ${accumAtual} (mesmo dia ${diaCorte})`);
             } else {
                 setTxt('fcEvolucao', '—'); setTxt('fcEvolucaoDet', 'Sem mês anterior comparável');
             }
