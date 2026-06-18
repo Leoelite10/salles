@@ -625,15 +625,6 @@
                             <span class="text-xs text-slate-400 font-medium relative z-10">Total geral (Vazio + 340)</span>
                             <svg class="absolute -bottom-4 -right-4 w-20 h-20 text-blue-50 opacity-50" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
                         </div>
-                        <div class="glass-card p-5 border-l-4 border-l-sky-500 relative overflow-hidden">
-                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Projeção Vendas Brutas</span>
-                            <div class="flex items-baseline gap-2 mt-2">
-                                <span class="text-3xl font-black text-sky-600" id="kpiProjBrutasTotal">0</span>
-                                <span class="text-xs font-bold text-slate-400" id="kpiProjBrutasMedia">0/dia</span>
-                            </div>
-                            <span class="text-xs text-slate-400 font-medium mt-1 block">Diferença projetada: <b id="kpiProjBrutasDelta" class="text-sky-700">0</b></span>
-                            <svg class="absolute -bottom-4 -right-4 w-20 h-20 text-sky-50 opacity-70" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 3a1 1 0 000 2h10.586L9.293 9.293a1 1 0 101.414 1.414L15 6.414V17a1 1 0 102 0V4a1 1 0 00-1-1H3z" clip-rule="evenodd"></path></svg>
-                        </div>
                         <div class="glass-card p-5 border-l-4 border-l-green-500">
                             <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Vol. Vendas Concluídas</span>
                             <span class="block text-3xl font-black text-green-600 mt-2" id="kpiConcluidas">0</span>
@@ -674,6 +665,54 @@
                             <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                                 <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight">Receita Após 1 Ano</span>
                                 <span class="text-base font-black text-indigo-500" id="kpiReceitaAno">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== FORECAST INTELIGENTE ===== -->
+                    <div class="mt-8">
+                        <h3 class="text-sm font-extrabold text-slate-800 mb-1 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Forecast Inteligente
+                        </h3>
+                        <p class="text-[11px] text-slate-400 font-medium mb-4" id="fcMesRef">—</p>
+                        <div class="glass-card p-5 mb-5 border-l-4 border-l-indigo-600 bg-gradient-to-r from-indigo-50/70 to-transparent flex items-center justify-between gap-4 flex-wrap">
+                            <div>
+                                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Projeção Total de Vendas Brutas (ritmo do mês)</span>
+                                <span class="block text-4xl font-black text-indigo-700 mt-1" id="fcTotal">—</span>
+                                <span class="text-[11px] text-slate-400 font-medium mt-1 block" id="fcTotalDet"></span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-medium max-w-[260px] leading-snug">No ritmo atual de brutas por dia útil (Seg-Sáb), projeção do total do dia 1 ao fim do mês.</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                            <div class="glass-card p-5 border-l-4 border-l-blue-600">
+                                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Forecast de Brutas</span>
+                                <span class="block text-3xl font-black text-blue-600 mt-2" id="fcBrutas">—</span>
+                                <span class="text-[11px] text-slate-400 font-medium mt-1 block" id="fcBrutasDet"></span>
+                            </div>
+                            <div class="glass-card p-5 border-l-4 border-l-emerald-600">
+                                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Forecast de Ativadas</span>
+                                <span class="block text-3xl font-black text-emerald-600 mt-2" id="fcAtivadas">—</span>
+                                <span class="text-[11px] text-slate-400 font-medium mt-1 block" id="fcAtivadasDet"></span>
+                            </div>
+                            <div class="glass-card p-5 border-l-4 border-l-cyan-500">
+                                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Run Rate</span>
+                                <span class="block text-3xl font-black text-cyan-600 mt-2" id="fcRunRate">—</span>
+                                <span class="text-[11px] text-slate-400 font-medium mt-1 block">Média de brutas por dia útil</span>
+                            </div>
+                            <div class="glass-card p-5 border-l-4 border-l-amber-500">
+                                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Gap para Meta</span>
+                                <span class="block text-3xl font-black text-amber-600 mt-2" id="fcGap">—</span>
+                                <span class="text-[11px] text-slate-400 font-medium mt-1 block" id="fcGapDet"></span>
+                            </div>
+                            <div class="glass-card p-5 border-l-4 border-l-rose-500">
+                                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Necessidade Diária</span>
+                                <span class="block text-3xl font-black text-rose-600 mt-2" id="fcNecessidade">—</span>
+                                <span class="text-[11px] text-slate-400 font-medium mt-1 block" id="fcNecessidadeDet"></span>
+                            </div>
+                            <div class="glass-card p-5 border-l-4 border-l-violet-500">
+                                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Evolução vs Mês Anterior</span>
+                                <span class="block text-3xl font-black text-violet-600 mt-2" id="fcEvolucao">—</span>
+                                <span class="text-[11px] text-slate-400 font-medium mt-1 block" id="fcEvolucaoDet"></span>
                             </div>
                         </div>
                     </div>
@@ -3450,6 +3489,47 @@
             return monthKeyFromDate(date);
         }
 
+        // ===== Dias úteis (Seg-Sáb) com feriados nacionais =====
+        const _feriadosCacheMap = {};
+        function _domingoPascoa(ano) {
+            const a = ano % 19, b = Math.floor(ano / 100), c = ano % 100,
+                  d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25),
+                  g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30,
+                  i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7,
+                  m = Math.floor((a + 11 * h + 22 * l) / 451),
+                  mes = Math.floor((h + l - 7 * m + 114) / 31),
+                  dia = ((h + l - 7 * m + 114) % 31) + 1;
+            return new Date(ano, mes - 1, dia);
+        }
+        function _feriadosNacionais(ano) {
+            if (_feriadosCacheMap[ano]) return _feriadosCacheMap[ano];
+            const set = new Set();
+            // Feriados nacionais fixos (+ Consciência Negra 20/11)
+            ['01-01', '04-21', '05-01', '09-07', '10-12', '11-02', '11-15', '11-20', '12-25']
+                .forEach(f => set.add(`${ano}-${f}`));
+            // Móveis (baseados na Páscoa): Carnaval, Sexta Santa, Corpus Christi
+            const pascoa = _domingoPascoa(ano);
+            [-48, -47, -2, 60].forEach(off => {
+                const dt = new Date(pascoa); dt.setDate(dt.getDate() + off);
+                set.add(isoFromDate(dt));
+            });
+            _feriadosCacheMap[ano] = set;
+            return set;
+        }
+        function _ehDiaUtil(date) {
+            if (date.getDay() === 0) return false; // domingo (conta Seg-Sáb)
+            return !_feriadosNacionais(date.getFullYear()).has(isoFromDate(date));
+        }
+        function _contarDiasUteis(ano, mesIndex, diaIni, diaFim) {
+            let n = 0;
+            for (let dia = diaIni; dia <= diaFim; dia++) {
+                const dt = new Date(ano, mesIndex, dia);
+                if (dt.getMonth() !== mesIndex) break;
+                if (_ehDiaUtil(dt)) n++;
+            }
+            return n;
+        }
+
         function aplicaFiltrosComparativoSemMesEPeriodo(d) {
             for (const [col, values] of Object.entries(activeFilters)) {
                 if (col === '_mes') continue;
@@ -4023,22 +4103,11 @@
             let maxDateConcluida = null;
             let minDateGlobal = null;
             let maxDateGlobal = null;
-            // Datas específicas para projeção de Vendas Brutas: usam a data de
-            // ABERTURA da O.S. (toda venda bruta tem), com fallback para ativação.
-            let minDateBrutas = null;
-            let maxDateBrutas = null;
-
             filteredData.forEach(d => {
                 const dDateG = d._dataISO;
                 if (dDateG) {
                     if (!minDateGlobal || dDateG < minDateGlobal) minDateGlobal = dDateG;
                     if (!maxDateGlobal || dDateG > maxDateGlobal) maxDateGlobal = dDateG;
-                }
-
-                const dDateB = d._dataAberturaISO || d._dataISO;
-                if (dDateB) {
-                    if (!minDateBrutas || dDateB < minDateBrutas) minDateBrutas = dDateB;
-                    if (!maxDateBrutas || dDateB > maxDateBrutas) maxDateBrutas = dDateB;
                 }
 
                 // Retenção (Churn)
@@ -4113,41 +4182,6 @@
             document.getElementById('kpiTicketAtual').textContent = formatBRL(ticketAtual);
             document.getElementById('kpiTicket1Ano').textContent = formatBRL(ticket1Ano);
             document.getElementById('kpiReceitaAno').textContent = formatBRL(sumValorCheio);
-
-            // --- PROJEÇÃO DE VENDAS BRUTAS ---
-            let mediaDiariaBrutas = 0;
-            let projecaoBrutasTotal = 0;
-            let diferencaProjecaoBrutas = 0;
-
-            if (totalBrutas > 0 && minDateBrutas && maxDateBrutas) {
-                const d1Brutas = new Date(minDateBrutas);
-                const d2Brutas = new Date(maxDateBrutas);
-                const diasDecorridosBrutas = Math.max(1, Math.ceil(Math.abs(d2Brutas - d1Brutas) / (1000 * 60 * 60 * 24)) + 1);
-
-                mediaDiariaBrutas = totalBrutas / diasDecorridosBrutas;
-
-                let periodDaysBrutas = 30;
-                const vDataIniBrutas = document.getElementById('filterDataInicio').value;
-                const vDataFimBrutas = document.getElementById('filterDataFim').value;
-
-                if (vDataIniBrutas && vDataFimBrutas) {
-                    const pd1Brutas = new Date(vDataIniBrutas);
-                    const pd2Brutas = new Date(vDataFimBrutas);
-                    periodDaysBrutas = Math.max(1, Math.ceil(Math.abs(pd2Brutas - pd1Brutas) / (1000 * 60 * 60 * 24)) + 1);
-                } else if (activeFilters['_mes'].length === 1) {
-                    const [mBrutas, yBrutas] = activeFilters['_mes'][0].split('/');
-                    periodDaysBrutas = new Date(yBrutas, mBrutas, 0).getDate();
-                } else {
-                    periodDaysBrutas = Math.max(30, diasDecorridosBrutas);
-                }
-
-                projecaoBrutasTotal = Math.round(mediaDiariaBrutas * periodDaysBrutas);
-                diferencaProjecaoBrutas = projecaoBrutasTotal - totalBrutas;
-            }
-
-            document.getElementById('kpiProjBrutasTotal').textContent = projecaoBrutasTotal;
-            document.getElementById('kpiProjBrutasMedia').textContent = mediaDiariaBrutas.toFixed(1) + '/dia';
-            document.getElementById('kpiProjBrutasDelta').textContent = (diferencaProjecaoBrutas >= 0 ? '+' : '') + diferencaProjecaoBrutas;
 
             document.getElementById('recordCount').textContent = totalBrutas;
 
@@ -4242,6 +4276,7 @@
             renderCrescimentoVendas(filteredData);
             renderMelhoresDias(filteredData);
             renderTempoInstalacao(filteredData);
+            renderForecastInteligente();
         }
 
         function renderCidadeSummary() {
@@ -7203,6 +7238,157 @@
                 console.error('Erro ao carregar Firebase:', e);
             } finally {
                 document.getElementById('firebaseLoader').classList.add('hidden');
+            }
+        }
+
+        // =====================================================================
+        // FORECAST INTELIGENTE (Ritmo 50% + Histórico 30%, por data de abertura)
+        // =====================================================================
+        // Conta brutas pela DATA DE ABERTURA da O.S (_dataAberturaISO), incluindo
+        // backlog ainda não ativado. Ativadas = brutas projetadas × taxa histórica.
+        function _fcContarPorAbertura(base, mesKey, diaFim) {
+            return base.reduce((n, d) => {
+                const iso = d._dataAberturaISO || d._dataISO;
+                if (!iso) return n;
+                const p = iso.split('-');
+                if (`${p[1]}/${p[0]}` !== mesKey) return n;
+                return (Number(p[2]) <= diaFim) ? n + 1 : n;
+            }, 0);
+        }
+        function _fcMetaTotal() {
+            // Soma metas dos canais filtrados (ou Geral) em RJ + SP. null se não definidas.
+            const canaisSel = (activeFilters['Setor'] || []).map(s => s.toUpperCase());
+            const map = { 'LOJAS': 'Lojas', 'MCV': 'MCV', 'PAP': 'PAP' };
+            const chaves = canaisSel.length > 0
+                ? canaisSel.map(c => map[c]).filter(Boolean)
+                : ['Geral'];
+            let total = 0, achou = false;
+            chaves.forEach(c => ['RJ', 'SP'].forEach(uf => {
+                const v = parseFloat(_metasRegionais[`${c}_${uf}`]);
+                if (!isNaN(v) && v > 0) { total += v; achou = true; }
+            }));
+            return achou ? total : null;
+        }
+        function renderForecastInteligente() {
+            const base = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
+            const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+            const elMes = document.getElementById('fcMesRef');
+
+            // Mês de referência
+            let mesRef;
+            if ((activeFilters._mes || []).length >= 1) {
+                mesRef = [...activeFilters._mes].sort((a, b) => monthSortValue(a) - monthSortValue(b)).pop();
+            } else {
+                const meses = base.map(d => {
+                    const iso = d._dataAberturaISO || d._dataISO;
+                    if (!iso) return null;
+                    const p = iso.split('-'); return `${p[1]}/${p[0]}`;
+                }).filter(Boolean);
+                mesRef = meses.sort((a, b) => monthSortValue(a) - monthSortValue(b)).pop() || null;
+            }
+
+            if (!mesRef || base.length === 0) {
+                ['fcTotal', 'fcBrutas', 'fcAtivadas', 'fcRunRate', 'fcGap', 'fcNecessidade', 'fcEvolucao'].forEach(id => setTxt(id, '—'));
+                ['fcTotalDet', 'fcBrutasDet', 'fcAtivadasDet', 'fcGapDet', 'fcNecessidadeDet', 'fcEvolucaoDet'].forEach(id => setTxt(id, ''));
+                if (elMes) elMes.textContent = 'Sem dados para projetar';
+                return;
+            }
+
+            const [mRef, yRef] = mesRef.split('/').map(Number);
+            const mesIndex = mRef - 1;
+            const ultimoDia = lastDayOfMonth(yRef, mesIndex);
+
+            // Dia de corte: hoje (se mês corrente) ou último dia com venda
+            const hoje = new Date();
+            let diaCorte;
+            if (hoje.getFullYear() === yRef && hoje.getMonth() === mesIndex) {
+                diaCorte = hoje.getDate();
+            } else {
+                let maxDia = 0;
+                base.forEach(d => {
+                    const iso = d._dataAberturaISO || d._dataISO;
+                    if (!iso) return;
+                    const p = iso.split('-');
+                    if (`${p[1]}/${p[0]}` === mesRef) { const dd = Number(p[2]); if (dd > maxDia) maxDia = dd; }
+                });
+                diaCorte = maxDia > 0 ? maxDia : ultimoDia;
+            }
+            diaCorte = Math.min(diaCorte, ultimoDia);
+
+            // Contagens
+            const brutasAtuais = _fcContarPorAbertura(base, mesRef, diaCorte);
+            const ativadasHist = base.filter(d => d._isConcluida).length;
+            const taxaAtiv = base.length > 0 ? ativadasHist / base.length : 0;
+
+            // Dias úteis (Seg-Sáb)
+            const duDecorridos = _contarDiasUteis(yRef, mesIndex, 1, diaCorte);
+            const duTotais = _contarDiasUteis(yRef, mesIndex, 1, ultimoDia);
+            const duRestantes = Math.max(0, duTotais - duDecorridos);
+
+            // Pilar 1 — Ritmo
+            const ritmoDiario = duDecorridos > 0 ? brutasAtuais / duDecorridos : 0;
+            const fcRitmo = ritmoDiario * duTotais;
+
+            // Pilar 2 — Histórico (média de até 3 meses anteriores)
+            const fatores = [];
+            let mAnt = mesRef;
+            for (let i = 0; i < 3; i++) {
+                mAnt = previousMonthKey(mAnt);
+                if (!mAnt) break;
+                const cheio = _fcContarPorAbertura(base, mAnt, 31);
+                const accum = _fcContarPorAbertura(base, mAnt, diaCorte);
+                if (accum > 0) fatores.push(cheio / accum);
+            }
+            let fcHist = null;
+            if (fatores.length > 0) {
+                const fatorMedio = fatores.reduce((a, b) => a + b, 0) / fatores.length;
+                fcHist = brutasAtuais * fatorMedio;
+            }
+
+            // Forecast de Brutas (Ritmo 0,5 + Histórico 0,3 renormalizado) e Ativadas
+            const fcBrutas = fcHist !== null ? (fcRitmo * 0.5 + fcHist * 0.3) / 0.8 : fcRitmo;
+            const fcAtivadas = fcBrutas * taxaAtiv;
+
+            // Projeção total de brutas no ritmo do mês (dia 1 ao último dia):
+            // ritmo por dia útil × dias úteis totais do mês.
+            const fcTotal = fcRitmo;
+
+            // Evolução vs mês anterior (mesmo dia de corte)
+            const mesAnt1 = previousMonthKey(mesRef);
+            const accumAnt = mesAnt1 ? _fcContarPorAbertura(base, mesAnt1, diaCorte) : 0;
+            const evol = accumAnt > 0 ? ((brutasAtuais - accumAnt) / accumAnt * 100) : null;
+
+            // Meta / Gap / Necessidade
+            const metaTotal = _fcMetaTotal();
+            const gap = metaTotal !== null ? (fcBrutas - metaTotal) : null;
+            const necessidade = (metaTotal !== null && duRestantes > 0)
+                ? Math.max(0, (metaTotal - brutasAtuais) / duRestantes)
+                : (metaTotal !== null ? 0 : null);
+
+            // Render
+            const nomesMes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            if (elMes) elMes.textContent = `Referência: ${nomesMes[mesIndex]}/${yRef} · dia ${diaCorte}/${ultimoDia} · dias úteis ${duDecorridos}/${duTotais} (Seg-Sáb)`;
+            setTxt('fcTotal', Math.round(fcTotal).toLocaleString('pt-BR'));
+            setTxt('fcTotalDet', `${brutasAtuais} brutas até dia ${diaCorte} · ritmo ${ritmoDiario.toFixed(1)}/dia útil · ${duTotais} dias úteis no mês`);
+            setTxt('fcBrutas', Math.round(fcBrutas).toLocaleString('pt-BR'));
+            setTxt('fcBrutasDet', `Atual ${brutasAtuais} · Ritmo ${Math.round(fcRitmo)}` + (fcHist !== null ? ` · Hist ${Math.round(fcHist)}` : ' · sem histórico'));
+            setTxt('fcAtivadas', Math.round(fcAtivadas).toLocaleString('pt-BR'));
+            setTxt('fcAtivadasDet', `Taxa de ativação ${(taxaAtiv * 100).toFixed(1)}%`);
+            setTxt('fcRunRate', ritmoDiario.toFixed(1) + '/dia');
+            if (metaTotal !== null) {
+                setTxt('fcGap', (gap >= 0 ? '+' : '') + Math.round(gap).toLocaleString('pt-BR'));
+                setTxt('fcGapDet', (gap >= 0 ? 'Projeção supera a meta de ' : 'Faltam para a meta de ') + metaTotal.toLocaleString('pt-BR'));
+                setTxt('fcNecessidade', Math.ceil(necessidade).toLocaleString('pt-BR') + '/dia');
+                setTxt('fcNecessidadeDet', duRestantes > 0 ? `${duRestantes} dias úteis restantes` : 'Mês encerrado');
+            } else {
+                setTxt('fcGap', '—'); setTxt('fcGapDet', 'Defina as metas no painel');
+                setTxt('fcNecessidade', '—'); setTxt('fcNecessidadeDet', 'Defina as metas no painel');
+            }
+            if (evol !== null) {
+                setTxt('fcEvolucao', (evol >= 0 ? '+' : '') + evol.toFixed(1) + '%');
+                setTxt('fcEvolucaoDet', `${accumAnt} → ${brutasAtuais} (mesmo dia ${diaCorte})`);
+            } else {
+                setTxt('fcEvolucao', '—'); setTxt('fcEvolucaoDet', 'Sem mês anterior comparável');
             }
         }
 
