@@ -1,4 +1,4 @@
-const CACHE  = 'sales-intel-v10';
+const CACHE  = 'sales-intel-v11';
 
 // Recursos que NUNCA devem ser cacheados pelo SW:
 // - Firebase (autenticação e dados)
@@ -38,6 +38,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = e.request.url;
   if (e.request.method !== 'GET') return;
+  if (!url.startsWith('http')) return; // ignora chrome-extension:, data:, etc. (não cacheáveis)
   if (ALWAYS_NETWORK.some(s => url.includes(s))) return; // sempre rede para Firebase
 
   if (e.request.mode === 'navigate') {

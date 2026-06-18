@@ -4023,12 +4023,22 @@
             let maxDateConcluida = null;
             let minDateGlobal = null;
             let maxDateGlobal = null;
+            // Datas específicas para projeção de Vendas Brutas: usam a data de
+            // ABERTURA da O.S. (toda venda bruta tem), com fallback para ativação.
+            let minDateBrutas = null;
+            let maxDateBrutas = null;
 
             filteredData.forEach(d => {
                 const dDateG = d._dataISO;
                 if (dDateG) {
                     if (!minDateGlobal || dDateG < minDateGlobal) minDateGlobal = dDateG;
                     if (!maxDateGlobal || dDateG > maxDateGlobal) maxDateGlobal = dDateG;
+                }
+
+                const dDateB = d._dataAberturaISO || d._dataISO;
+                if (dDateB) {
+                    if (!minDateBrutas || dDateB < minDateBrutas) minDateBrutas = dDateB;
+                    if (!maxDateBrutas || dDateB > maxDateBrutas) maxDateBrutas = dDateB;
                 }
 
                 // Retenção (Churn)
@@ -4109,9 +4119,9 @@
             let projecaoBrutasTotal = 0;
             let diferencaProjecaoBrutas = 0;
 
-            if (totalBrutas > 0 && minDateGlobal && maxDateGlobal) {
-                const d1Brutas = new Date(minDateGlobal);
-                const d2Brutas = new Date(maxDateGlobal);
+            if (totalBrutas > 0 && minDateBrutas && maxDateBrutas) {
+                const d1Brutas = new Date(minDateBrutas);
+                const d2Brutas = new Date(maxDateBrutas);
                 const diasDecorridosBrutas = Math.max(1, Math.ceil(Math.abs(d2Brutas - d1Brutas) / (1000 * 60 * 60 * 24)) + 1);
 
                 mediaDiariaBrutas = totalBrutas / diasDecorridosBrutas;
