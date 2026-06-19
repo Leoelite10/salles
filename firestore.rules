@@ -50,7 +50,8 @@ service cloud.firestore {
       allow create: if isApproved()
                     && request.resource.data.uid == request.auth.uid;
       allow read, list: if isAdmin();
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if isAdmin();
     }
   }
 }

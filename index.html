@@ -2315,14 +2315,28 @@
             }
 
             if (tab === 'acessos') {
+                try { await _limparLogsAntigos(); } catch (e) { console.error('[Logs] limpeza:', e); }
                 const logs = await _carregarLogsAcesso();
                 const _fmt = ts => {
                     if (!ts) return '—';
                     const d = ts.toDate ? ts.toDate() : new Date(ts);
                     return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                 };
-                // Resumo: usuários únicos e sessões por dia
-                const uniqueUsers = [...new Set(logs.map(l => l.email))].length;
+                const _ms = ts => (ts && ts.toDate ? ts.toDate() : new Date(ts || 0)).getTime();
+
+                // Consolida por usuário: 1 linha por pessoa (saber QUEM acessa o sistema).
+                // logs vêm em ordem decrescente, então o 1º registro de cada usuário é o mais recente.
+                const porUsuario = {};
+                logs.forEach(l => {
+                    const chave = l.uid || l.email;
+                    if (!chave) return;
+                    if (!porUsuario[chave]) {
+                        porUsuario[chave] = { nome: l.nome, email: l.email, role: l.role, ultimo: l.timestamp, dispositivo: l.dispositivo, acessos: 0 };
+                    }
+                    porUsuario[chave].acessos++;
+                });
+                const usuarios = Object.values(porUsuario).sort((a, b) => _ms(b.ultimo) - _ms(a.ultimo));
+
                 const hoje = new Date().toLocaleDateString('pt-BR');
                 const acessosHoje = logs.filter(l => {
                     if (!l.timestamp) return false;
@@ -2330,35 +2344,34 @@
                     return d.toLocaleDateString('pt-BR') === hoje;
                 }).length;
 
-                const rows = logs.map(l => {
-                    const badgeRole = l.role === 'admin'
+                const rows = usuarios.map(u => {
+                    const badgeRole = u.role === 'admin'
                         ? 'bg-blue-50 text-blue-700 border-blue-100'
                         : 'bg-slate-50 text-slate-600 border-slate-200';
-                    const badgeDev = l.dispositivo === 'Mobile'
+                    const badgeDev = u.dispositivo === 'Mobile'
                         ? 'bg-orange-50 text-orange-700 border-orange-100'
                         : 'bg-green-50 text-green-700 border-green-100';
                     return `<tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
-                        <td class="py-2.5 px-3 text-xs text-slate-500 font-medium whitespace-nowrap">${_fmt(l.timestamp)}</td>
                         <td class="py-2.5 px-3">
-                            <p class="text-xs font-bold text-slate-800">${escapeHTML(l.nome || l.email)}</p>
-                            <p class="text-[10px] text-slate-400">${escapeHTML(l.email)}</p>
+                            <p class="text-xs font-bold text-slate-800">${escapeHTML(u.nome || u.email)}</p>
+                            <p class="text-[10px] text-slate-400">${escapeHTML(u.email)}</p>
                         </td>
-                        <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-md border text-[10px] font-black uppercase ${badgeRole}">${l.role === 'admin' ? 'Admin' : 'Usuário'}</span></td>
-                        <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-md border text-[10px] font-bold ${badgeDev}">${l.dispositivo || '—'}</span></td>
-                        <td class="py-2.5 px-3 text-[10px] text-slate-500 text-center">${l.navegador || '—'}</td>
-                        <td class="py-2.5 px-3 text-[10px] text-slate-400 text-center">${l.resolucao || '—'}</td>
+                        <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-md border text-[10px] font-black uppercase ${badgeRole}">${u.role === 'admin' ? 'Admin' : 'Usuário'}</span></td>
+                        <td class="py-2.5 px-3 text-xs text-slate-500 font-medium whitespace-nowrap text-center">${_fmt(u.ultimo)}</td>
+                        <td class="py-2.5 px-3 text-center text-xs font-black text-slate-700">${u.acessos}</td>
+                        <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-md border text-[10px] font-bold ${badgeDev}">${u.dispositivo || '—'}</span></td>
                     </tr>`;
                 }).join('');
 
                 const logsHtml = `
                     <div class="grid grid-cols-3 gap-3 mb-5">
                         <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
-                            <span class="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">Total de Acessos</span>
-                            <span class="text-2xl font-black text-blue-700">${logs.length}</span>
+                            <span class="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">Usuários (7 dias)</span>
+                            <span class="text-2xl font-black text-blue-700">${usuarios.length}</span>
                         </div>
                         <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center">
-                            <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block">Usuários Únicos</span>
-                            <span class="text-2xl font-black text-emerald-700">${uniqueUsers}</span>
+                            <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block">Total de Acessos (7d)</span>
+                            <span class="text-2xl font-black text-emerald-700">${logs.length}</span>
                         </div>
                         <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 text-center">
                             <span class="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">Acessos Hoje</span>
@@ -2366,21 +2379,20 @@
                         </div>
                     </div>
                     <div class="overflow-x-auto rounded-xl border border-slate-200">
-                        <table class="w-full min-w-[600px]">
+                        <table class="w-full min-w-[500px]">
                             <thead class="bg-slate-50">
                                 <tr>
-                                    <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-left">Data/Hora</th>
                                     <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-left">Usuário</th>
                                     <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Perfil</th>
+                                    <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Último acesso</th>
+                                    <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Acessos (7d)</th>
                                     <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Dispositivo</th>
-                                    <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Navegador</th>
-                                    <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Resolução</th>
                                 </tr>
                             </thead>
-                            <tbody>${rows || '<tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">Nenhum acesso registrado ainda.</td></tr>'}</tbody>
+                            <tbody>${rows || '<tr><td colspan="5" class="py-6 text-center text-xs text-slate-400">Nenhum acesso nos últimos 7 dias.</td></tr>'}</tbody>
                         </table>
                     </div>
-                    <p class="text-[10px] text-slate-400 mt-2 text-right">Últimos 200 registros • ordem decrescente</p>`;
+                    <p class="text-[10px] text-slate-400 mt-2 text-right">1 linha por usuário • últimos 7 dias • logs antigos são apagados automaticamente</p>`;
 
                 document.getElementById('adminPanelContent').innerHTML = tabBar + logsHtml;
                 return;
@@ -2707,11 +2719,27 @@
         }
 
         async function _carregarLogsAcesso() {
+            const corte = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
             const snap = await _fsDB.collection('logs_acesso')
+                .where('timestamp', '>=', corte)
                 .orderBy('timestamp', 'desc')
-                .limit(200)
+                .limit(500)
                 .get();
             return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+
+        // Apaga logs de acesso com mais de 7 dias (executado quando o admin abre a aba)
+        async function _limparLogsAntigos() {
+            const corte = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            const snap = await _fsDB.collection('logs_acesso')
+                .where('timestamp', '<', corte)
+                .limit(500)
+                .get();
+            if (snap.empty) return 0;
+            const batch = _fsDB.batch();
+            snap.docs.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+            return snap.docs.length;
         }
 
         // — Auth state listener —
