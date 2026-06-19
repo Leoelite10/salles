@@ -1564,6 +1564,9 @@
                             <!-- JS Inject -->
                         </div>
 
+                        <!-- Crescimento Trimestral (últimos 3 meses vs 3 anteriores) -->
+                        <div id="crescTrimestralCards"><!-- JS Inject --></div>
+
                         <!-- Projeção Inteligente -->
                         <div>
                             <h5 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -7407,7 +7410,10 @@
         // =====================================================================
 
         function renderCrescimentoVendas(dataSet) {
-            const base = dataSet;
+            // Comparador de desempenho: usa o histórico COMPLETO (todos os meses),
+            // respeitando filtros de canal/cidade/etc, mas IGNORANDO o filtro de mês/período.
+            // Sem isso, ao selecionar um mês, não haveria mês anterior para comparar.
+            const base = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
             if (!base || base.length === 0) {
                 _crescLimpar();
                 return;
@@ -7461,6 +7467,7 @@
             let mtd = null;
             try { mtd = _calcMTDComparativo(base); } catch(e) { console.error('[Crescimento] _calcMTDComparativo:', e); }
             try { _crescRenderKpis(mtd); } catch(e) { console.error('[Crescimento] _crescRenderKpis:', e); }
+            try { _crescRenderTrimestral(serieMensal); } catch(e) { console.error('[Crescimento] _crescRenderTrimestral:', e); }
             try { _crescRenderProjecao(mtd); } catch(e) { console.error('[Crescimento] _crescRenderProjecao:', e); }
             try { _crescRenderTendencia(mtd); } catch(e) { console.error('[Crescimento] _crescRenderTendencia:', e); }
             try { _crescRenderComparativoPeriodo(base); } catch(e) { console.error('[Crescimento] _crescRenderComparativoPeriodo:', e); }
@@ -7495,8 +7502,53 @@
             });
         }
 
+        function _crescRenderTrimestral(serie) {
+            const el = document.getElementById('crescTrimestralCards');
+            if (!el) return;
+            const badge = (pct, sem) => {
+                if (sem) return '<span class="px-2 py-0.5 rounded-lg border text-[10px] font-black bg-slate-50 text-slate-400 border-slate-100">—</span>';
+                const pos = pct > 0, neg = pct < 0;
+                const cls = pos ? 'bg-green-50 text-green-700 border-green-100' : (neg ? 'bg-red-50 text-red-700 border-red-100' : 'bg-slate-50 text-slate-500 border-slate-100');
+                const icon = pos ? '▲' : (neg ? '▼' : '=');
+                return `<span class="px-2 py-0.5 rounded-lg border text-[10px] font-black ${cls}">${icon} ${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%</span>`;
+            };
+            if (!serie || serie.length < 4) {
+                el.innerHTML = `<div class="glass-card p-5 border-l-4 border-l-fuchsia-500">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Crescimento Trimestral</span>
+                    <p class="text-xs text-slate-400 font-medium mt-2">Precisa de pelo menos 4 meses de histórico para comparar trimestres.</p>
+                </div>`;
+                return;
+            }
+            const n = serie.length;
+            const u3 = serie.slice(n - 3);
+            const p3 = serie.slice(Math.max(0, n - 6), n - 3);
+            const somaB = a => a.reduce((s, m) => s + m.brutas, 0);
+            const somaA = a => a.reduce((s, m) => s + m.ativadas, 0);
+            const bA = somaB(u3), bP = somaB(p3), aA = somaA(u3), aP = somaA(p3);
+            const pctB = bP > 0 ? ((bA - bP) / bP) * 100 : (bA > 0 ? 100 : 0);
+            const pctA = aP > 0 ? ((aA - aP) / aP) * 100 : (aA > 0 ? 100 : 0);
+            const sem = p3.length < 3; // janela anterior incompleta
+            const faixaU = `${u3[0].mes}–${u3[u3.length - 1].mes}`;
+            const faixaP = p3.length ? `${p3[0].mes}–${p3[p3.length - 1].mes}` : '—';
+            el.innerHTML = `<div class="glass-card p-5 border-l-4 border-l-fuchsia-500">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Crescimento Trimestral <span class="normal-case font-medium text-slate-400">(últimos 3 meses vs 3 anteriores)</span></span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Brutas</span>
+                        <div class="flex items-end gap-2 mt-1"><span class="text-2xl font-black text-slate-800">${bA.toLocaleString('pt-BR')}</span>${badge(pctB, sem)}</div>
+                        <span class="text-[10px] text-slate-400 font-medium block mt-1">${faixaU} (${bA}) vs ${faixaP} (${bP})</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Ativadas</span>
+                        <div class="flex items-end gap-2 mt-1"><span class="text-2xl font-black text-slate-800">${aA.toLocaleString('pt-BR')}</span>${badge(pctA, sem)}</div>
+                        <span class="text-[10px] text-slate-400 font-medium block mt-1">${aA} vs ${aP} ativadas</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+
         function _crescLimpar() {
-            ['crescKpiCards','crescMesTableBody','crescCanalCards','crescVendedorTableBody','crescCidadeTableBody','crescDependenciaCards'].forEach(id => {
+            ['crescKpiCards','crescTrimestralCards','crescMesTableBody','crescCanalCards','crescVendedorTableBody','crescCidadeTableBody','crescDependenciaCards'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = '<div class="col-span-full text-center text-xs text-slate-400 py-6 font-bold tracking-wide">Nenhum dado disponível.</div>';
             });
