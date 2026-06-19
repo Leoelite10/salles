@@ -2787,12 +2787,15 @@
                     const { novos, atualizados } = await _dbMerge(rawObjects);
                     await _dbSalvarMeta('ultima_atualizacao', new Date().toISOString());
                     await _atualizarTimestamp();
+                    const lblNovas = novos === 1 ? 'nova venda' : 'novas vendas';
+                    const lblAtu = atualizados === 1 ? 'atualizada' : 'atualizadas';
                     const statsEl = document.getElementById('importStats');
-                    statsEl.textContent = `+${novos} novos · ${atualizados} atualizados`;
+                    statsEl.textContent = `✓ ${novos} ${lblNovas} · ${atualizados} ${lblAtu}`;
                     statsEl.classList.remove('hidden');
-                    setTimeout(() => statsEl.classList.add('hidden'), 6000);
+                    setTimeout(() => statsEl.classList.add('hidden'), 12000);
                     const todos = await _dbCarregarTodos();
                     processRawObjects(todos);
+                    alert(`Importação concluída!\n\n✅ ${novos} ${lblNovas} entraram\n🔄 ${atualizados} ${lblAtu}`);
                 } catch (err) {
                     console.error('Erro ao importar arquivo:', err);
                     alert('Erro ao importar: ' + (err.message || err));
@@ -7530,19 +7533,29 @@
             const sem = p3.length < 3; // janela anterior incompleta
             const faixaU = `${u3[0].mes}–${u3[u3.length - 1].mes}`;
             const faixaP = p3.length ? `${p3[0].mes}–${p3[p3.length - 1].mes}` : '—';
+            const bloco = (titulo, ant, atual, pct) => `
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">${titulo}</span>
+                    <div class="flex items-center gap-3">
+                        <div class="text-center flex-1">
+                            <span class="block text-[9px] text-slate-400 font-bold uppercase">Trim. anterior</span>
+                            <span class="block text-2xl font-black text-slate-400">${ant.toLocaleString('pt-BR')}</span>
+                            <span class="block text-[9px] text-slate-400">${faixaP}</span>
+                        </div>
+                        <span class="text-slate-300 text-xl font-black">→</span>
+                        <div class="text-center flex-1">
+                            <span class="block text-[9px] text-slate-400 font-bold uppercase">Trim. atual</span>
+                            <span class="block text-2xl font-black text-slate-800">${atual.toLocaleString('pt-BR')}</span>
+                            <span class="block text-[9px] text-slate-400">${faixaU}</span>
+                        </div>
+                        <div class="shrink-0">${badge(pct, sem)}</div>
+                    </div>
+                </div>`;
             el.innerHTML = `<div class="glass-card p-5 border-l-4 border-l-fuchsia-500">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Crescimento Trimestral <span class="normal-case font-medium text-slate-400">(últimos 3 meses vs 3 anteriores)</span></span>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
-                    <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Brutas</span>
-                        <div class="flex items-end gap-2 mt-1"><span class="text-2xl font-black text-slate-800">${bA.toLocaleString('pt-BR')}</span>${badge(pctB, sem)}</div>
-                        <span class="text-[10px] text-slate-400 font-medium block mt-1">${faixaU} (${bA}) vs ${faixaP} (${bP})</span>
-                    </div>
-                    <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Ativadas</span>
-                        <div class="flex items-end gap-2 mt-1"><span class="text-2xl font-black text-slate-800">${aA.toLocaleString('pt-BR')}</span>${badge(pctA, sem)}</div>
-                        <span class="text-[10px] text-slate-400 font-medium block mt-1">${aA} vs ${aP} ativadas</span>
-                    </div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-3">Crescimento Trimestral <span class="normal-case font-medium text-slate-400">(3 meses anteriores → 3 meses atuais)</span></span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    ${bloco('Brutas', bP, bA, pctB)}
+                    ${bloco('Ativadas', aP, aA, pctA)}
                 </div>
             </div>`;
         }
