@@ -2697,14 +2697,7 @@
         // ===== LOGS DE ACESSO =====
         async function _registrarAcesso(user, userData) {
             const ua = navigator.userAgent;
-            let dispositivo = 'Desktop';
-            if (/Android|iPhone|iPad|iPod/i.test(ua)) dispositivo = 'Mobile';
-            else if (/Tablet|iPad/i.test(ua)) dispositivo = 'Tablet';
-            let navegador = 'Outro';
-            if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) navegador = 'Chrome';
-            else if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) navegador = 'Safari';
-            else if (/Firefox\//.test(ua)) navegador = 'Firefox';
-            else if (/Edg\//.test(ua)) navegador = 'Edge';
+            const dispositivo = /Android|iPhone|iPad|iPod/i.test(ua) ? 'Mobile' : 'Desktop';
 
             await _fsDB.collection('logs_acesso').add({
                 uid:        user.uid,
@@ -2712,9 +2705,7 @@
                 nome:       userData.nome || user.email,
                 role:       userData.role || 'user',
                 timestamp:  firebase.firestore.FieldValue.serverTimestamp(),
-                dispositivo,
-                navegador,
-                resolucao:  `${screen.width}x${screen.height}`
+                dispositivo
             });
         }
 
