@@ -5378,7 +5378,7 @@
             modal.classList.remove('hidden');
 
             const META = META_INSTALACAO_DIAS;
-            const base = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
+            const base = filteredData; // respeita TODOS os filtros ativos (canal, cidade e período/calendário)
             const mapa = {};
             base.forEach(d => {
                 const cid = (d['Cidade'] || 'Não Identificada').trim() || 'Não Identificada';
@@ -5460,7 +5460,7 @@
                         <tbody>${rows || '<tr><td colspan="5" class="py-6 text-center text-xs text-slate-400">Sem dados de instalação no filtro atual.</td></tr>'}</tbody>
                     </table>
                 </div>
-                <p class="text-[10px] text-slate-400 mt-3 leading-relaxed">Tempo médio em <b>dias úteis</b> (Seg-Sáb, exclui feriados), da venda até a ativação 340. Meta: <b>${META} dias úteis</b> · 🟢 ≤ ${META} · 🟡 ${META}–4,5 · 🔴 &gt; 4,5. Ordenado do pior para o melhor. Respeita filtros de canal/cidade; ignora o filtro de mês.</p>`;
+                <p class="text-[10px] text-slate-400 mt-3 leading-relaxed">Tempo médio em <b>dias úteis</b> (Seg-Sáb, exclui feriados), da venda até a ativação 340. Meta: <b>${META} dias úteis</b> · 🟢 ≤ ${META} · 🟡 ${META}–4,5 · 🔴 &gt; 4,5. Ordenado do pior para o melhor. Respeita todos os filtros ativos (canal, cidade e período do calendário).</p>`;
         }
         function _fecharModalInstalacaoCidade() {
             const m = document.getElementById('modalInstalacaoCidade');
