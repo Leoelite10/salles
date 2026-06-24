@@ -5409,11 +5409,8 @@
                 return { txt: 'Crítico', cls: 'bg-red-50 text-red-700 border-red-100', sev: 2 };
             };
 
-            cidades.sort((a, b) => {
-                const sb = statusOf(b.tempoMedio).sev, sa = statusOf(a.tempoMedio).sev;
-                if (sb !== sa) return sb - sa;
-                return (b.tempoMedio || 0) - (a.tempoMedio || 0);
-            });
+            // Ordena pela fila de pendentes (maior primeiro); empate pelo maior tempo médio
+            cidades.sort((a, b) => (b.pendentes - a.pendentes) || ((b.tempoMedio || 0) - (a.tempoMedio || 0)));
 
             const comDados = cidades.filter(c => c.tempoMedio !== null).length;
             const naMeta = cidades.filter(c => c.tempoMedio !== null && c.tempoMedio <= META).length;
@@ -5442,7 +5439,7 @@
                         <span class="text-xl font-black text-green-700">${naMeta}/${comDados}</span>
                     </div>
                     <div class="bg-fuchsia-50 border border-fuchsia-100 rounded-xl p-3 text-center">
-                        <span class="text-[10px] font-bold text-fuchsia-500 uppercase tracking-wider block">Pendentes (fila)</span>
+                        <span class="text-[10px] font-bold text-fuchsia-500 uppercase tracking-wider block">Pendentes de Instalação</span>
                         <span class="text-xl font-black text-fuchsia-700">${totalPend}</span>
                     </div>
                     <div class="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
@@ -5455,7 +5452,7 @@
                         <thead class="bg-slate-50">
                             <tr>
                                 <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-left">Cidade</th>
-                                <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Pendentes (fila atual)</th>
+                                <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Pendentes de Instalação</th>
                                 <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Tempo médio</th>
                                 <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Status</th>
                             </tr>
@@ -5463,7 +5460,7 @@
                         <tbody>${rows || '<tr><td colspan="4" class="py-6 text-center text-xs text-slate-400">Sem dados de instalação no filtro atual.</td></tr>'}</tbody>
                     </table>
                 </div>
-                <p class="text-[10px] text-slate-400 mt-3 leading-relaxed">Tempo médio em <b>dias úteis</b> (Seg-Sáb, exclui feriados), da venda até a ativação 340. Meta: <b>${META} dias úteis</b> · 🟢 ≤ ${META} · 🟡 ${META}–4,5 · 🔴 &gt; 4,5. Ordenado do pior para o melhor. <b>Instaladas e tempo médio</b> seguem o período do calendário; <b>Pendentes</b> mostram a fila atual total (independe do período). Ambos respeitam canal/cidade.</p>`;
+                <p class="text-[10px] text-slate-400 mt-3 leading-relaxed">Tempo médio em <b>dias úteis</b> (Seg-Sáb, exclui feriados), da venda até a ativação 340. Meta: <b>${META} dias úteis</b> · 🟢 ≤ ${META} · 🟡 ${META}–4,5 · 🔴 &gt; 4,5. Ordenado por pendentes de instalação (maior primeiro). <b>Tempo médio</b> segue o período do calendário; <b>Pendentes</b> mostram a fila atual total (independe do período). Ambos respeitam canal/cidade.</p>`;
         }
         function _fecharModalInstalacaoCidade() {
             const m = document.getElementById('modalInstalacaoCidade');
