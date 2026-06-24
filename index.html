@@ -1964,19 +1964,9 @@
         }
 
         function switchDashboardTab(tabName) {
-            // Guarda de permissão: bloqueia abas não liberadas para o perfil do usuário
-            if (_currentAbas && !_currentAbas.includes(tabName)) {
-                const liberada = _currentAbas[0];
-                if (!liberada) return;
-                tabName = liberada;
-            }
             document.querySelectorAll('.dashboard-tab-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === tabName);
             });
-            // Mantém o label do menu mobile sincronizado com a aba ativa
-            const _btnAtivo = document.querySelector(`.dashboard-tab-btn[data-tab="${tabName}"]`);
-            const _lblMobile = document.getElementById('tabAtualLabel');
-            if (_btnAtivo && _lblMobile) _lblMobile.textContent = _btnAtivo.textContent.trim();
 
             const area = document.getElementById('areaRelatorios');
             const tabBar = document.getElementById('dashboardTabsBar');
@@ -2173,118 +2163,6 @@
         let _currentUser  = null;
         let _currentRole  = null;
         let _currentCanais = null; // null = todos; ['PAP','MCV','LOJAS'] = restrição
-        let _currentAbas  = null;  // null = todas; ['executivo','funil',...] = restrição de visuais
-
-        // Lista canônica das abas/visuais do dashboard (id = data-tab dos botões)
-        const ABAS_DISPONIVEIS = [
-            { id: 'executivo',   label: 'Executivo' },
-            { id: 'funil',       label: 'Funil' },
-            { id: 'cancelados',  label: 'Cancelados' },
-            { id: 'canais',      label: 'Leads' },
-            { id: 'vendedores',  label: 'Vendedores' },
-            { id: 'setores',     label: 'Canais Op.' },
-            { id: 'cidades',     label: 'Cidades' },
-            { id: 'planos',      label: 'Planos' },
-            { id: 'cruzamentos', label: 'Cruzamentos' },
-            { id: 'qualidade',   label: 'Qualidade' },
-            { id: 'bairros',     label: 'Mapa de Calor' },
-            { id: 'crescimento', label: 'Crescimento' }
-        ];
-
-        // ===== PERFIS / DEPARTAMENTOS — quais visuais cada grupo enxerga =====
-        async function _carregarPerfis() {
-            const arr = await _dbLerMeta('perfis');
-            return Array.isArray(arr) ? arr : [];
-        }
-        async function _salvarPerfis(arr) {
-            await _dbSalvarMeta('perfis', arr);
-        }
-        // Aplica a restrição de visuais: esconde botões de aba não permitidos e
-        // garante que a aba ativa seja uma liberada. _currentAbas null = vê todas.
-        function _aplicarVisuaisPermitidos() {
-            const permitidas = _currentAbas; // null = todas
-            const botoes = Array.from(document.querySelectorAll('.dashboard-tab-btn'));
-            botoes.forEach(btn => {
-                const liberada = !permitidas || permitidas.includes(btn.dataset.tab);
-                btn.classList.toggle('hidden', !liberada);
-            });
-            if (!permitidas) return;
-            // Se a aba ativa não está liberada, abre a primeira liberada
-            const ativa = document.querySelector('.dashboard-tab-btn.active');
-            if (!ativa || !permitidas.includes(ativa.dataset.tab)) {
-                const primeira = botoes.find(b => !b.classList.contains('hidden'));
-                if (primeira) switchDashboardTab(primeira.dataset.tab);
-            }
-        }
-
-        // ----- CRUD de perfis (painel admin) -----
-        function _perfisHtml(perfis) {
-            const cards = perfis.map(p => {
-                const abas = Array.isArray(p.abas) ? p.abas : [];
-                const checks = ABAS_DISPONIVEIS.map(a => {
-                    const checked = abas.includes(a.id) ? 'checked' : '';
-                    return `<label class="flex items-center gap-1.5 cursor-pointer select-none px-2 py-1 rounded-lg hover:bg-slate-100">
-                        <input type="checkbox" id="aba_${p.id}_${a.id}" ${checked} class="w-3.5 h-3.5 accent-blue-600 rounded cursor-pointer">
-                        <span class="text-[11px] font-bold text-slate-600">${a.label}</span>
-                    </label>`;
-                }).join('');
-                return `<div class="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
-                    <div class="flex items-center gap-2">
-                        <input type="text" id="perfilNome_${p.id}" value="${escapeHTML(p.nome || '')}" placeholder="Nome do perfil"
-                            class="flex-1 text-sm font-bold text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none">
-                        <button onclick="_perfilSalvar('${p.id}')" class="px-3 py-2 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition-colors whitespace-nowrap">Salvar</button>
-                        <button onclick="_perfilExcluir('${p.id}')" class="px-3 py-2 bg-red-50 text-red-600 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors">Excluir</button>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-1">${checks}</div>
-                </div>`;
-            }).join('');
-            return `<div class="space-y-4">
-                <div class="flex items-center justify-between gap-2 flex-wrap">
-                    <div class="min-w-0">
-                        <h3 class="text-sm font-extrabold text-slate-700">Perfis de visuais</h3>
-                        <p class="text-xs text-slate-400">Marque quais abas cada perfil enxerga. Depois atribua o perfil a cada usuário na aba <b>Usuários</b>.</p>
-                    </div>
-                    <button onclick="_perfilNovo()" class="px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap">+ Novo perfil</button>
-                </div>
-                <div class="space-y-3">${cards || '<p class="text-slate-400 text-sm text-center py-6">Nenhum perfil criado. Clique em “+ Novo perfil”.</p>'}</div>
-            </div>`;
-        }
-
-        async function _perfilNovo() {
-            const perfis = await _carregarPerfis();
-            perfis.push({ id: 'p_' + Date.now().toString(36), nome: 'Novo perfil', abas: [] });
-            await _salvarPerfis(perfis);
-            _abrirPainelAdmin('perfis');
-        }
-
-        async function _perfilSalvar(id) {
-            const perfis = await _carregarPerfis();
-            const p = perfis.find(x => x.id === id);
-            if (!p) return;
-            const nomeEl = document.getElementById(`perfilNome_${id}`);
-            p.nome = (nomeEl ? nomeEl.value.trim() : '') || 'Sem nome';
-            p.abas = ABAS_DISPONIVEIS.filter(a => {
-                const el = document.getElementById(`aba_${id}_${a.id}`);
-                return el && el.checked;
-            }).map(a => a.id);
-            await _salvarPerfis(perfis);
-            _abrirPainelAdmin('perfis');
-        }
-
-        async function _perfilExcluir(id) {
-            if (!confirm('Excluir este perfil? Usuários que o usavam voltam a ver todos os visuais.')) return;
-            let perfis = await _carregarPerfis();
-            perfis = perfis.filter(x => x.id !== id);
-            await _salvarPerfis(perfis);
-            _abrirPainelAdmin('perfis');
-        }
-
-        async function _salvarPerfilUsuario(uid) {
-            const sel = document.getElementById(`perfilUser_${uid}`);
-            const perfil = sel ? sel.value : '';
-            await _fsDB.collection('users').doc(uid).update({ perfil });
-            _abrirPainelAdmin('usuarios');
-        }
 
         function _loginMsg(msg, tipo) {
             const el = document.getElementById('loginMsg');
@@ -2443,12 +2321,6 @@
                         Metas Anuais
                     </span>
                 </button>
-                <button onclick="_abrirPainelAdmin('perfis')" class="${_tc('perfis')}">
-                    <span class="flex items-center justify-center gap-1.5">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                        Perfis
-                    </span>
-                </button>
                 <button onclick="_abrirPainelAdmin('acessos')" class="${_tc('acessos')}">
                     <span class="flex items-center justify-center gap-1.5">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
@@ -2464,12 +2336,6 @@
                 const agora = new Date();
                 const metas = await _carregarMetasAnuais(agora.getFullYear(), agora.getMonth() + 1);
                 document.getElementById('adminPanelContent').innerHTML = tabBar + _wizardMetasHtml(metas);
-                return;
-            }
-
-            if (tab === 'perfis') {
-                const perfis = await _carregarPerfis();
-                document.getElementById('adminPanelContent').innerHTML = tabBar + _perfisHtml(perfis);
                 return;
             }
 
@@ -2559,7 +2425,6 @@
 
             const snap  = await _fsDB.collection('users').get();
             const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            const perfisLista = await _carregarPerfis();
             const pendentes  = users.filter(u => u.status === 'pending');
             const aprovados  = users.filter(u => u.status === 'approved');
             const rejeitados = users.filter(u => u.status === 'rejected');
@@ -2647,19 +2512,6 @@
                             </div>
                             ${!isAdmin ? `<button onclick="_salvarCanaisUsuario('${u.id}')" class="px-2.5 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition-colors">Salvar canais</button>` : '<span class="text-[10px] text-slate-400 italic">todos (admin)</span>'}
                         </div>
-                        ${!isAdmin ? `<div class="flex items-center justify-between gap-3 pt-2 border-t border-slate-200 flex-wrap">
-                            <div class="flex items-center gap-1 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
-                                Visuais (perfil):
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <select id="perfilUser_${u.id}" class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-blue-400 outline-none">
-                                    <option value="">— Todos os visuais</option>
-                                    ${perfisLista.map(p => `<option value="${p.id}" ${u.perfil === p.id ? 'selected' : ''}>${escapeHTML(p.nome || 'Sem nome')}</option>`).join('')}
-                                </select>
-                                <button onclick="_salvarPerfilUsuario('${u.id}')" class="px-2.5 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg hover:bg-indigo-100 transition-colors">Salvar visuais</button>
-                            </div>
-                        </div>` : ''}
                     </div>`;
                 });
                 html += '</div>';
@@ -2938,18 +2790,7 @@
                 _currentCanais = (data.role === 'admin' || !data.canais || data.canais.length === 0)
                     ? null
                     : data.canais.map(c => c.toUpperCase());
-                // Visuais permitidos: admin vê tudo; demais seguem as abas do seu perfil/departamento.
-                // Sem perfil ou perfil sem abas = vê tudo (fallback seguro, ninguém fica travado).
-                _currentAbas = null;
-                if (data.role !== 'admin' && data.perfil) {
-                    try {
-                        const perfis = await _carregarPerfis();
-                        const p = perfis.find(x => x.id === data.perfil);
-                        if (p && Array.isArray(p.abas) && p.abas.length) _currentAbas = p.abas.slice();
-                    } catch (e) { console.error('[Perfis] carregar:', e); }
-                }
                 _aplicarRoleUI();
-                _aplicarVisuaisPermitidos();
                 _ocultarLoginScreen();
                 // Grava log de acesso (fire-and-forget, não bloqueia carregamento)
                 _registrarAcesso(user, data).catch(() => {});
