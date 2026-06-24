@@ -5378,20 +5378,25 @@
             modal.classList.remove('hidden');
 
             const META = META_INSTALACAO_DIAS;
-            const base = filteredData; // respeita TODOS os filtros ativos (canal, cidade e período/calendário)
             const mapa = {};
-            base.forEach(d => {
-                const cid = (d['Cidade'] || 'Não Identificada').trim() || 'Não Identificada';
-                if (!mapa[cid]) mapa[cid] = { nome: cid, instaladas: 0, pendentes: 0, soma: 0, qtd: 0 };
-                const m = mapa[cid];
-                if (d._isConcluida) {
-                    m.instaladas++;
-                    if (d._dataAberturaISO && d._dataISO) {
-                        const dias = _diasUteisEntre(dateFromISO(d._dataAberturaISO), dateFromISO(d._dataISO));
-                        if (dias !== null) { m.soma += dias; m.qtd++; }
-                    }
+            const getCidade = d => (d['Cidade'] || 'Não Identificada').trim() || 'Não Identificada';
+            const ensure = cid => (mapa[cid] || (mapa[cid] = { nome: cid, instaladas: 0, pendentes: 0, soma: 0, qtd: 0 }));
+
+            // Instaladas + tempo médio: seguem o período/calendário (filteredData)
+            filteredData.forEach(d => {
+                if (!d._isConcluida) return;
+                const m = ensure(getCidade(d));
+                m.instaladas++;
+                if (d._dataAberturaISO && d._dataISO) {
+                    const dias = _diasUteisEntre(dateFromISO(d._dataAberturaISO), dateFromISO(d._dataISO));
+                    if (dias !== null) { m.soma += dias; m.qtd++; }
                 }
-                if (d._situacao === 'Pendente') m.pendentes++;
+            });
+
+            // Pendentes = fila ATUAL (sempre completa). Respeita canal/cidade, mas ignora o período,
+            // pois um pendente continua na fila até ser instalado (independe da data).
+            globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo).forEach(d => {
+                if (d._situacao === 'Pendente') ensure(getCidade(d)).pendentes++;
             });
 
             let cidades = Object.values(mapa).filter(c => c.instaladas > 0 || c.pendentes > 0);
@@ -5452,7 +5457,7 @@
                             <tr>
                                 <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-left">Cidade</th>
                                 <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Instaladas</th>
-                                <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Pendentes</th>
+                                <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Pendentes (fila atual)</th>
                                 <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Tempo médio</th>
                                 <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Status</th>
                             </tr>
@@ -5460,7 +5465,7 @@
                         <tbody>${rows || '<tr><td colspan="5" class="py-6 text-center text-xs text-slate-400">Sem dados de instalação no filtro atual.</td></tr>'}</tbody>
                     </table>
                 </div>
-                <p class="text-[10px] text-slate-400 mt-3 leading-relaxed">Tempo médio em <b>dias úteis</b> (Seg-Sáb, exclui feriados), da venda até a ativação 340. Meta: <b>${META} dias úteis</b> · 🟢 ≤ ${META} · 🟡 ${META}–4,5 · 🔴 &gt; 4,5. Ordenado do pior para o melhor. Respeita todos os filtros ativos (canal, cidade e período do calendário).</p>`;
+                <p class="text-[10px] text-slate-400 mt-3 leading-relaxed">Tempo médio em <b>dias úteis</b> (Seg-Sáb, exclui feriados), da venda até a ativação 340. Meta: <b>${META} dias úteis</b> · 🟢 ≤ ${META} · 🟡 ${META}–4,5 · 🔴 &gt; 4,5. Ordenado do pior para o melhor. <b>Instaladas e tempo médio</b> seguem o período do calendário; <b>Pendentes</b> mostram a fila atual total (independe do período). Ambos respeitam canal/cidade.</p>`;
         }
         function _fecharModalInstalacaoCidade() {
             const m = document.getElementById('modalInstalacaoCidade');
