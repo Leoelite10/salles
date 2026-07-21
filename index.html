@@ -1978,6 +1978,24 @@
                         </div>
                     </div>
 
+                    <!-- Comparação entre Vendedores (lado a lado) -->
+                    <div class="glass-card p-5">
+                        <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                            <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span> Comparação entre Vendedores
+                            </h4>
+                            <div class="relative" style="min-width:220px;">
+                                <button type="button" id="dvCompararBtn" class="w-full text-left border border-slate-200 rounded-lg p-2.5 text-sm font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 flex justify-between items-center transition-colors">
+                                    <span id="dvCompararLabel">Comparar com...</span>
+                                    <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                                <div id="dvCompararPanel" class="absolute z-50 hidden w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto custom-scrollbar right-0"></div>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-400 font-medium mb-3">Selecione 2 ou mais vendedores para ver lado a lado, no mesmo período e comparação já definidos nos filtros acima. O melhor valor de cada métrica fica destacado.</p>
+                        <div id="dvCompararContainer"><p class="text-xs text-slate-400 text-center py-6">Selecione ao menos 2 vendedores em "Comparar com" para ver o comparativo lado a lado.</p></div>
+                    </div>
+
                     <!-- Análise 3: Desempenho por canal -->
                     <div>
                         <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -2245,6 +2263,7 @@
         }
 
         function switchDashboardTab(tabName) {
+            if (tabName === 'desempenhoVendedores' && !_currentPodeVerDesempenhoVendedores) { tabName = 'executivo'; }
             document.querySelectorAll('.dashboard-tab-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === tabName);
             });
@@ -2445,6 +2464,7 @@
         let _currentUser  = null;
         let _currentRole  = null;
         let _currentCanais = null; // null = todos; ['PAP','MCV','LOJAS'] = restrição
+        let _currentPodeVerDesempenhoVendedores = true; // guia "Desempenho de Vendedores": true por padrão (não quebra usuários já existentes)
 
         function _loginMsg(msg, tipo) {
             const el = document.getElementById('loginMsg');
@@ -2500,6 +2520,12 @@
                     ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
                     : 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
             }`;
+            // Guia "Desempenho de Vendedores": visibilidade controlada pelo admin (por usuário).
+            // Isolado em try/catch para nunca interromper o login caso o botão não exista no DOM.
+            try {
+                const btnDesempenho = document.querySelector('[data-tab="desempenhoVendedores"]');
+                if (btnDesempenho) btnDesempenho.classList.toggle('hidden', !_currentPodeVerDesempenhoVendedores);
+            } catch (e) { console.warn('Falha ao aplicar permissão da guia Desempenho de Vendedores:', e); }
         }
 
         // — Listeners da tela de login —
@@ -2794,6 +2820,17 @@
                             </div>
                             ${!isAdmin ? `<button onclick="_salvarCanaisUsuario('${u.id}')" class="px-2.5 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition-colors">Salvar canais</button>` : '<span class="text-[10px] text-slate-400 italic">todos (admin)</span>'}
                         </div>
+                        <div class="flex items-center justify-between gap-3 pt-2 border-t border-slate-200">
+                            <div class="flex items-center gap-1 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                Guia Desempenho de Vendedores:
+                            </div>
+                            <label class="flex items-center gap-1.5 cursor-pointer select-none ${isAdmin ? 'opacity-40' : ''}">
+                                <input type="checkbox" id="dvPerm_${u.id}" ${(u.podeVerDesempenhoVendedores !== false) ? 'checked' : ''} ${isAdmin ? 'disabled title="Admin sempre vê todas as guias"' : ''} class="w-3.5 h-3.5 accent-indigo-600 rounded cursor-pointer">
+                                <span class="text-[10px] font-black text-indigo-700 uppercase tracking-wider">Pode ver</span>
+                            </label>
+                            ${!isAdmin ? `<button onclick="_salvarPermissaoDesempenho('${u.id}')" class="px-2.5 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg hover:bg-indigo-100 transition-colors">Salvar</button>` : '<span class="text-[10px] text-slate-400 italic">sempre visível (admin)</span>'}
+                        </div>
                     </div>`;
                 });
                 html += '</div>';
@@ -2994,6 +3031,13 @@
             _abrirPainelAdmin();
         }
 
+        async function _salvarPermissaoDesempenho(uid) {
+            const el = document.getElementById(`dvPerm_${uid}`);
+            const podeVer = el ? el.checked : true;
+            await _fsDB.collection('users').doc(uid).update({ podeVerDesempenhoVendedores: podeVer });
+            _abrirPainelAdmin();
+        }
+
         async function _excluirUsuario(uid) {
             if (confirm('Excluir permanentemente este usuário? Esta ação não pode ser desfeita.')) {
                 await _fsDB.collection('users').doc(uid).delete();
@@ -3072,6 +3116,9 @@
                 _currentCanais = (data.role === 'admin' || !data.canais || data.canais.length === 0)
                     ? null
                     : data.canais.map(c => c.toUpperCase());
+                // Guia "Desempenho de Vendedores": admin sempre vê; demais usuários veem por padrão,
+                // a menos que o admin explicitamente desmarque (campo ausente = permitido).
+                _currentPodeVerDesempenhoVendedores = (data.role === 'admin' || data.podeVerDesempenhoVendedores !== false);
                 _aplicarRoleUI();
                 _ocultarLoginScreen();
                 // Grava log de acesso (fire-and-forget, não bloqueia carregamento)
@@ -8912,6 +8959,7 @@
             comparacao: 'anterior', // 'anterior' | 'anoAnterior'
             indicadorGrafico: 'faturamento',
             ordenacaoRanking: 'faturamento',
+            comparar: [], // vendedores selecionados no bloco "Comparação entre Vendedores"
             tabela: { pagina: 1, porPagina: 25, busca: '', campo: 'data', dir: 'desc' },
             _primeiraCompraCache: null
         };
@@ -9182,6 +9230,142 @@
                     <td class="py-2.5 px-4 text-center text-[10px] text-slate-400 font-bold uppercase">Dados indisponíveis</td>
                 </tr>`;
             }).join('');
+        }
+
+        function _dvBaseParaVendedor(nome, ignorar) {
+            ignorar = ignorar || [];
+            return globalData.filter(item => _dvVendedorNome(item) === nome && _dvPassaFiltros(item, [...ignorar, 'vendedores']));
+        }
+
+        function _dvTotalFaturamentoRecorte(periodo) {
+            if (!periodo) return 0;
+            const base = filtrarPeriodoPorDatas(_dvBase(['vendedores', 'periodo']), periodo.inicio, periodo.fim);
+            return base.reduce((s, d) => s + (d._isConcluida ? (d._valorDesconto || 0) : 0), 0);
+        }
+
+        function _dvMetricasComparacaoVendedor(nome) {
+            const atual = _dvPeriodoAtual();
+            if (!atual) return null;
+            const anterior = _dvPeriodoComparacao(atual);
+            const baseSemPeriodo = _dvBaseParaVendedor(nome, ['periodo']);
+            const dadosAtual = filtrarPeriodoPorDatas(baseSemPeriodo, atual.inicio, atual.fim);
+            const dadosAnterior = anterior ? filtrarPeriodoPorDatas(baseSemPeriodo, anterior.inicio, anterior.fim) : [];
+            const agA = _dvAgregado(dadosAtual);
+            const agP = dadosAnterior.length > 0 ? _dvAgregado(dadosAnterior) : null;
+
+            const canais = {};
+            dadosAtual.forEach(d => { const c = _dvCanalNome(d); (canais[c] || (canais[c] = { fat: 0 })).fat += (d._isConcluida ? (d._valorDesconto || 0) : 0); });
+            const melhorCanal = Object.entries(canais).sort((a, b) => b[1].fat - a[1].fat)[0];
+
+            const cidades = {};
+            dadosAtual.forEach(d => { const c = _dvCidadeNome(d); (cidades[c] || (cidades[c] = { fat: 0 })).fat += (d._isConcluida ? (d._valorDesconto || 0) : 0); });
+            const melhorCidade = Object.entries(cidades).sort((a, b) => b[1].fat - a[1].fat)[0];
+
+            return {
+                nome, ...agA,
+                variacao: _dvVariacao(agA.faturamento, agP ? agP.faturamento : null),
+                melhorCanal: melhorCanal ? melhorCanal[0] : null,
+                melhorCidade: melhorCidade ? melhorCidade[0] : null
+            };
+        }
+
+        function _dvRenderComparacaoVendedores() {
+            const cont = document.getElementById('dvCompararContainer');
+            if (!cont) return;
+            const selecionados = _dvState.comparar;
+            if (selecionados.length < 2) {
+                cont.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Selecione ao menos 2 vendedores em "Comparar com" para ver o comparativo lado a lado.</p>';
+                return;
+            }
+
+            const atual = _dvPeriodoAtual();
+            const totalRecorte = _dvTotalFaturamentoRecorte(atual);
+            const dados = selecionados.map(_dvMetricasComparacaoVendedor).filter(Boolean);
+            if (dados.length === 0) {
+                cont.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Sem dados para os vendedores selecionados no período atual.</p>';
+                return;
+            }
+
+            const linhas = [
+                { label: 'Faturamento', get: d => formatBRL(d.faturamento), destaque: d => d.faturamento },
+                { label: 'Variação vs comparação', get: d => { const b = _dvBadgeVariacao(d.variacao); return `<span class="px-2 py-0.5 rounded border text-[10px] font-black uppercase ${b.classe}">${b.icone} ${d.variacao.pct !== null ? (d.variacao.pct >= 0 ? '+' : '') + d.variacao.pct.toFixed(1) + '%' : b.texto}</span>`; } },
+                { label: 'Quantidade de Vendas', get: d => d.brutas, destaque: d => d.brutas },
+                { label: 'Ticket Médio', get: d => formatBRL(d.ticketMedio), destaque: d => d.ticketMedio },
+                { label: 'Clientes Atendidos', get: d => d.clientes, destaque: d => d.clientes },
+                { label: 'Participação no Faturamento', get: d => totalRecorte > 0 ? ((d.faturamento / totalRecorte) * 100).toFixed(1) + '%' : '—' },
+                { label: 'Melhor Canal', get: d => d.melhorCanal ? escapeHTML(d.melhorCanal) : '—' },
+                { label: 'Melhor Cidade', get: d => d.melhorCidade ? escapeHTML(d.melhorCidade) : '—' }
+            ];
+
+            let html = '<div class="overflow-x-auto"><table class="w-full text-xs border-collapse"><thead><tr><th class="text-left py-2 px-3 font-bold text-slate-500 uppercase text-[10px] bg-slate-50">Métrica</th>';
+            dados.forEach(d => html += `<th class="text-center py-2 px-3 font-black text-slate-700 uppercase text-[10px] bg-slate-50">${escapeHTML(d.nome)}</th>`);
+            html += '</tr></thead><tbody>';
+            linhas.forEach(linha => {
+                const melhorValor = linha.destaque ? Math.max(...dados.map(linha.destaque)) : null;
+                html += `<tr class="border-b border-slate-100"><td class="py-2 px-3 font-bold text-slate-500 uppercase text-[10px]">${linha.label}</td>`;
+                dados.forEach(d => {
+                    const destacado = linha.destaque && dados.length > 1 && linha.destaque(d) === melhorValor;
+                    html += `<td class="text-center py-2 px-3 font-bold ${destacado ? 'text-green-700 bg-green-50' : 'text-slate-700'}">${linha.get(d)}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+            cont.innerHTML = html;
+        }
+
+        function _dvRenderCompararMultiSelect(vendedores) {
+            const btn = document.getElementById('dvCompararBtn');
+            const panel = document.getElementById('dvCompararPanel');
+            const label = document.getElementById('dvCompararLabel');
+            if (!btn || !panel || !label) return;
+
+            const atualizarLabel = () => {
+                const n = _dvState.comparar.length;
+                label.textContent = n > 0 ? `${n} selecionado(s)` : 'Comparar com...';
+            };
+
+            const renderOpcoes = (filtro) => {
+                const busca = (filtro || '').toLowerCase();
+                const opcoesEl = panel.querySelector('.dv-comp-opcoes');
+                if (!opcoesEl) return;
+                opcoesEl.innerHTML = vendedores
+                    .filter(v => v.toLowerCase().indexOf(busca) !== -1)
+                    .map(v => `<label class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded cursor-pointer text-xs text-slate-700">
+                        <input type="checkbox" class="dv-comp-check rounded text-cyan-600 border-slate-300" value="${escapeHTML(v)}" ${_dvState.comparar.indexOf(v) !== -1 ? 'checked' : ''}>
+                        <span class="truncate">${escapeHTML(v)}</span>
+                    </label>`).join('') || '<div class="p-2 text-xs text-slate-400 text-center">Nenhum vendedor encontrado</div>';
+
+                opcoesEl.querySelectorAll('.dv-comp-check').forEach(chk => {
+                    chk.addEventListener('change', e => {
+                        if (e.target.checked) _dvState.comparar.push(e.target.value);
+                        else _dvState.comparar = _dvState.comparar.filter(v => v !== e.target.value);
+                        atualizarLabel();
+                        _dvRenderComparacaoVendedores();
+                    });
+                });
+            };
+
+            panel.innerHTML = `
+                <div class="p-2 sticky top-0 bg-white border-b border-slate-100 flex flex-col gap-2 z-10">
+                    <input type="text" placeholder="Buscar vendedor..." class="w-full text-xs p-1.5 border border-slate-200 rounded focus:outline-none focus:border-cyan-500 dv-comp-busca">
+                    <div class="flex justify-between px-1">
+                        <button type="button" class="text-[10px] font-bold text-slate-500 uppercase dv-comp-nenhum">Limpar seleção</button>
+                    </div>
+                </div>
+                <div class="p-1 dv-comp-opcoes"></div>
+            `;
+            renderOpcoes('');
+
+            panel.querySelector('.dv-comp-busca').addEventListener('input', e => renderOpcoes(e.target.value));
+            panel.querySelector('.dv-comp-nenhum').addEventListener('click', e => { e.preventDefault(); _dvState.comparar = []; renderOpcoes(panel.querySelector('.dv-comp-busca').value); atualizarLabel(); _dvRenderComparacaoVendedores(); });
+
+            atualizarLabel();
+
+            if (!btn._dvBound) {
+                btn.addEventListener('click', e => { e.stopPropagation(); panel.classList.toggle('hidden'); });
+                document.addEventListener('click', e => { if (!btn.contains(e.target) && !panel.contains(e.target)) panel.classList.add('hidden'); });
+                btn._dvBound = true;
+            }
         }
 
         function _dvCalcularCanais() {
@@ -9820,10 +10004,12 @@
             _dvPopularSelect('dvFiltroProduto', produtos, 'Todos');
             _dvPopularAnoMes();
             _dvRenderVendedorMultiSelect(vendedores);
+            _dvRenderCompararMultiSelect(vendedores);
         }
 
         function _dvLimparFiltros() {
             _dvState.filtros = { vendedores: [], canal: '', cidade: '', uf: '', cliente: '', produto: '', dataInicio: '', dataFim: '' };
+            _dvState.comparar = [];
             _dvState.tabela.busca = '';
             _dvState.tabela.pagina = 1;
             ['dvFiltroCanal', 'dvFiltroCidade', 'dvFiltroEstado', 'dvFiltroCliente', 'dvFiltroProduto', 'dvFiltroAno', 'dvFiltroMes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -9870,6 +10056,7 @@
             _dvRenderComparacaoPeriodos();
             _dvRenderGraficoEvolucao();
             _dvRenderRanking();
+            _dvRenderComparacaoVendedores();
             _dvRenderCanais();
             _dvRenderGeografia();
             _dvRenderCruzamento();
