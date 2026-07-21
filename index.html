@@ -610,6 +610,7 @@
                         <button type="button" data-tab="qualidade" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Qualidade</button>
                         <button type="button" data-tab="bairros" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Mapa de Calor</button>
                         <button type="button" data-tab="crescimento" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">Crescimento</button>
+                        <button type="button" data-tab="desempenhoVendedores" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">Desempenho de Vendedores</button>
                     </div>
                 </div>
                 
@@ -1831,6 +1832,285 @@
                 </div>
                 <!-- ===== FIM ABA: CRESCIMENTO DE VENDAS ===== -->
 
+                <!-- ===== ABA: DESEMPENHO DE VENDEDORES (guia isolada, somente leitura) ===== -->
+                <div id="secaoDesempenhoVendedores" class="space-y-8 dashboard-section-hidden">
+
+                    <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-indigo-600"></span> Desempenho de Vendedores
+                            </h3>
+                            <p class="text-xs text-slate-400 font-medium mt-1">Guia com filtros próprios (não interferem nas demais abas) · leitura sobre a base já carregada, sem alterar dados de origem.</p>
+                        </div>
+                    </div>
+
+                    <!-- Painel de Filtros (independente do menu lateral) -->
+                    <div class="glass-card p-5">
+                        <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                            <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> Filtros da Guia
+                            </h4>
+                            <button type="button" onclick="_dvLimparFiltros()" class="px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-600 hover:bg-slate-50 transition-colors">Limpar filtros</button>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                            <div class="relative">
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Vendedor(es)</label>
+                                <button type="button" id="dvFiltroVendedorBtn" class="w-full text-left border border-slate-200 rounded-lg p-2.5 text-sm font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 flex justify-between items-center transition-colors">
+                                    <span id="dvFiltroVendedorLabel">Todos</span>
+                                    <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                                <div id="dvFiltroVendedorPanel" class="absolute z-50 hidden w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto custom-scrollbar"></div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Canal</label>
+                                <select id="dvFiltroCanal" onchange="_dvOnFiltroSimples()" class="w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"><option value="">Todos</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Cidade</label>
+                                <select id="dvFiltroCidade" onchange="_dvOnFiltroSimples()" class="w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"><option value="">Todas</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Estado (UF)</label>
+                                <select id="dvFiltroEstado" onchange="_dvOnFiltroSimples()" class="w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"><option value="">Todos</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Cliente</label>
+                                <select id="dvFiltroCliente" onchange="_dvOnFiltroSimples()" class="w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"><option value="">Todos</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Produto / Plano</label>
+                                <select id="dvFiltroProduto" onchange="_dvOnFiltroSimples()" class="w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"><option value="">Todos</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Ano</label>
+                                <select id="dvFiltroAno" onchange="_dvAplicarAnoMes()" class="w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"><option value="">Ano</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Mês</label>
+                                <select id="dvFiltroMes" onchange="_dvAplicarAnoMes()" class="w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">Todos</option>
+                                    <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
+                                    <option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option>
+                                    <option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option>
+                                    <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Período — Data início</label>
+                                <input type="date" id="dvFiltroDataInicio" onchange="_dvOnFiltroSimples()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Período — Data fim</label>
+                                <input type="date" id="dvFiltroDataFim" onchange="_dvOnFiltroSimples()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Comparar com</label>
+                                <select id="dvComparacaoModo" onchange="_dvOnComparacaoChange()" class="w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="anterior">Período/mês anterior</option>
+                                    <option value="anoAnterior">Mesmo mês do ano anterior</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPIs principais -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5" id="dvKpiCards"></div>
+
+                    <!-- Comparação de períodos -->
+                    <div class="glass-card p-5">
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> Comparação de Períodos
+                        </h4>
+                        <div id="dvComparacaoPeriodosCards"></div>
+                    </div>
+
+                    <!-- Análise 1: Desempenho mês a mês -->
+                    <div class="glass-card p-5 chart-box">
+                        <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                            <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Desempenho Mês a Mês
+                            </h4>
+                            <select id="dvIndicadorGrafico" onchange="_dvOnIndicadorChange()" class="border border-slate-200 rounded-lg p-2 text-xs font-bold text-slate-600 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="faturamento">Faturamento</option>
+                                <option value="brutas">Quantidade de Vendas</option>
+                                <option value="ticketMedio">Ticket Médio</option>
+                                <option value="clientes">Clientes</option>
+                                <option value="participacao">Participação % (faturamento)</option>
+                            </select>
+                        </div>
+                        <p class="text-[11px] text-slate-400 font-medium mb-3">Se nenhum vendedor for selecionado no filtro, mostra automaticamente o Top 5 por faturamento. Meses sem venda aparecem como lacuna no gráfico (sem valor inventado).</p>
+                        <div style="position:relative;height:340px;">
+                            <canvas id="chartDvEvolucao"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Análise 2: Ranking de vendedores -->
+                    <div class="glass-card overflow-hidden parent-overflow flex flex-col">
+                        <div class="p-5 border-b border-slate-100 bg-white flex justify-between items-center flex-wrap gap-3">
+                            <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Ranking de Vendedores
+                            </h4>
+                            <select id="dvOrdenacaoRanking" onchange="_dvOnOrdenacaoChange()" class="border border-slate-200 rounded-lg p-2 text-xs font-bold text-slate-600 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="faturamento">Ordenar por: Maior faturamento</option>
+                                <option value="vendas">Ordenar por: Maior quantidade de vendas</option>
+                                <option value="ticket">Ordenar por: Maior ticket médio</option>
+                                <option value="crescimento">Ordenar por: Maior crescimento</option>
+                                <option value="clientes">Ordenar por: Maior número de clientes</option>
+                            </select>
+                        </div>
+                        <div class="overflow-x-auto table-container flex-1 bg-white" style="max-height: 460px;">
+                            <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
+                                <thead class="bg-slate-50 sticky top-0 z-10">
+                                    <tr>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">#</th>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Faturamento</th>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Vendas</th>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Ticket Médio</th>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Clientes</th>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Participação</th>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Crescimento</th>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Meta</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dvRankingTableBody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Análise 3: Desempenho por canal -->
+                    <div>
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-violet-500"></span> Desempenho por Canal
+                        </h4>
+                        <div id="dvCanalVendedorInfo" class="mb-3"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5" id="dvCanalCards"></div>
+                    </div>
+
+                    <!-- Análise 4: Desempenho por cidade e estado -->
+                    <div>
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span> Desempenho por Cidade e Estado
+                        </h4>
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                            <div class="glass-card overflow-hidden parent-overflow flex flex-col">
+                                <div class="overflow-x-auto table-container flex-1 bg-white" style="max-height: 420px;">
+                                    <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
+                                        <thead class="bg-slate-50 sticky top-0 z-10">
+                                            <tr>
+                                                <th class="py-2.5 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">#</th>
+                                                <th class="py-2.5 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Cidade</th>
+                                                <th class="py-2.5 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">UF</th>
+                                                <th class="py-2.5 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Faturamento</th>
+                                                <th class="py-2.5 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Vendas</th>
+                                                <th class="py-2.5 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Ticket Médio</th>
+                                                <th class="py-2.5 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Clientes</th>
+                                                <th class="py-2.5 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Variação</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dvCidadeTableBody" class="divide-y divide-slate-100"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="glass-card p-5 flex flex-col gap-4" style="position:relative;height:420px;">
+                                <canvas id="chartDvCidade"></canvas>
+                            </div>
+                        </div>
+                        <div class="glass-card overflow-hidden mt-6" style="padding:0;">
+                            <div class="p-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+                                <h5 class="text-[11px] font-extrabold text-slate-600 uppercase tracking-widest">Mapa — Concentração de Vendas por Cidade</h5>
+                                <span id="dvMapaStatus" class="text-[10px] font-bold text-slate-400"></span>
+                            </div>
+                            <div id="dvMapaContainer" style="height:420px;width:100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Análise 5: Cruzamento vendedor x canal x cidade -->
+                    <div>
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-fuchsia-500"></span> Cruzamento: Vendedor × Canal × Cidade
+                        </h4>
+                        <div class="glass-card p-5 mb-6">
+                            <h5 class="text-[11px] font-extrabold text-slate-600 uppercase tracking-widest mb-3">Mapa de Calor — Faturamento por Vendedor e Canal</h5>
+                            <div id="dvMatrizContainer"></div>
+                        </div>
+                        <div class="glass-card overflow-hidden parent-overflow flex flex-col">
+                            <div class="p-5 border-b border-slate-100 bg-white">
+                                <h5 class="text-[11px] font-extrabold text-slate-600 uppercase tracking-widest">Melhores Combinações Vendedor + Canal + Cidade</h5>
+                            </div>
+                            <div class="overflow-x-auto table-container flex-1 bg-white" style="max-height: 420px;">
+                                <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
+                                    <thead class="bg-slate-50 sticky top-0 z-10">
+                                        <tr>
+                                            <th class="py-2 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">#</th>
+                                            <th class="py-2 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
+                                            <th class="py-2 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Canal</th>
+                                            <th class="py-2 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Cidade</th>
+                                            <th class="py-2 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Faturamento</th>
+                                            <th class="py-2 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Vendas</th>
+                                            <th class="py-2 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Ticket Médio</th>
+                                            <th class="py-2 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Variação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dvCombosTableBody" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Análise 7: Tabela detalhada -->
+                    <div class="glass-card overflow-hidden parent-overflow flex flex-col">
+                        <div class="p-5 border-b border-slate-100 bg-white flex justify-between items-center flex-wrap gap-3">
+                            <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span> Tabela Detalhada
+                            </h4>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <input type="text" id="dvTabelaBusca" oninput="_dvBuscarTabela(this.value)" placeholder="Buscar vendedor, cidade, cliente..." class="border border-slate-200 rounded-lg p-2 text-xs text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500 w-56">
+                                <button type="button" onclick="_dvExportarExcel()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">Exportar (Excel)</button>
+                            </div>
+                        </div>
+                        <div class="px-5 py-2 flex items-center justify-between flex-wrap gap-2">
+                            <span id="dvTabelaInfo" class="text-[11px] font-bold text-slate-400"></span>
+                        </div>
+                        <div class="overflow-x-auto table-container flex-1 bg-white" style="max-height: 460px;">
+                            <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
+                                <thead class="bg-slate-50 sticky top-0 z-10">
+                                    <tr>
+                                        <th onclick="_dvSortTabela('data')" class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Data<span id="dvSortIcon_data" class="ml-1 text-indigo-500"></span></th>
+                                        <th onclick="_dvSortTabela('vendedor')" class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Vendedor<span id="dvSortIcon_vendedor" class="ml-1 text-indigo-500"></span></th>
+                                        <th onclick="_dvSortTabela('canal')" class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Canal<span id="dvSortIcon_canal" class="ml-1 text-indigo-500"></span></th>
+                                        <th onclick="_dvSortTabela('cidade')" class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Cidade<span id="dvSortIcon_cidade" class="ml-1 text-indigo-500"></span></th>
+                                        <th onclick="_dvSortTabela('uf')" class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">UF<span id="dvSortIcon_uf" class="ml-1 text-indigo-500"></span></th>
+                                        <th onclick="_dvSortTabela('cliente')" class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Cliente<span id="dvSortIcon_cliente" class="ml-1 text-indigo-500"></span></th>
+                                        <th onclick="_dvSortTabela('produto')" class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Produto/Plano<span id="dvSortIcon_produto" class="ml-1 text-indigo-500"></span></th>
+                                        <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Situação</th>
+                                        <th onclick="_dvSortTabela('valor')" class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">Faturamento<span id="dvSortIcon_valor" class="ml-1 text-indigo-500"></span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dvTabelaTableBody" class="divide-y divide-slate-100"></tbody>
+                                <tfoot class="bg-slate-50 sticky bottom-0">
+                                    <tr>
+                                        <td colspan="7" class="py-2.5 px-3 text-right text-[10px] font-black uppercase text-slate-500">Total (<span id="dvTabelaTotalRegistros">0</span> registros)</td>
+                                        <td></td>
+                                        <td class="py-2.5 px-3 text-right text-sm font-black text-slate-800" id="dvTabelaTotalValor">R$ 0,00</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div class="p-4 flex items-center justify-center gap-2" id="dvTabelaPaginacao"></div>
+                    </div>
+
+                    <!-- Insights de Desempenho -->
+                    <div class="glass-card p-5">
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Insights de Desempenho
+                        </h4>
+                        <div class="space-y-2.5" id="dvInsightsList"></div>
+                    </div>
+
+                </div>
+                <!-- ===== FIM ABA: DESEMPENHO DE VENDEDORES ===== -->
+
             </div>
         </div>
     </main>
@@ -1928,7 +2208,8 @@
             { tabs: ['bairros'] },
             { tabs: ['funil'] },
             { tabs: ['funil', 'qualidade'] },
-            { tabs: ['crescimento'] }
+            { tabs: ['crescimento'] },
+            { tabs: ['desempenhoVendedores'] }
         ];
 
         function setupDashboardTabs() {
@@ -2002,6 +2283,7 @@
             if (qualidadeAlertasCard) qualidadeAlertasCard.classList.toggle('dashboard-section-hidden', tabName === 'funil');
 
             if (tabName === 'bairros') { setTimeout(() => renderMapaLeaflet(), 80); }
+            if (tabName === 'desempenhoVendedores') { _dvInit(); _dvRenderAll(); }
         }
 
         // DOM Inputs Fixos
@@ -8610,6 +8892,990 @@
                     </div>
                 </div>
             `;
+        }
+
+        // ===========================================================
+        // ABA: DESEMPENHO DE VENDEDORES (guia isolada — somente leitura)
+        // -----------------------------------------------------------
+        // Regras de isolamento:
+        //  - Lê exclusivamente `globalData` (base já normalizada pelo
+        //    processRawObjects, mesma regra de "vendas brutas" usada no
+        //    resto do app — ver memória `modelo-dados-vendas`).
+        //  - Nunca lê nem grava em `activeFilters` / `filteredData`
+        //    (filtros do menu lateral): filtros próprios em `_dvState`.
+        //  - Nunca muta objetos de `globalData` (usa apenas leitura).
+        //  - Só processa quando a aba está visível (chamado a partir de
+        //    switchDashboardTab), evitando trabalho desnecessário.
+        // ===========================================================
+        const _dvState = {
+            filtros: { vendedores: [], canal: '', cidade: '', uf: '', cliente: '', produto: '', dataInicio: '', dataFim: '' },
+            comparacao: 'anterior', // 'anterior' | 'anoAnterior'
+            indicadorGrafico: 'faturamento',
+            ordenacaoRanking: 'faturamento',
+            tabela: { pagina: 1, porPagina: 25, busca: '', campo: 'data', dir: 'desc' },
+            _primeiraCompraCache: null
+        };
+
+        function _dvClienteNome(d) { return (d['Razão social/nome'] || '').trim(); }
+        function _dvCanalNome(d) { return (d['Setor'] || 'Não Identificado').trim() || 'Não Identificado'; }
+        function _dvCidadeNome(d) { return (d['Cidade'] || 'Não Identificada').trim() || 'Não Identificada'; }
+        function _dvEstadoNome(d) { return d._ufOperacao || 'Não Identificado'; }
+        function _dvProdutoNome(d) { return (d['Plano de venda'] || 'Não Identificado').trim() || 'Não Identificado'; }
+        function _dvVendedorNome(d) { return d._vendedorNome || 'Não Identificado'; }
+
+        function _dvPassaFiltros(item, ignorar) {
+            ignorar = ignorar || [];
+            const f = _dvState.filtros;
+            if (ignorar.indexOf('vendedores') === -1 && f.vendedores.length > 0 && f.vendedores.indexOf(_dvVendedorNome(item)) === -1) return false;
+            if (ignorar.indexOf('canal') === -1 && f.canal && _dvCanalNome(item) !== f.canal) return false;
+            if (ignorar.indexOf('cidade') === -1 && f.cidade && _dvCidadeNome(item) !== f.cidade) return false;
+            if (ignorar.indexOf('uf') === -1 && f.uf && _dvEstadoNome(item) !== f.uf) return false;
+            if (ignorar.indexOf('cliente') === -1 && f.cliente && _dvClienteNome(item) !== f.cliente) return false;
+            if (ignorar.indexOf('produto') === -1 && f.produto && _dvProdutoNome(item) !== f.produto) return false;
+            if (ignorar.indexOf('periodo') === -1 && (f.dataInicio || f.dataFim)) {
+                const iso = item._dataISO;
+                if (!iso) return false;
+                if (f.dataInicio && iso < f.dataInicio) return false;
+                if (f.dataFim && iso > f.dataFim) return false;
+            }
+            return true;
+        }
+
+        function _dvBase(ignorar) {
+            return globalData.filter(item => _dvPassaFiltros(item, ignorar || []));
+        }
+
+        function _dvPeriodoAtual() {
+            const base = _dvBase();
+            const datas = base.map(getDateFromRecord).filter(Boolean).sort((a, b) => a - b);
+            let inicio = _dvState.filtros.dataInicio ? dateFromISO(_dvState.filtros.dataInicio) : (datas[0] || null);
+            let fim = _dvState.filtros.dataFim ? dateFromISO(_dvState.filtros.dataFim) : (datas[datas.length - 1] || null);
+            if (!inicio || !fim) return null;
+            if (inicio > fim) { const t = inicio; inicio = fim; fim = t; }
+            return { inicio, fim, label: `${formatDateBRFromDate(inicio)} a ${formatDateBRFromDate(fim)}` };
+        }
+
+        function _dvPeriodoComparacao(periodoAtual) {
+            if (!periodoAtual) return null;
+            if (_dvState.comparacao === 'anoAnterior') {
+                const inicio = new Date(periodoAtual.inicio.getFullYear() - 1, periodoAtual.inicio.getMonth(), periodoAtual.inicio.getDate());
+                const fim = new Date(periodoAtual.fim.getFullYear() - 1, periodoAtual.fim.getMonth(), periodoAtual.fim.getDate());
+                return { inicio, fim, label: `${formatDateBRFromDate(inicio)} a ${formatDateBRFromDate(fim)}` };
+            }
+            return deslocarPeriodo(periodoAtual, -1);
+        }
+
+        function _dvDadosPeriodoAnterior() {
+            const atual = _dvPeriodoAtual();
+            if (!atual) return { atual: null, anterior: null, dadosAtual: [], dadosAnterior: [] };
+            const anterior = _dvPeriodoComparacao(atual);
+            const baseSemPeriodo = _dvBase(['periodo']);
+            const dadosAtual = filtrarPeriodoPorDatas(baseSemPeriodo, atual.inicio, atual.fim);
+            const dadosAnterior = anterior ? filtrarPeriodoPorDatas(baseSemPeriodo, anterior.inicio, anterior.fim) : [];
+            return { atual, anterior, dadosAtual, dadosAnterior };
+        }
+
+        function _dvAgregado(lista) {
+            const brutas = lista.length;
+            let faturamento = 0, instaladas = 0;
+            const clientes = new Set();
+            lista.forEach(d => {
+                if (d._isConcluida) { faturamento += (d._valorDesconto || 0); instaladas++; }
+                const c = _dvClienteNome(d);
+                if (c) clientes.add(c);
+            });
+            return {
+                brutas,
+                faturamento,
+                instaladas,
+                ticketMedio: instaladas > 0 ? faturamento / instaladas : 0,
+                clientes: clientes.size,
+                mediaVendasPorCliente: clientes.size > 0 ? brutas / clientes.size : 0
+            };
+        }
+
+        function _dvVariacao(atual, anterior) {
+            if (atual === null || atual === undefined || anterior === null || anterior === undefined) return { diff: null, pct: null, status: 'semBase' };
+            const diff = atual - anterior;
+            if (anterior === 0) {
+                if (atual === 0) return { diff: 0, pct: 0, status: 'estavel' };
+                return { diff, pct: null, status: 'semBase' };
+            }
+            const pct = (diff / anterior) * 100;
+            return { diff, pct, status: diff > 0 ? 'alta' : (diff < 0 ? 'queda' : 'estavel') };
+        }
+
+        function _dvBadgeVariacao(v) {
+            if (v.status === 'semBase') return { texto: 'Sem base de comparação', classe: 'bg-slate-50 text-slate-400 border-slate-100', icone: '—' };
+            if (v.status === 'alta') return { texto: 'Crescimento', classe: 'bg-green-50 text-green-700 border-green-100', icone: '▲' };
+            if (v.status === 'queda') return { texto: 'Queda', classe: 'bg-red-50 text-red-700 border-red-100', icone: '▼' };
+            return { texto: 'Estabilidade', classe: 'bg-amber-50 text-amber-700 border-amber-100', icone: '=' };
+        }
+
+        function _dvPrimeiraCompraPorCliente() {
+            if (_dvState._primeiraCompraCache) return _dvState._primeiraCompraCache;
+            const mapa = {};
+            globalData.forEach(d => {
+                const c = _dvClienteNome(d);
+                if (!c) return;
+                const iso = d._dataISO;
+                if (!iso) return;
+                if (!mapa[c] || iso < mapa[c]) mapa[c] = iso;
+            });
+            _dvState._primeiraCompraCache = mapa;
+            return mapa;
+        }
+
+        function _dvNovosClientes(lista, periodo) {
+            if (!periodo) return null;
+            const primeira = _dvPrimeiraCompraPorCliente();
+            const vistos = new Set();
+            let novos = 0;
+            const iniISO = isoFromDate(periodo.inicio), fimISO = isoFromDate(periodo.fim);
+            lista.forEach(d => {
+                const c = _dvClienteNome(d);
+                if (!c || vistos.has(c)) return;
+                vistos.add(c);
+                const pc = primeira[c];
+                if (pc && pc >= iniISO && pc <= fimISO) novos++;
+            });
+            return novos;
+        }
+
+        function _dvRenderKpis() {
+            const cont = document.getElementById('dvKpiCards');
+            if (!cont) return;
+            const { atual, anterior, dadosAtual, dadosAnterior } = _dvDadosPeriodoAnterior();
+            if (!atual) {
+                cont.innerHTML = '<div class="col-span-full text-center text-xs text-slate-400 py-8 font-bold tracking-wide">Sem dados para os filtros selecionados.</div>';
+                return;
+            }
+            const agAtual = _dvAgregado(dadosAtual);
+            const agAnterior = anterior ? _dvAgregado(dadosAnterior) : null;
+            const novosAtual = _dvNovosClientes(dadosAtual, atual);
+            const novosAnterior = anterior ? _dvNovosClientes(dadosAnterior, anterior) : null;
+
+            const totalSemVendedor = _dvAgregado(filtrarPeriodoPorDatas(_dvBase(['vendedores']), atual.inicio, atual.fim));
+            const participacao = (_dvState.filtros.vendedores.length > 0 && totalSemVendedor.faturamento > 0)
+                ? (agAtual.faturamento / totalSemVendedor.faturamento) * 100
+                : null;
+
+            const compLabel = _dvState.comparacao === 'anoAnterior' ? 'mesmo mês do ano anterior' : 'período anterior';
+
+            const cardsComparaveis = [
+                { titulo: 'Faturamento Total', valor: formatBRL(agAtual.faturamento), atual: agAtual.faturamento, anterior: agAnterior ? agAnterior.faturamento : null },
+                { titulo: 'Quantidade de Vendas', valor: agAtual.brutas.toLocaleString('pt-BR'), atual: agAtual.brutas, anterior: agAnterior ? agAnterior.brutas : null },
+                { titulo: 'Ticket Médio', valor: formatBRL(agAtual.ticketMedio), atual: agAtual.ticketMedio, anterior: agAnterior ? agAnterior.ticketMedio : null },
+                { titulo: 'Clientes Atendidos', valor: agAtual.clientes.toLocaleString('pt-BR'), atual: agAtual.clientes, anterior: agAnterior ? agAnterior.clientes : null }
+            ];
+
+            let html = cardsComparaveis.map(c => {
+                const v = _dvVariacao(c.atual, c.anterior);
+                const b = _dvBadgeVariacao(v);
+                return `<div class="glass-card p-5 border-l-4 border-l-indigo-500">
+                    <div class="flex items-start justify-between gap-3">
+                        <div><span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">${c.titulo}</span>
+                        <span class="block text-2xl font-black text-slate-800 mt-2">${c.valor}</span></div>
+                        <span class="px-2.5 py-1 rounded-lg text-[10px] font-black border ${b.classe}">${b.icone}</span>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-[10px] uppercase font-bold tracking-wider">
+                        <span class="${b.classe} px-2 py-1 rounded border">${b.texto}</span>
+                        <span class="text-slate-500 normal-case font-medium">${v.pct !== null ? (v.pct >= 0 ? '+' : '') + v.pct.toFixed(1) + '%' : '—'} vs ${compLabel}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            const novosIndisp = novosAtual === null;
+            html += `<div class="glass-card p-5 border-l-4 ${novosIndisp ? 'border-l-slate-200' : 'border-l-indigo-500'}">
+                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Novos Clientes</span>
+                <span class="block text-2xl font-black ${novosIndisp ? 'text-slate-300' : 'text-slate-800'} mt-2">${novosIndisp ? 'Dados indisponíveis' : novosAtual.toLocaleString('pt-BR')}</span>
+                ${!novosIndisp ? `<span class="text-[10px] text-slate-400 font-medium mt-1 block">Cliente com primeira compra da base dentro do período. Anterior: ${novosAnterior !== null ? novosAnterior : '—'}</span>` : `<span class="text-[10px] text-slate-400 font-medium mt-1 block">Sem período válido para identificar primeira compra.</span>`}
+            </div>`;
+
+            const mediaIndisp = agAtual.clientes === 0;
+            html += `<div class="glass-card p-5 border-l-4 ${mediaIndisp ? 'border-l-slate-200' : 'border-l-indigo-500'}">
+                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Média de Vendas por Cliente</span>
+                <span class="block text-2xl font-black ${mediaIndisp ? 'text-slate-300' : 'text-slate-800'} mt-2">${mediaIndisp ? 'Dados indisponíveis' : agAtual.mediaVendasPorCliente.toFixed(2)}</span>
+            </div>`;
+
+            const partIndisp = participacao === null;
+            html += `<div class="glass-card p-5 border-l-4 ${partIndisp ? 'border-l-slate-200' : 'border-l-indigo-500'}">
+                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Participação no Faturamento</span>
+                <span class="block text-2xl font-black ${partIndisp ? 'text-slate-300' : 'text-slate-800'} mt-2">${partIndisp ? 'Selecione vendedor(es)' : participacao.toFixed(1) + '%'}</span>
+                <span class="text-[10px] text-slate-400 font-medium mt-1 block">Faturamento do(s) vendedor(es) selecionado(s) sobre o total do mesmo recorte de canal/cidade/período.</span>
+            </div>`;
+
+            html += `<div class="glass-card p-5 border-l-4 border-l-slate-200">
+                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Meta Mensal / % Atingimento</span>
+                <span class="block text-2xl font-black text-slate-300 mt-2">Dados indisponíveis</span>
+                <span class="text-[10px] text-slate-400 font-medium mt-1 block">A base atual não possui metas cadastradas por vendedor (apenas por UF/Canal).</span>
+            </div>`;
+
+            cont.innerHTML = html;
+        }
+
+        function _dvCalcularRanking() {
+            const { atual, dadosAtual, dadosAnterior } = _dvDadosPeriodoAnterior();
+            if (!atual) return { linhas: [], totalFaturamento: 0 };
+
+            const mapa = {};
+            const ensure = nome => (mapa[nome] || (mapa[nome] = { nome, atual: [], anterior: [] }));
+            dadosAtual.forEach(d => ensure(_dvVendedorNome(d)).atual.push(d));
+            dadosAnterior.forEach(d => ensure(_dvVendedorNome(d)).anterior.push(d));
+
+            const totalFaturamento = dadosAtual.reduce((s, d) => s + (d._isConcluida ? (d._valorDesconto || 0) : 0), 0);
+
+            const linhas = Object.values(mapa).map(v => {
+                const agA = _dvAgregado(v.atual);
+                const agP = v.anterior.length > 0 ? _dvAgregado(v.anterior) : null;
+                return {
+                    nome: v.nome,
+                    ...agA,
+                    participacao: totalFaturamento > 0 ? (agA.faturamento / totalFaturamento) * 100 : 0,
+                    variacao: _dvVariacao(agA.faturamento, agP ? agP.faturamento : null)
+                };
+            });
+
+            return { linhas, totalFaturamento };
+        }
+
+        function _dvRenderRanking() {
+            const tbody = document.getElementById('dvRankingTableBody');
+            if (!tbody) return;
+            const { linhas } = _dvCalcularRanking();
+            if (linhas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="py-4 px-4 text-center text-xs text-slate-400">Sem vendedores para os filtros selecionados.</td></tr>';
+                return;
+            }
+
+            const sorters = {
+                faturamento: (a, b) => b.faturamento - a.faturamento,
+                vendas: (a, b) => b.brutas - a.brutas,
+                ticket: (a, b) => b.ticketMedio - a.ticketMedio,
+                crescimento: (a, b) => (b.variacao.pct ?? -Infinity) - (a.variacao.pct ?? -Infinity),
+                clientes: (a, b) => b.clientes - a.clientes
+            };
+            const lista = [...linhas].sort(sorters[_dvState.ordenacaoRanking] || sorters.faturamento);
+
+            const mediaFaturamento = linhas.reduce((s, v) => s + v.faturamento, 0) / linhas.length;
+            const melhor = [...linhas].sort((a, b) => b.faturamento - a.faturamento)[0];
+            const crescentes = linhas.filter(v => v.variacao.pct !== null);
+            const maiorCrescimento = crescentes.length ? [...crescentes].sort((a, b) => b.variacao.pct - a.variacao.pct)[0] : null;
+            const maiorQueda = crescentes.length ? [...crescentes].sort((a, b) => a.variacao.pct - b.variacao.pct)[0] : null;
+
+            tbody.innerHTML = lista.map((v, i) => {
+                const b = _dvBadgeVariacao(v.variacao);
+                const destaques = [];
+                if (v.nome === melhor.nome) destaques.push('<span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 text-[9px] font-black uppercase">Melhor</span>');
+                if (maiorCrescimento && v.nome === maiorCrescimento.nome && maiorCrescimento.variacao.pct > 0) destaques.push('<span class="px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-100 text-[9px] font-black uppercase">+ Cresceu</span>');
+                if (maiorQueda && v.nome === maiorQueda.nome && maiorQueda.variacao.pct < 0) destaques.push('<span class="px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-100 text-[9px] font-black uppercase">Queda</span>');
+                if (v.faturamento < mediaFaturamento) destaques.push('<span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100 text-[9px] font-black uppercase">Abaixo da média</span>');
+                return `<tr class="hover:bg-indigo-50/40 transition-colors">
+                    <td class="py-2.5 px-4 text-slate-500 text-center font-bold text-xs">${i + 1}</td>
+                    <td class="py-2.5 px-4 text-slate-800 font-bold text-xs">${escapeHTML(v.nome)}<div class="flex gap-1 mt-1 flex-wrap">${destaques.join('')}</div></td>
+                    <td class="py-2.5 px-4 text-right font-black text-slate-800">${formatBRL(v.faturamento)}</td>
+                    <td class="py-2.5 px-4 text-center font-bold text-blue-700">${v.brutas}</td>
+                    <td class="py-2.5 px-4 text-right font-bold text-emerald-600">${formatBRL(v.ticketMedio)}</td>
+                    <td class="py-2.5 px-4 text-center font-bold text-slate-600">${v.clientes}</td>
+                    <td class="py-2.5 px-4 text-center font-bold text-purple-600">${v.participacao.toFixed(1)}%</td>
+                    <td class="py-2.5 px-4 text-center"><span class="px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase ${b.classe}">${b.icone} ${v.variacao.pct !== null ? (v.variacao.pct >= 0 ? '+' : '') + v.variacao.pct.toFixed(1) + '%' : b.texto}</span></td>
+                    <td class="py-2.5 px-4 text-center text-[10px] text-slate-400 font-bold uppercase">Dados indisponíveis</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function _dvCalcularCanais() {
+            const { dadosAtual, dadosAnterior } = _dvDadosPeriodoAnterior();
+            const canais = {};
+            const ensure = c => (canais[c] || (canais[c] = { nome: c, atual: [], anterior: [] }));
+            dadosAtual.forEach(d => ensure(_dvCanalNome(d)).atual.push(d));
+            dadosAnterior.forEach(d => ensure(_dvCanalNome(d)).anterior.push(d));
+            const totalFat = dadosAtual.reduce((s, d) => s + (d._isConcluida ? (d._valorDesconto || 0) : 0), 0);
+            return Object.values(canais).map(c => {
+                const agA = _dvAgregado(c.atual);
+                const agP = c.anterior.length > 0 ? _dvAgregado(c.anterior) : null;
+                return { nome: c.nome, ...agA, participacao: totalFat > 0 ? (agA.faturamento / totalFat) * 100 : 0, variacao: _dvVariacao(agA.faturamento, agP ? agP.faturamento : null) };
+            }).sort((a, b) => b.faturamento - a.faturamento);
+        }
+
+        function _dvRenderCanais() {
+            const cont = document.getElementById('dvCanalCards');
+            const info = document.getElementById('dvCanalVendedorInfo');
+            if (!cont) return;
+            const canais = _dvCalcularCanais();
+            if (canais.length === 0) {
+                cont.innerHTML = '<div class="col-span-full text-center text-xs text-slate-400 py-6">Sem dados de canal para os filtros atuais.</div>';
+                if (info) info.innerHTML = '';
+                return;
+            }
+
+            const cores = { 'PAP': '#2563eb', 'MCV': '#7c3aed', 'LOJAS': '#d97706' };
+            cont.innerHTML = canais.map(c => {
+                const b = _dvBadgeVariacao(c.variacao);
+                const cor = cores[c.nome.toUpperCase()] || '#64748b';
+                return `<div class="glass-card p-5 border-l-4" style="border-left-color:${cor}">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">${escapeHTML(c.nome)}</span>
+                    <span class="block text-xl font-black text-slate-800 mt-1">${formatBRL(c.faturamento)}</span>
+                    <span class="text-xs text-slate-400 font-medium">${c.brutas} vendas · ${c.clientes} clientes</span>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center text-[10px] font-bold uppercase">
+                        <span class="text-slate-500">Part.: ${c.participacao.toFixed(1)}%</span>
+                        <span class="px-2 py-0.5 rounded border ${b.classe}">${b.icone} ${c.variacao.pct !== null ? (c.variacao.pct >= 0 ? '+' : '') + c.variacao.pct.toFixed(1) + '%' : b.texto}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            if (info) {
+                if (_dvState.filtros.vendedores.length === 1) {
+                    const nome = _dvState.filtros.vendedores[0];
+                    const melhorFat = [...canais].sort((a, b) => b.faturamento - a.faturamento)[0];
+                    const melhorVol = [...canais].sort((a, b) => b.brutas - a.brutas)[0];
+                    const melhorTicket = [...canais].sort((a, b) => b.ticketMedio - a.ticketMedio)[0];
+                    info.innerHTML = `<div class="glass-card p-4 text-xs text-slate-600">
+                        <b>${escapeHTML(nome)}</b> — canal com maior faturamento: <b class="text-indigo-600">${melhorFat ? escapeHTML(melhorFat.nome) : '—'}</b>
+                        · maior volume de vendas: <b class="text-indigo-600">${melhorVol ? escapeHTML(melhorVol.nome) : '—'}</b>
+                        · melhor ticket médio: <b class="text-indigo-600">${melhorTicket ? escapeHTML(melhorTicket.nome) : '—'}</b>
+                    </div>`;
+                } else {
+                    info.innerHTML = `<p class="text-[11px] text-slate-400 font-medium">Selecione um único vendedor no filtro acima para ver o detalhamento individual por canal (melhor canal, canais em crescimento/queda).</p>`;
+                }
+            }
+        }
+
+        function _dvCalcularCidades() {
+            const { dadosAtual, dadosAnterior } = _dvDadosPeriodoAnterior();
+            const cidades = {};
+            const ensure = (nome, uf) => (cidades[nome] || (cidades[nome] = { nome, uf, atual: [], anterior: [] }));
+            dadosAtual.forEach(d => ensure(_dvCidadeNome(d), _dvEstadoNome(d)).atual.push(d));
+            dadosAnterior.forEach(d => ensure(_dvCidadeNome(d), _dvEstadoNome(d)).anterior.push(d));
+            const totalFat = dadosAtual.reduce((s, d) => s + (d._isConcluida ? (d._valorDesconto || 0) : 0), 0);
+            return Object.values(cidades).map(c => {
+                const agA = _dvAgregado(c.atual);
+                const agP = c.anterior.length > 0 ? _dvAgregado(c.anterior) : null;
+                return { nome: c.nome, uf: c.uf, ...agA, participacao: totalFat > 0 ? (agA.faturamento / totalFat) * 100 : 0, variacao: _dvVariacao(agA.faturamento, agP ? agP.faturamento : null) };
+            }).sort((a, b) => b.faturamento - a.faturamento);
+        }
+
+        function _dvRenderGeografia() {
+            const tbody = document.getElementById('dvCidadeTableBody');
+            if (!tbody) return;
+            const cidades = _dvCalcularCidades();
+            if (cidades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="py-4 text-center text-xs text-slate-400">Sem dados de cidade para os filtros atuais.</td></tr>';
+                _dvRenderGraficoCidade([]);
+                _dvRenderMapa([]);
+                return;
+            }
+            tbody.innerHTML = cidades.map((c, i) => {
+                const b = _dvBadgeVariacao(c.variacao);
+                return `<tr class="hover:bg-teal-50/40 transition-colors">
+                    <td class="py-2.5 px-4 text-slate-500 text-center font-bold text-xs">${i + 1}</td>
+                    <td class="py-2.5 px-4 text-slate-800 font-bold text-xs">${escapeHTML(c.nome)}</td>
+                    <td class="py-2.5 px-4 text-center text-[10px] font-black uppercase text-slate-500">${escapeHTML(c.uf)}</td>
+                    <td class="py-2.5 px-4 text-right font-black text-slate-800">${formatBRL(c.faturamento)}</td>
+                    <td class="py-2.5 px-4 text-center font-bold text-blue-700">${c.brutas}</td>
+                    <td class="py-2.5 px-4 text-right font-bold text-emerald-600">${formatBRL(c.ticketMedio)}</td>
+                    <td class="py-2.5 px-4 text-center font-bold text-slate-600">${c.clientes}</td>
+                    <td class="py-2.5 px-4 text-center"><span class="px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase ${b.classe}">${b.icone} ${c.variacao.pct !== null ? (c.variacao.pct >= 0 ? '+' : '') + c.variacao.pct.toFixed(1) + '%' : b.texto}</span></td>
+                </tr>`;
+            }).join('');
+            _dvRenderGraficoCidade(cidades);
+            _dvRenderMapa(cidades);
+        }
+
+        function _dvRenderGraficoCidade(cidades) {
+            const top = [...cidades].sort((a, b) => b.faturamento - a.faturamento).slice(0, 10);
+            criarOuAtualizarChart('chartDvCidade', {
+                type: 'bar',
+                data: { labels: top.map(c => c.nome), datasets: [{ label: 'Faturamento', data: top.map(c => c.faturamento), backgroundColor: 'rgba(13,148,136,0.75)', borderRadius: 5 }] },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + formatBRL(ctx.raw) } } },
+                    scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } }
+                }
+            });
+        }
+
+        function _dvRenderMapa(cidades) {
+            const el = document.getElementById('dvMapaContainer');
+            const status = document.getElementById('dvMapaStatus');
+            if (!el || typeof L === 'undefined') { if (status) status.textContent = 'Mapa indisponível neste navegador.'; return; }
+
+            const comCoord = cidades.filter(c => CIDADES_COORDS[c.nome]);
+            try {
+                if (!window._dvMapaLeaflet) {
+                    window._dvMapaLeaflet = L.map(el, { scrollWheelZoom: false }).setView([-22.5, -44.5], 7);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 18 }).addTo(window._dvMapaLeaflet);
+                    window._dvMapaMarkers = L.layerGroup().addTo(window._dvMapaLeaflet);
+                }
+            } catch (e) { if (status) status.textContent = 'Não foi possível inicializar o mapa.'; return; }
+            window._dvMapaMarkers.clearLayers();
+
+            if (comCoord.length === 0) {
+                if (status) status.textContent = cidades.length > 0 ? `Nenhuma das ${cidades.length} cidade(s) do filtro possui coordenadas conhecidas — consulte o ranking e o gráfico acima.` : 'Sem dados para exibir no mapa.';
+                return;
+            }
+            if (status) status.textContent = `${comCoord.length} de ${cidades.length} cidade(s) posicionada(s) no mapa (coordenadas conhecidas).`;
+
+            const max = Math.max(...comCoord.map(c => c.faturamento), 1);
+            comCoord.forEach(c => {
+                const r = Math.min(6 + Math.sqrt(c.faturamento / max) * 20, 30);
+                const marker = L.circleMarker(CIDADES_COORDS[c.nome], { radius: r, fillColor: '#4f46e5', color: '#3730a3', weight: 2, fillOpacity: 0.75 });
+                marker.bindPopup(`<div style="font-family:sans-serif;min-width:170px"><b>${escapeHTML(c.nome)}</b><br>Faturamento: ${formatBRL(c.faturamento)}<br>Vendas: ${c.brutas} · Clientes: ${c.clientes}</div>`);
+                window._dvMapaMarkers.addLayer(marker);
+            });
+
+            try {
+                const grupo = L.featureGroup(window._dvMapaMarkers.getLayers());
+                window._dvMapaLeaflet.fitBounds(grupo.getBounds().pad(0.2));
+            } catch (e) {}
+        }
+
+        function _dvCalcularCruzamento() {
+            const { dadosAtual, dadosAnterior } = _dvDadosPeriodoAnterior();
+            const combos = {};
+            const ensure = (key, vendedor, canal, cidade) => (combos[key] || (combos[key] = { vendedor, canal, cidade, atual: [], anterior: [] }));
+            dadosAtual.forEach(d => {
+                const key = `${_dvVendedorNome(d)}|${_dvCanalNome(d)}|${_dvCidadeNome(d)}`;
+                ensure(key, _dvVendedorNome(d), _dvCanalNome(d), _dvCidadeNome(d)).atual.push(d);
+            });
+            dadosAnterior.forEach(d => {
+                const key = `${_dvVendedorNome(d)}|${_dvCanalNome(d)}|${_dvCidadeNome(d)}`;
+                ensure(key, _dvVendedorNome(d), _dvCanalNome(d), _dvCidadeNome(d)).anterior.push(d);
+            });
+            return Object.values(combos).map(c => {
+                const agA = _dvAgregado(c.atual);
+                const agP = c.anterior.length > 0 ? _dvAgregado(c.anterior) : null;
+                return { vendedor: c.vendedor, canal: c.canal, cidade: c.cidade, ...agA, variacao: _dvVariacao(agA.faturamento, agP ? agP.faturamento : null) };
+            }).sort((a, b) => b.faturamento - a.faturamento);
+        }
+
+        function _dvRenderMatrizVendedorCanal(combos) {
+            const cont = document.getElementById('dvMatrizContainer');
+            if (!cont) return;
+            const vendedores = [...new Set(combos.map(c => c.vendedor))];
+            const canais = [...new Set(combos.map(c => c.canal))];
+            if (vendedores.length === 0) { cont.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Sem dados para montar a matriz.</p>'; return; }
+
+            const porVendCanal = {};
+            combos.forEach(c => { porVendCanal[c.vendedor + '|' + c.canal] = (porVendCanal[c.vendedor + '|' + c.canal] || 0) + c.faturamento; });
+            const max = Math.max(...Object.values(porVendCanal), 1);
+
+            const vendedoresOrdenados = vendedores
+                .map(v => ({ v, total: canais.reduce((s, c) => s + (porVendCanal[v + '|' + c] || 0), 0) }))
+                .sort((a, b) => b.total - a.total).slice(0, 20).map(x => x.v);
+
+            let html = '<div class="overflow-x-auto"><table class="w-full text-xs border-collapse"><thead><tr><th class="text-left py-2 px-3 font-bold text-slate-500 uppercase text-[10px]">Vendedor</th>';
+            canais.forEach(c => html += `<th class="text-center py-2 px-3 font-bold text-slate-500 uppercase text-[10px]">${escapeHTML(c)}</th>`);
+            html += '</tr></thead><tbody>';
+            vendedoresOrdenados.forEach(v => {
+                html += `<tr><td class="py-2 px-3 font-bold text-slate-700 whitespace-nowrap">${escapeHTML(v)}</td>`;
+                canais.forEach(c => {
+                    const val = porVendCanal[v + '|' + c] || 0;
+                    const intensidade = val / max;
+                    const bg = val === 0 ? '#f8fafc' : `rgba(79,70,229,${(0.12 + intensidade * 0.75).toFixed(2)})`;
+                    const cor = intensidade > 0.55 ? '#fff' : '#1e293b';
+                    html += `<td class="text-center py-2 px-3 font-bold" style="background:${bg};color:${cor}">${val > 0 ? formatBRL(val) : '—'}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+            cont.innerHTML = html;
+        }
+
+        function _dvRenderCombos(combos) {
+            const tbody = document.getElementById('dvCombosTableBody');
+            if (!tbody) return;
+            const top = combos.filter(c => c.faturamento > 0 || c.brutas > 0).slice(0, 25);
+            if (top.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="py-4 text-center text-xs text-slate-400">Sem combinações para os filtros atuais.</td></tr>'; return; }
+            tbody.innerHTML = top.map((c, i) => {
+                const b = _dvBadgeVariacao(c.variacao);
+                return `<tr class="hover:bg-indigo-50/30 transition-colors">
+                    <td class="py-2 px-3 text-center text-slate-400 font-bold text-[11px]">${i + 1}</td>
+                    <td class="py-2 px-3 font-bold text-slate-800 text-xs">${escapeHTML(c.vendedor)}</td>
+                    <td class="py-2 px-3 text-center text-[10px] font-black uppercase">${escapeHTML(c.canal)}</td>
+                    <td class="py-2 px-3 text-slate-600 text-xs">${escapeHTML(c.cidade)}</td>
+                    <td class="py-2 px-3 text-right font-black">${formatBRL(c.faturamento)}</td>
+                    <td class="py-2 px-3 text-center font-bold">${c.brutas}</td>
+                    <td class="py-2 px-3 text-right font-bold text-emerald-600">${formatBRL(c.ticketMedio)}</td>
+                    <td class="py-2 px-3 text-center"><span class="px-2 py-0.5 rounded border text-[9px] font-black uppercase ${b.classe}">${b.icone} ${c.variacao.pct !== null ? (c.variacao.pct >= 0 ? '+' : '') + c.variacao.pct.toFixed(1) + '%' : b.texto}</span></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function _dvRenderCruzamento() {
+            const combos = _dvCalcularCruzamento();
+            _dvRenderMatrizVendedorCanal(combos);
+            _dvRenderCombos(combos);
+            window._dvCombosCache = combos;
+        }
+
+        function _dvRenderComparacaoPeriodos() {
+            const cont = document.getElementById('dvComparacaoPeriodosCards');
+            if (!cont) return;
+            const { atual, anterior, dadosAtual, dadosAnterior } = _dvDadosPeriodoAnterior();
+            if (!atual) { cont.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Sem período definido para os filtros atuais.</p>'; return; }
+            const agA = _dvAgregado(dadosAtual);
+            const agP = anterior ? _dvAgregado(dadosAnterior) : null;
+            const compLabel = _dvState.comparacao === 'anoAnterior' ? 'Mesmo mês do ano anterior' : 'Período imediatamente anterior';
+
+            const linhas = [
+                { titulo: 'Faturamento', a: agA.faturamento, p: agP ? agP.faturamento : null, fmt: formatBRL },
+                { titulo: 'Quantidade de Vendas', a: agA.brutas, p: agP ? agP.brutas : null, fmt: v => v.toLocaleString('pt-BR') },
+                { titulo: 'Ticket Médio', a: agA.ticketMedio, p: agP ? agP.ticketMedio : null, fmt: formatBRL },
+                { titulo: 'Clientes Atendidos', a: agA.clientes, p: agP ? agP.clientes : null, fmt: v => v.toLocaleString('pt-BR') }
+            ];
+
+            cont.innerHTML = `
+                <div class="text-xs text-slate-500 font-bold mb-3">${atual.label} <span class="text-slate-300">vs</span> ${anterior ? anterior.label : '—'} <span class="text-slate-400 font-medium normal-case">(${compLabel})</span></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                ${linhas.map(l => {
+                    const v = _dvVariacao(l.a, l.p);
+                    const b = _dvBadgeVariacao(v);
+                    return `<div class="glass-card p-4">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">${l.titulo}</span>
+                        <div class="flex items-baseline gap-2 mt-1 flex-wrap">
+                            <span class="text-lg font-black text-slate-800">${l.fmt(l.a)}</span>
+                            <span class="text-[10px] text-slate-400 font-bold">vs ${l.p !== null ? l.fmt(l.p) : '—'}</span>
+                        </div>
+                        <div class="mt-2 flex justify-between items-center">
+                            <span class="px-2 py-0.5 rounded border text-[9px] font-black uppercase ${b.classe}">${b.icone} ${b.texto}</span>
+                            <span class="text-[10px] font-bold text-slate-500">${v.diff !== null ? (v.diff >= 0 ? '+' : '') + l.fmt(v.diff) : '—'} ${v.pct !== null ? '(' + (v.pct >= 0 ? '+' : '') + v.pct.toFixed(1) + '%)' : ''}</span>
+                        </div>
+                    </div>`;
+                }).join('')}
+                </div>`;
+        }
+
+        function _dvSerieMensal() {
+            const semPeriodo = _dvBase(['periodo']);
+            const meses = [...new Set(semPeriodo.map(getMonthKeyFromRecord).filter(Boolean))].sort((a, b) => monthSortValue(a) - monthSortValue(b));
+            return meses.map(mes => {
+                const lista = semPeriodo.filter(d => getMonthKeyFromRecord(d) === mes);
+                return { mes, ..._dvAgregado(lista) };
+            });
+        }
+
+        function _dvRenderGraficoEvolucao() {
+            const canvas = document.getElementById('chartDvEvolucao');
+            if (!canvas) return;
+            const serie = _dvSerieMensal();
+            const indicador = _dvState.indicadorGrafico;
+
+            let vendedoresParaLinhas = _dvState.filtros.vendedores.length > 0 ? _dvState.filtros.vendedores : null;
+            if (!vendedoresParaLinhas) {
+                vendedoresParaLinhas = _dvCalcularRanking().linhas.sort((a, b) => b.faturamento - a.faturamento).slice(0, 5).map(r => r.nome);
+            }
+
+            if (vendedoresParaLinhas.length === 0 || serie.length === 0) {
+                criarOuAtualizarChart('chartDvEvolucao', { type: 'line', data: { labels: [], datasets: [] }, options: {} });
+                return;
+            }
+
+            const semPeriodoSemVendedor = _dvBase(['periodo', 'vendedores']);
+            const cores = ['#4f46e5', '#0d9488', '#d97706', '#dc2626', '#7c3aed', '#0284c7', '#65a30d', '#db2777'];
+            const totalPorMes = {};
+            serie.forEach(s => { totalPorMes[s.mes] = s; });
+
+            const datasets = vendedoresParaLinhas.map((nome, idx) => {
+                const dadosVendedor = semPeriodoSemVendedor.filter(d => _dvVendedorNome(d) === nome);
+                const porMes = {};
+                dadosVendedor.forEach(d => {
+                    const m = getMonthKeyFromRecord(d);
+                    if (!m) return;
+                    (porMes[m] || (porMes[m] = [])).push(d);
+                });
+
+                const valores = serie.map(s => {
+                    const lista = porMes[s.mes];
+                    if (!lista || lista.length === 0) return null;
+                    const ag = _dvAgregado(lista);
+                    if (indicador === 'participacao') {
+                        const totalMes = totalPorMes[s.mes];
+                        return (totalMes && totalMes.faturamento > 0) ? (ag.faturamento / totalMes.faturamento) * 100 : 0;
+                    }
+                    return ag[indicador] !== undefined ? ag[indicador] : ag.faturamento;
+                });
+
+                return { label: nome, data: valores, borderColor: cores[idx % cores.length], backgroundColor: cores[idx % cores.length] + '22', spanGaps: false, tension: 0.3, pointRadius: 3 };
+            });
+
+            criarOuAtualizarChart('chartDvEvolucao', {
+                type: 'line',
+                data: { labels: serie.map(s => s.mes), datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' }, padding: 10 } },
+                        tooltip: {
+                            mode: 'index', intersect: false, callbacks: {
+                                label: ctx => {
+                                    const v = ctx.raw;
+                                    if (v === null || v === undefined) return ` ${ctx.dataset.label}: sem venda no mês`;
+                                    if (indicador === 'faturamento' || indicador === 'ticketMedio') return ` ${ctx.dataset.label}: ${formatBRL(v)}`;
+                                    if (indicador === 'participacao') return ` ${ctx.dataset.label}: ${v.toFixed(1)}%`;
+                                    return ` ${ctx.dataset.label}: ${v}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } } }
+                }
+            });
+        }
+
+        function _dvLinhasTabela() {
+            const dados = _dvBase();
+            const busca = (_dvState.tabela.busca || '').toLowerCase().trim();
+            let linhas = dados.filter(d => {
+                if (!busca) return true;
+                const alvo = [_dvVendedorNome(d), _dvCanalNome(d), _dvCidadeNome(d), _dvEstadoNome(d), _dvClienteNome(d), _dvProdutoNome(d)].join(' ').toLowerCase();
+                return alvo.indexOf(busca) !== -1;
+            });
+
+            const { campo, dir } = _dvState.tabela;
+            const mult = dir === 'asc' ? 1 : -1;
+            const getVal = d => {
+                switch (campo) {
+                    case 'data': return d._dataISO || '';
+                    case 'vendedor': return _dvVendedorNome(d);
+                    case 'canal': return _dvCanalNome(d);
+                    case 'cidade': return _dvCidadeNome(d);
+                    case 'uf': return _dvEstadoNome(d);
+                    case 'cliente': return _dvClienteNome(d);
+                    case 'produto': return _dvProdutoNome(d);
+                    case 'valor': return d._isConcluida ? (d._valorDesconto || 0) : 0;
+                    default: return d._dataISO || '';
+                }
+            };
+            linhas.sort((a, b) => {
+                const va = getVal(a), vb = getVal(b);
+                if (va < vb) return -1 * mult;
+                if (va > vb) return 1 * mult;
+                return 0;
+            });
+            return linhas;
+        }
+
+        function _dvSortTabela(campo) {
+            if (_dvState.tabela.campo === campo) {
+                _dvState.tabela.dir = _dvState.tabela.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                _dvState.tabela.campo = campo;
+                _dvState.tabela.dir = 'asc';
+            }
+            _dvState.tabela.pagina = 1;
+            _dvRenderTabela();
+        }
+
+        function _dvRenderTabela() {
+            const tbody = document.getElementById('dvTabelaTableBody');
+            const info = document.getElementById('dvTabelaInfo');
+            const pagCont = document.getElementById('dvTabelaPaginacao');
+            if (!tbody) return;
+
+            const linhas = _dvLinhasTabela();
+            const porPagina = _dvState.tabela.porPagina;
+            const totalPaginas = Math.max(1, Math.ceil(linhas.length / porPagina));
+            _dvState.tabela.pagina = Math.min(Math.max(1, _dvState.tabela.pagina), totalPaginas);
+            const inicio = (_dvState.tabela.pagina - 1) * porPagina;
+            const pagina = linhas.slice(inicio, inicio + porPagina);
+
+            ['data', 'vendedor', 'canal', 'cidade', 'uf', 'cliente', 'produto', 'valor'].forEach(k => {
+                const el = document.getElementById('dvSortIcon_' + k);
+                if (el) el.textContent = _dvState.tabela.campo === k ? (_dvState.tabela.dir === 'asc' ? ' ↑' : ' ↓') : '';
+            });
+
+            tbody.innerHTML = pagina.map(d => `
+                <tr class="hover:bg-indigo-50/30 transition-colors">
+                    <td class="py-2 px-3 text-slate-600 text-xs">${d['Data ativação'] || '-'}</td>
+                    <td class="py-2 px-3 text-slate-800 font-bold text-xs">${escapeHTML(_dvVendedorNome(d))}</td>
+                    <td class="py-2 px-3 text-center text-[10px] font-black uppercase">${escapeHTML(_dvCanalNome(d))}</td>
+                    <td class="py-2 px-3 text-slate-600 text-xs">${escapeHTML(_dvCidadeNome(d))}</td>
+                    <td class="py-2 px-3 text-center text-[10px] font-black uppercase text-slate-500">${escapeHTML(_dvEstadoNome(d))}</td>
+                    <td class="py-2 px-3 text-slate-600 text-xs truncate max-w-[180px]" title="${escapeHTML(_dvClienteNome(d) || '-')}">${escapeHTML(_dvClienteNome(d) || '-')}</td>
+                    <td class="py-2 px-3 text-slate-500 text-xs">${escapeHTML(_dvProdutoNome(d))}</td>
+                    <td class="py-2 px-3 text-center"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase border ${d._isConcluida ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-700 border-amber-100'}">${d._isConcluida ? 'Concluída' : 'Pendente'}</span></td>
+                    <td class="py-2 px-3 text-right font-bold">${formatBRL(d._isConcluida ? (d._valorDesconto || 0) : 0)}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="9" class="py-4 text-center text-xs text-slate-400">Sem registros para os filtros/busca atuais.</td></tr>';
+
+            const totalValor = linhas.reduce((s, d) => s + (d._isConcluida ? (d._valorDesconto || 0) : 0), 0);
+            const totalValorEl = document.getElementById('dvTabelaTotalValor');
+            if (totalValorEl) totalValorEl.textContent = formatBRL(totalValor);
+            const totalRegEl = document.getElementById('dvTabelaTotalRegistros');
+            if (totalRegEl) totalRegEl.textContent = linhas.length.toLocaleString('pt-BR');
+
+            if (info) info.textContent = `${linhas.length.toLocaleString('pt-BR')} registro(s) — página ${_dvState.tabela.pagina} de ${totalPaginas}`;
+            if (pagCont) {
+                pagCont.innerHTML = `
+                    <button type="button" onclick="_dvMudarPagina(-1)" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40" ${_dvState.tabela.pagina <= 1 ? 'disabled' : ''}>Anterior</button>
+                    <span class="text-xs font-bold text-slate-500 px-2">${_dvState.tabela.pagina} / ${totalPaginas}</span>
+                    <button type="button" onclick="_dvMudarPagina(1)" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40" ${_dvState.tabela.pagina >= totalPaginas ? 'disabled' : ''}>Próxima</button>
+                `;
+            }
+        }
+
+        function _dvMudarPagina(delta) {
+            _dvState.tabela.pagina += delta;
+            _dvRenderTabela();
+        }
+
+        function _dvBuscarTabela(valor) {
+            _dvState.tabela.busca = valor;
+            _dvState.tabela.pagina = 1;
+            _dvRenderTabela();
+        }
+
+        function _dvExportarExcel() {
+            if (typeof XLSX === 'undefined') { alert('Biblioteca de exportação indisponível.'); return; }
+            const linhas = _dvLinhasTabela();
+            const dadosExport = linhas.map(d => ({
+                'Data Ativação': d['Data ativação'] || '',
+                'Vendedor': _dvVendedorNome(d),
+                'Canal': _dvCanalNome(d),
+                'Cidade': _dvCidadeNome(d),
+                'UF': _dvEstadoNome(d),
+                'Cliente': _dvClienteNome(d) || '',
+                'Produto/Plano': _dvProdutoNome(d),
+                'Situação': d._isConcluida ? 'Concluída' : 'Pendente',
+                'Faturamento': d._isConcluida ? (d._valorDesconto || 0) : 0
+            }));
+            const ws = XLSX.utils.json_to_sheet(dadosExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Desempenho Vendedores');
+            XLSX.writeFile(wb, `Desempenho_Vendedores_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        function _dvRenderInsights() {
+            const cont = document.getElementById('dvInsightsList');
+            if (!cont) return;
+            const { linhas: vendedores } = _dvCalcularRanking();
+            const canais = _dvCalcularCanais();
+            const cidades = _dvCalcularCidades();
+            const combos = window._dvCombosCache || _dvCalcularCruzamento();
+
+            if (vendedores.length === 0) { cont.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Sem dados suficientes para gerar insights com os filtros atuais.</p>'; return; }
+
+            const itens = [];
+            const porFat = [...vendedores].sort((a, b) => b.faturamento - a.faturamento);
+            const comCrescimento = vendedores.filter(v => v.variacao.pct !== null);
+            const porCresc = [...comCrescimento].sort((a, b) => b.variacao.pct - a.variacao.pct);
+            const porQueda = [...comCrescimento].sort((a, b) => a.variacao.pct - b.variacao.pct);
+            const media = vendedores.reduce((s, v) => s + v.faturamento, 0) / vendedores.length;
+            const abaixoMedia = vendedores.filter(v => v.faturamento < media);
+
+            if (porFat[0]) itens.push({ tipo: 'ok', texto: `<b>${escapeHTML(porFat[0].nome)}</b> é o vendedor com maior faturamento no período (${formatBRL(porFat[0].faturamento)}).` });
+            if (porCresc[0] && porCresc[0].variacao.pct > 0) itens.push({ tipo: 'ok', texto: `<b>${escapeHTML(porCresc[0].nome)}</b> teve o maior crescimento (${porCresc[0].variacao.pct.toFixed(1)}%) frente ao período de comparação.` });
+            if (porQueda[0] && porQueda[0].variacao.pct < 0) itens.push({ tipo: 'alerta', texto: `<b>${escapeHTML(porQueda[0].nome)}</b> apresentou a maior queda (${porQueda[0].variacao.pct.toFixed(1)}%) — recomenda-se investigar a causa.` });
+            if (abaixoMedia.length > 0) itens.push({ tipo: 'atencao', texto: `${abaixoMedia.length} vendedor(es) estão com faturamento abaixo da média da equipe (${formatBRL(media)}): ${abaixoMedia.slice(0, 5).map(v => escapeHTML(v.nome)).join(', ')}${abaixoMedia.length > 5 ? '…' : ''}.` });
+
+            const canalComCresc = canais.filter(c => c.variacao.pct !== null);
+            const canalCresc = [...canalComCresc].sort((a, b) => b.variacao.pct - a.variacao.pct)[0];
+            if (canalCresc && canalCresc.variacao.pct > 0) itens.push({ tipo: 'ok', texto: `O canal <b>${escapeHTML(canalCresc.nome)}</b> foi o que mais cresceu (${canalCresc.variacao.pct.toFixed(1)}%) — pode valer replicar as práticas desse canal em outros.` });
+            const canalQueda = [...canalComCresc].sort((a, b) => a.variacao.pct - b.variacao.pct)[0];
+            if (canalQueda && canalQueda.variacao.pct < 0) itens.push({ tipo: 'alerta', texto: `O canal <b>${escapeHTML(canalQueda.nome)}</b> perdeu desempenho (${canalQueda.variacao.pct.toFixed(1)}%) frente ao período anterior — vale investigar a queda.` });
+
+            const cidadeTop = [...cidades].sort((a, b) => b.faturamento - a.faturamento)[0];
+            if (cidadeTop) itens.push({ tipo: 'ok', texto: `<b>${escapeHTML(cidadeTop.nome)}</b> concentra o maior faturamento entre as cidades do filtro atual (${formatBRL(cidadeTop.faturamento)}).` });
+            const cidadeComCresc = cidades.filter(c => c.variacao.pct !== null);
+            const cidadeCresc = [...cidadeComCresc].sort((a, b) => b.variacao.pct - a.variacao.pct)[0];
+            if (cidadeCresc && cidadeCresc.variacao.pct > 0) itens.push({ tipo: 'ok', texto: `<b>${escapeHTML(cidadeCresc.nome)}</b> mostra crescimento consistente (${cidadeCresc.variacao.pct.toFixed(1)}%) — possível oportunidade para intensificar a atuação comercial na região.` });
+            const cidadeQueda = [...cidadeComCresc].sort((a, b) => a.variacao.pct - b.variacao.pct)[0];
+            if (cidadeQueda && cidadeQueda.variacao.pct < 0) itens.push({ tipo: 'atencao', texto: `<b>${escapeHTML(cidadeQueda.nome)}</b> apresentou queda de desempenho (${cidadeQueda.variacao.pct.toFixed(1)}%) frente ao período anterior.` });
+
+            if (_dvState.filtros.vendedores.length === 1 && canais.length > 0) {
+                const nome = _dvState.filtros.vendedores[0];
+                const hhi = _calcHerfindahl(canais.map(c => c.faturamento));
+                if (hhi > 60) {
+                    const dominante = [...canais].sort((a, b) => b.faturamento - a.faturamento)[0];
+                    itens.push({ tipo: 'atencao', texto: `<b>${escapeHTML(nome)}</b> depende fortemente do canal <b>${escapeHTML(dominante.nome)}</b> (índice de concentração ${hhi.toFixed(1)}) — diversificar canais pode reduzir o risco.` });
+                }
+                const cidadesVendedor = cidades;
+                if (cidadesVendedor.length > 0) {
+                    const hhiCidade = _calcHerfindahl(cidadesVendedor.map(c => c.faturamento));
+                    if (hhiCidade > 60) {
+                        const domCidade = [...cidadesVendedor].sort((a, b) => b.faturamento - a.faturamento)[0];
+                        itens.push({ tipo: 'atencao', texto: `<b>${escapeHTML(nome)}</b> depende fortemente da cidade <b>${escapeHTML(domCidade.nome)}</b> (índice de concentração ${hhiCidade.toFixed(1)}) — diversificar regiões pode reduzir o risco.` });
+                    }
+                }
+            }
+
+            const melhorCombo = combos.length > 0 ? combos[0] : null;
+            if (melhorCombo && melhorCombo.faturamento > 0) itens.push({ tipo: 'ok', texto: `Melhor combinação do período: <b>${escapeHTML(melhorCombo.vendedor)}</b> + canal <b>${escapeHTML(melhorCombo.canal)}</b> + <b>${escapeHTML(melhorCombo.cidade)}</b> (${formatBRL(melhorCombo.faturamento)}) — combinação que pode ser replicada em outras regiões pelo mesmo vendedor ou pela equipe.` });
+
+            const coresTipo = { ok: 'bg-green-50 text-green-700 border-green-100', alerta: 'bg-red-50 text-red-700 border-red-100', atencao: 'bg-amber-50 text-amber-700 border-amber-100' };
+            const iconeTipo = { ok: '✓', alerta: '⚠', atencao: 'ℹ' };
+
+            cont.innerHTML = itens.map(it => `
+                <div class="flex items-start gap-3 p-3 rounded-xl border ${coresTipo[it.tipo]}">
+                    <span class="text-sm font-black shrink-0">${iconeTipo[it.tipo]}</span>
+                    <p class="text-xs font-medium leading-relaxed">${it.texto}</p>
+                </div>
+            `).join('') || '<p class="text-xs text-slate-400 text-center py-6">Sem insights suficientes para os filtros atuais.</p>';
+        }
+
+        function _dvPopularSelect(id, valores, labelTodos) {
+            const select = document.getElementById(id);
+            if (!select) return;
+            const atual = select.value;
+            select.innerHTML = `<option value="">${labelTodos}</option>` + valores.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
+            if (valores.indexOf(atual) !== -1) select.value = atual;
+        }
+
+        function _dvPopularAnoMes() {
+            const anos = [...new Set(globalData.map(d => { const k = getMonthKeyFromRecord(d); return k ? k.split('/')[1] : null; }).filter(Boolean))].sort();
+            _dvPopularSelect('dvFiltroAno', anos, 'Ano');
+        }
+
+        function _dvAplicarAnoMes() {
+            const ano = document.getElementById('dvFiltroAno')?.value || '';
+            const mes = document.getElementById('dvFiltroMes')?.value || '';
+            if (!ano) { _dvOnFiltroSimples(); return; }
+            const anoNum = parseInt(ano, 10);
+            const iniEl = document.getElementById('dvFiltroDataInicio');
+            const fimEl = document.getElementById('dvFiltroDataFim');
+            if (mes) {
+                const ultimoDia = lastDayOfMonth(anoNum, parseInt(mes, 10) - 1);
+                iniEl.value = `${ano}-${mes}-01`;
+                fimEl.value = `${ano}-${mes}-${String(ultimoDia).padStart(2, '0')}`;
+            } else {
+                iniEl.value = `${ano}-01-01`;
+                fimEl.value = `${ano}-12-31`;
+            }
+            _dvOnFiltroSimples();
+        }
+
+        function _dvRenderVendedorMultiSelect(vendedores) {
+            const btn = document.getElementById('dvFiltroVendedorBtn');
+            const panel = document.getElementById('dvFiltroVendedorPanel');
+            const label = document.getElementById('dvFiltroVendedorLabel');
+            if (!btn || !panel || !label) return;
+
+            const atualizarLabel = () => {
+                const n = _dvState.filtros.vendedores.length;
+                label.textContent = n > 0 ? `${n} selecionado(s)` : 'Todos';
+            };
+
+            const renderOpcoes = (filtro) => {
+                const busca = (filtro || '').toLowerCase();
+                const opcoesEl = panel.querySelector('.dv-vend-opcoes');
+                if (!opcoesEl) return;
+                opcoesEl.innerHTML = vendedores
+                    .filter(v => v.toLowerCase().indexOf(busca) !== -1)
+                    .map(v => `<label class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded cursor-pointer text-xs text-slate-700">
+                        <input type="checkbox" class="dv-vend-check rounded text-indigo-600 border-slate-300" value="${escapeHTML(v)}" ${_dvState.filtros.vendedores.indexOf(v) !== -1 ? 'checked' : ''}>
+                        <span class="truncate">${escapeHTML(v)}</span>
+                    </label>`).join('') || '<div class="p-2 text-xs text-slate-400 text-center">Nenhum vendedor encontrado</div>';
+
+                opcoesEl.querySelectorAll('.dv-vend-check').forEach(chk => {
+                    chk.addEventListener('change', e => {
+                        if (e.target.checked) _dvState.filtros.vendedores.push(e.target.value);
+                        else _dvState.filtros.vendedores = _dvState.filtros.vendedores.filter(v => v !== e.target.value);
+                        atualizarLabel();
+                        _dvRenderAll();
+                    });
+                });
+            };
+
+            panel.innerHTML = `
+                <div class="p-2 sticky top-0 bg-white border-b border-slate-100 flex flex-col gap-2 z-10">
+                    <input type="text" placeholder="Buscar vendedor..." class="w-full text-xs p-1.5 border border-slate-200 rounded focus:outline-none focus:border-indigo-500 dv-vend-busca">
+                    <div class="flex justify-between px-1">
+                        <button type="button" class="text-[10px] font-bold text-indigo-600 uppercase dv-vend-todos">Marcar todos</button>
+                        <button type="button" class="text-[10px] font-bold text-slate-500 uppercase dv-vend-nenhum">Limpar</button>
+                    </div>
+                </div>
+                <div class="p-1 dv-vend-opcoes"></div>
+            `;
+            renderOpcoes('');
+
+            panel.querySelector('.dv-vend-busca').addEventListener('input', e => renderOpcoes(e.target.value));
+            panel.querySelector('.dv-vend-todos').addEventListener('click', e => { e.preventDefault(); _dvState.filtros.vendedores = [...vendedores]; renderOpcoes(panel.querySelector('.dv-vend-busca').value); atualizarLabel(); _dvRenderAll(); });
+            panel.querySelector('.dv-vend-nenhum').addEventListener('click', e => { e.preventDefault(); _dvState.filtros.vendedores = []; renderOpcoes(panel.querySelector('.dv-vend-busca').value); atualizarLabel(); _dvRenderAll(); });
+
+            atualizarLabel();
+
+            if (!btn._dvBound) {
+                btn.addEventListener('click', e => { e.stopPropagation(); panel.classList.toggle('hidden'); });
+                document.addEventListener('click', e => { if (!btn.contains(e.target) && !panel.contains(e.target)) panel.classList.add('hidden'); });
+                btn._dvBound = true;
+            }
+        }
+
+        function _dvInit() {
+            if (!globalData || globalData.length === 0) return;
+            _dvState._primeiraCompraCache = null;
+
+            const canais = [...new Set(globalData.map(_dvCanalNome))].sort();
+            const cidades = [...new Set(globalData.map(_dvCidadeNome))].sort();
+            const ufs = [...new Set(globalData.map(_dvEstadoNome))].sort();
+            const clientes = [...new Set(globalData.map(_dvClienteNome).filter(Boolean))].sort();
+            const produtos = [...new Set(globalData.map(_dvProdutoNome))].sort();
+            const vendedores = [...new Set(globalData.map(_dvVendedorNome))].sort();
+
+            _dvPopularSelect('dvFiltroCanal', canais, 'Todos');
+            _dvPopularSelect('dvFiltroCidade', cidades, 'Todas');
+            _dvPopularSelect('dvFiltroEstado', ufs, 'Todos');
+            _dvPopularSelect('dvFiltroCliente', clientes, 'Todos');
+            _dvPopularSelect('dvFiltroProduto', produtos, 'Todos');
+            _dvPopularAnoMes();
+            _dvRenderVendedorMultiSelect(vendedores);
+        }
+
+        function _dvLimparFiltros() {
+            _dvState.filtros = { vendedores: [], canal: '', cidade: '', uf: '', cliente: '', produto: '', dataInicio: '', dataFim: '' };
+            _dvState.tabela.busca = '';
+            _dvState.tabela.pagina = 1;
+            ['dvFiltroCanal', 'dvFiltroCidade', 'dvFiltroEstado', 'dvFiltroCliente', 'dvFiltroProduto', 'dvFiltroAno', 'dvFiltroMes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            ['dvFiltroDataInicio', 'dvFiltroDataFim'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            const busca = document.getElementById('dvTabelaBusca'); if (busca) busca.value = '';
+            _dvInit();
+            _dvRenderAll();
+        }
+
+        function _dvOnFiltroSimples() {
+            _dvState.filtros.canal = document.getElementById('dvFiltroCanal')?.value || '';
+            _dvState.filtros.cidade = document.getElementById('dvFiltroCidade')?.value || '';
+            _dvState.filtros.uf = document.getElementById('dvFiltroEstado')?.value || '';
+            _dvState.filtros.cliente = document.getElementById('dvFiltroCliente')?.value || '';
+            _dvState.filtros.produto = document.getElementById('dvFiltroProduto')?.value || '';
+            _dvState.filtros.dataInicio = document.getElementById('dvFiltroDataInicio')?.value || '';
+            _dvState.filtros.dataFim = document.getElementById('dvFiltroDataFim')?.value || '';
+            _dvRenderAll();
+        }
+
+        function _dvOnComparacaoChange() {
+            _dvState.comparacao = document.getElementById('dvComparacaoModo')?.value || 'anterior';
+            _dvRenderAll();
+        }
+
+        function _dvOnIndicadorChange() {
+            _dvState.indicadorGrafico = document.getElementById('dvIndicadorGrafico')?.value || 'faturamento';
+            _dvRenderGraficoEvolucao();
+        }
+
+        function _dvOnOrdenacaoChange() {
+            _dvState.ordenacaoRanking = document.getElementById('dvOrdenacaoRanking')?.value || 'faturamento';
+            _dvRenderRanking();
+        }
+
+        function _dvRenderAll() {
+            if (!globalData || globalData.length === 0) {
+                const cont = document.getElementById('dvKpiCards');
+                if (cont) cont.innerHTML = '<div class="col-span-full text-center text-xs text-slate-400 py-8 font-bold tracking-wide">Nenhum dado carregado ainda. Importe uma base para visualizar esta guia.</div>';
+                ['dvRankingTableBody', 'dvCidadeTableBody', 'dvCombosTableBody', 'dvTabelaTableBody'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+                return;
+            }
+            _dvRenderKpis();
+            _dvRenderComparacaoPeriodos();
+            _dvRenderGraficoEvolucao();
+            _dvRenderRanking();
+            _dvRenderCanais();
+            _dvRenderGeografia();
+            _dvRenderCruzamento();
+            _dvRenderTabela();
+            _dvRenderInsights();
+            setTimeout(() => { if (window._dvMapaLeaflet) window._dvMapaLeaflet.invalidateSize(); }, 120);
         }
 
     </script>
