@@ -599,6 +599,7 @@
                     </button>
                     <div class="flex gap-2 overflow-x-auto custom-scrollbar" id="dashboardTabs">
                         <button type="button" data-tab="executivo" class="dashboard-tab-btn active px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Executivo</button>
+                        <button type="button" data-tab="fechamentoMensal" class="dashboard-tab-btn hidden px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-amber-50 hover:text-amber-700 transition-colors">Fechamento Mensal</button>
                         <button type="button" data-tab="funil" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Funil</button>
                         <button type="button" data-tab="cancelados" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Cancelados</button>
                         <button type="button" data-tab="canais" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Leads</button>
@@ -2129,6 +2130,111 @@
                 </div>
                 <!-- ===== FIM ABA: DESEMPENHO DE VENDEDORES ===== -->
 
+                <!-- ===== ABA: FECHAMENTO MENSAL (guia isolada, somente admin) ===== -->
+                <div id="secaoFechamentoMensal" class="space-y-8 dashboard-section-hidden">
+
+                    <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span> Fechamento Mensal
+                            </h3>
+                            <p class="text-xs text-slate-400 font-medium mt-1">Guia exclusiva do admin · mês da venda = Data Abertura O.S (quando vazia, usa a data de ativação) · leitura sobre a base carregada, sem alterar dados.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mês de referência</label>
+                            <select id="fmMesSelect" class="border border-slate-200 rounded-lg p-2 text-sm font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors"></select>
+                        </div>
+                    </div>
+
+                    <!-- KPIs do mês selecionado -->
+                    <div id="fmKpiCards" class="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-4"></div>
+                    <p id="fmNotaDados" class="text-[10px] text-slate-400 font-medium -mt-4"></p>
+
+                    <!-- Evolução mensal -->
+                    <div class="glass-card p-5">
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2 mb-4">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Evolução Mensal · Brutas × Concluídas no mês × Ficaram p/ mês seguinte
+                        </h4>
+                        <div class="relative h-72"><canvas id="chartFmMensal"></canvas></div>
+                    </div>
+
+                    <!-- Tabela mês a mês -->
+                    <div class="glass-card p-5">
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2 mb-4">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Resumo Mês a Mês
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left min-w-[900px]">
+                                <thead>
+                                    <tr>
+                                        <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Mês</th>
+                                        <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Vendas Brutas</th>
+                                        <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Concluídas no mês</th>
+                                        <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Concluídas depois</th>
+                                        <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Ainda pendentes</th>
+                                        <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Não concluídas</th>
+                                        <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Ficaram p/ seguinte</th>
+                                        <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Canceladas</th>
+                                        <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">% Conv. no mês</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fmTabelaMensalBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Detalhamento por Assunto (mês selecionado) -->
+                    <div class="glass-card p-5">
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2 mb-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Por Assunto · <span id="fmAssuntoMesLabel" class="text-amber-600"></span>
+                        </h4>
+                        <p class="text-[10px] text-slate-400 font-medium mb-4">Distribuição das vendas abertas no mês por tipo de O.S. (campo Assunto), com o que foi concluído dentro do mês e o que ficou.</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left min-w-[600px]">
+                                <thead>
+                                    <tr>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Assunto</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Abertas no mês</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Concluídas no mês</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Não instaladas no mês</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fmAssuntoBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Não instaladas no mês (mês selecionado) -->
+                    <div class="glass-card p-5">
+                        <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                            <div>
+                                <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> Não Instaladas no Mês · <span id="fmNaoInstMesLabel" class="text-red-500"></span>
+                                </h4>
+                                <p class="text-[10px] text-slate-400 font-medium mt-1">Vendas abertas no mês de referência que não foram concluídas dentro dele — <span id="fmNaoInstResumo" class="font-bold text-slate-500"></span></p>
+                            </div>
+                            <input type="text" id="fmNaoInstBusca" placeholder="Buscar cliente, vendedor, cidade, assunto..." class="border border-slate-200 rounded-lg p-2 text-xs font-medium text-slate-700 bg-slate-50 w-64">
+                        </div>
+                        <div class="overflow-x-auto max-h-[480px] overflow-y-auto">
+                            <table class="w-full text-left min-w-[800px]">
+                                <thead class="sticky top-0 bg-white">
+                                    <tr>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Cliente</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Assunto</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Cidade</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Abertura</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Situação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fmNaoInstaladasBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- ===== FIM ABA: FECHAMENTO MENSAL ===== -->
+
             </div>
         </div>
     </main>
@@ -2227,7 +2333,8 @@
             { tabs: ['funil'] },
             { tabs: ['funil', 'qualidade'] },
             { tabs: ['crescimento'] },
-            { tabs: ['desempenhoVendedores'] }
+            { tabs: ['desempenhoVendedores'] },
+            { tabs: ['fechamentoMensal'] }
         ];
 
         function setupDashboardTabs() {
@@ -2264,6 +2371,7 @@
 
         function switchDashboardTab(tabName) {
             if (tabName === 'desempenhoVendedores' && !_currentPodeVerDesempenhoVendedores) { tabName = 'executivo'; }
+            if (tabName === 'fechamentoMensal' && _currentRole !== 'admin') { tabName = 'executivo'; }
             document.querySelectorAll('.dashboard-tab-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === tabName);
             });
@@ -2303,6 +2411,7 @@
 
             if (tabName === 'bairros') { setTimeout(() => renderMapaLeaflet(), 80); }
             if (tabName === 'desempenhoVendedores') { _dvInit(); _dvRenderAll(); }
+            if (tabName === 'fechamentoMensal') { _fmRenderAll(); }
         }
 
         // DOM Inputs Fixos
@@ -2526,6 +2635,11 @@
                 const btnDesempenho = document.querySelector('[data-tab="desempenhoVendedores"]');
                 if (btnDesempenho) btnDesempenho.classList.toggle('hidden', !_currentPodeVerDesempenhoVendedores);
             } catch (e) { console.warn('Falha ao aplicar permissão da guia Desempenho de Vendedores:', e); }
+            // Guia "Fechamento Mensal": exclusiva do admin.
+            try {
+                const btnFm = document.querySelector('[data-tab="fechamentoMensal"]');
+                if (btnFm) btnFm.classList.toggle('hidden', !isAdmin);
+            } catch (e) { console.warn('Falha ao aplicar permissão da guia Fechamento Mensal:', e); }
         }
 
         // — Listeners da tela de login —
@@ -10063,6 +10177,225 @@
             _dvRenderTabela();
             _dvRenderInsights();
             setTimeout(() => { if (window._dvMapaLeaflet) window._dvMapaLeaflet.invalidateSize(); }, 120);
+        }
+
+        // ===========================================================
+        // ABA: FECHAMENTO MENSAL (guia isolada — somente admin)
+        // -----------------------------------------------------------
+        // Mesmas regras de isolamento da guia Desempenho de Vendedores:
+        // lê exclusivamente `globalData`, nunca toca em activeFilters /
+        // filteredData e só processa quando a aba está visível.
+        // Critérios (ver memória modelo-dados-vendas):
+        //  - Mês da venda = _dataAberturaISO; quando vazia, usa _dataISO
+        //    (híbrido, mesma regra do Forecast). Sem abertura real, o
+        //    registro nunca aparece como "ficou p/ mês seguinte".
+        //  - Concluída = _isConcluida (Diagnóstico 340).
+        //  - Ficaram p/ mês seguinte = abertas no mês e concluídas em mês
+        //    posterior OU ainda pendentes (fila). "Não concluídas" (outros
+        //    diagnósticos) são mostradas à parte, como perdas.
+        //  - O.S. Instalação = Assunto contém "instal" (sem acento/caixa);
+        //    Instal. Novo Cliente = idem + "novo cliente".
+        // ===========================================================
+        const _fmState = { mes: '', busca: '' };
+        let _fmChart = null;
+
+        function _fmNorm(s) { return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
+        function _fmMesDeISO(iso) { if (!iso) return null; const p = iso.split('-'); return `${p[1]}/${p[0]}`; }
+        function _fmMesVenda(d) { return _fmMesDeISO(d._dataAberturaISO || d._dataISO); }
+        function _fmDataBR(iso) { if (!iso) return '—'; const p = iso.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; }
+        function _fmNum(v) { return (v || 0).toLocaleString('pt-BR'); }
+
+        // Classifica um registro dentro do seu mês de venda
+        function _fmClassificar(d, mesVenda) {
+            if (d._isConcluida) {
+                const mAtiv = _fmMesDeISO(d._dataISO);
+                if (mAtiv && monthSortValue(mAtiv) > monthSortValue(mesVenda)) return 'conclDepois';
+                return 'conclNoMes'; // mesmo mês (ou dado inconsistente com ativação anterior)
+            }
+            if (d._situacao === 'Pendente') return 'pendente';
+            return 'naoConcl';
+        }
+
+        function _fmAgregarMeses() {
+            const meses = {};
+            let semData = 0;
+            globalData.forEach(d => {
+                const mes = _fmMesVenda(d);
+                if (!mes) { semData++; return; }
+                const m = meses[mes] || (meses[mes] = { mes, brutas: 0, canceladas: 0, conclNoMes: 0, conclDepois: 0, pendentes: 0, naoConcl: 0 });
+                m.brutas++;
+                if (isCancelamentoReal(d)) m.canceladas++;
+                const cls = _fmClassificar(d, mes);
+                if (cls === 'conclNoMes') m.conclNoMes++;
+                else if (cls === 'conclDepois') m.conclDepois++;
+                else if (cls === 'pendente') m.pendentes++;
+                else m.naoConcl++;
+            });
+            const lista = Object.values(meses).sort((a, b) => monthSortValue(a.mes) - monthSortValue(b.mes));
+            return { lista, semData };
+        }
+
+        function _fmRegistrosDoMes(mes) {
+            return globalData.filter(d => _fmMesVenda(d) === mes);
+        }
+
+        function _fmRenderKpis(m, semData) {
+            const cont = document.getElementById('fmKpiCards');
+            if (!cont) return;
+            const ficaram = m.conclDepois + m.pendentes;
+            const conv = m.brutas > 0 ? (m.conclNoMes / m.brutas * 100) : 0;
+            const card = (label, valor, sub, borda) => `
+                <div class="glass-card p-4 border-l-4 ${borda}">
+                    <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400">${label}</span>
+                    <span class="block text-2xl font-black text-slate-800 mt-1">${valor}</span>
+                    <span class="block text-[10px] text-slate-400 font-medium mt-1">${sub}</span>
+                </div>`;
+            const ativadasSafra = m.conclNoMes + m.conclDepois;
+            const pctCanc = ativadasSafra > 0 ? (m.canceladas / ativadasSafra * 100) : 0;
+            cont.innerHTML =
+                card('Vendas Brutas', _fmNum(m.brutas), `abertas em ${m.mes}`, 'border-l-blue-500') +
+                card('Concluídas no mês', _fmNum(m.conclNoMes), `${conv.toFixed(1)}% das brutas do mês`, 'border-l-emerald-500') +
+                card('Ficaram p/ mês seguinte', _fmNum(ficaram), `${_fmNum(m.conclDepois)} concluídas depois · ${_fmNum(m.pendentes)} pendentes · ${_fmNum(m.naoConcl)} não concluídas`, 'border-l-red-500') +
+                card('Canceladas', _fmNum(m.canceladas), `${pctCanc.toFixed(1)}% das ativadas desta safra (contrato hoje Inativo)`, 'border-l-rose-600');
+            const nota = document.getElementById('fmNotaDados');
+            if (nota) nota.textContent = semData > 0
+                ? `⚠ ${_fmNum(semData)} registro(s) sem nenhuma data (abertura e ativação vazias) ficaram fora desta análise.`
+                : '';
+        }
+
+        function _fmRenderChart(lista) {
+            const canvas = document.getElementById('chartFmMensal');
+            if (!canvas || typeof Chart === 'undefined') return;
+            if (_fmChart) { _fmChart.destroy(); _fmChart = null; }
+            _fmChart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: lista.map(m => m.mes),
+                    datasets: [
+                        { label: 'Vendas Brutas', data: lista.map(m => m.brutas), backgroundColor: 'rgba(59,130,246,0.75)', borderRadius: 6 },
+                        { label: 'Concluídas no mês', data: lista.map(m => m.conclNoMes), backgroundColor: 'rgba(16,185,129,0.75)', borderRadius: 6 },
+                        { label: 'Ficaram p/ seguinte', data: lista.map(m => m.conclDepois + m.pendentes), backgroundColor: 'rgba(239,68,68,0.7)', borderRadius: 6 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10, weight: 'bold' } } } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } },
+                        y: { beginAtZero: true, ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function _fmRenderTabelaMensal(lista) {
+            const body = document.getElementById('fmTabelaMensalBody');
+            if (!body) return;
+            body.innerHTML = [...lista].reverse().map(m => {
+                const ficaram = m.conclDepois + m.pendentes;
+                const conv = m.brutas > 0 ? (m.conclNoMes / m.brutas * 100) : 0;
+                const selecionado = m.mes === _fmState.mes;
+                return `<tr class="border-b border-slate-100 hover:bg-amber-50/40 transition-colors ${selecionado ? 'bg-amber-50/60' : ''}">
+                    <td class="py-2.5 px-3 text-xs font-black text-slate-700">${m.mes}</td>
+                    <td class="py-2.5 px-3 text-xs font-bold text-slate-700 text-center">${_fmNum(m.brutas)}</td>
+                    <td class="py-2.5 px-3 text-xs font-bold text-emerald-700 text-center">${_fmNum(m.conclNoMes)}</td>
+                    <td class="py-2.5 px-3 text-xs font-semibold text-slate-600 text-center">${_fmNum(m.conclDepois)}</td>
+                    <td class="py-2.5 px-3 text-xs font-semibold text-orange-600 text-center">${_fmNum(m.pendentes)}</td>
+                    <td class="py-2.5 px-3 text-xs font-semibold text-slate-500 text-center">${_fmNum(m.naoConcl)}</td>
+                    <td class="py-2.5 px-3 text-xs font-black text-red-600 text-center">${_fmNum(ficaram)}</td>
+                    <td class="py-2.5 px-3 text-xs font-black text-rose-600 text-center">${_fmNum(m.canceladas)}</td>
+                    <td class="py-2.5 px-3 text-xs font-black text-slate-700 text-center">${conv.toFixed(1)}%</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function _fmRenderAssunto(mes) {
+            const label = document.getElementById('fmAssuntoMesLabel');
+            if (label) label.textContent = mes || '—';
+            const body = document.getElementById('fmAssuntoBody');
+            if (!body) return;
+            const porAssunto = {};
+            _fmRegistrosDoMes(mes).forEach(d => {
+                const key = (d['Assunto'] || 'Não informado').trim() || 'Não informado';
+                const a = porAssunto[key] || (porAssunto[key] = { qtd: 0, concl: 0, naoInst: 0 });
+                a.qtd++;
+                if (_fmClassificar(d, mes) === 'conclNoMes') a.concl++;
+                else a.naoInst++;
+            });
+            body.innerHTML = Object.entries(porAssunto)
+                .sort((a, b) => b[1].qtd - a[1].qtd)
+                .map(([assunto, a]) => `<tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td class="py-2 px-3 text-xs font-semibold text-slate-700">${assunto}${_fmNorm(assunto).indexOf('instal') !== -1 ? ' <span class="text-[9px] font-black text-amber-600 uppercase">· instalação</span>' : ''}</td>
+                    <td class="py-2 px-3 text-xs font-bold text-slate-700 text-center">${_fmNum(a.qtd)}</td>
+                    <td class="py-2 px-3 text-xs font-bold text-emerald-700 text-center">${_fmNum(a.concl)}</td>
+                    <td class="py-2 px-3 text-xs font-bold text-red-600 text-center">${_fmNum(a.naoInst)}</td>
+                </tr>`).join('') || '<tr><td colspan="4" class="py-4 text-center text-xs text-slate-400 font-bold">Sem registros no mês selecionado.</td></tr>';
+        }
+
+        function _fmRenderNaoInstaladas(mes) {
+            const label = document.getElementById('fmNaoInstMesLabel');
+            if (label) label.textContent = mes || '—';
+            const body = document.getElementById('fmNaoInstaladasBody');
+            if (!body) return;
+            const busca = _fmNorm(_fmState.busca);
+            const pesoSituacao = { pendente: 0, naoConcl: 1, conclDepois: 2 };
+            const itens = _fmRegistrosDoMes(mes)
+                .map(d => ({ d, cls: _fmClassificar(d, mes) }))
+                .filter(x => x.cls !== 'conclNoMes')
+                .filter(x => {
+                    if (!busca) return true;
+                    const alvo = _fmNorm(`${x.d['Razão social/nome']} ${x.d._vendedorNome} ${x.d['Cidade']} ${x.d['Assunto']}`);
+                    return alvo.indexOf(busca) !== -1;
+                })
+                .sort((a, b) => (pesoSituacao[a.cls] - pesoSituacao[b.cls]) || String(a.d['Razão social/nome'] || '').localeCompare(String(b.d['Razão social/nome'] || '')));
+            const resumo = document.getElementById('fmNaoInstResumo');
+            if (resumo) resumo.textContent = `${_fmNum(itens.length)} registro(s)${busca ? ' (com busca aplicada)' : ''}.`;
+            const badge = (cls, d) => {
+                if (cls === 'pendente') return '<span class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-[10px] font-black uppercase">Pendente</span>';
+                if (cls === 'conclDepois') return `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase">Ativada em ${_fmMesDeISO(d._dataISO) || '—'}</span>`;
+                return '<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-black uppercase">Não concluída</span>';
+            };
+            body.innerHTML = itens.map(({ d, cls }) => `<tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td class="py-2 px-3 text-xs font-semibold text-slate-700 truncate max-w-[220px]" title="${d['Razão social/nome'] || ''}">${d['Razão social/nome'] || '—'}</td>
+                    <td class="py-2 px-3 text-xs text-slate-600 truncate max-w-[180px]" title="${d['Assunto'] || ''}">${d['Assunto'] || '—'}</td>
+                    <td class="py-2 px-3 text-xs text-slate-600 truncate max-w-[160px]">${d._vendedorNome || '—'}</td>
+                    <td class="py-2 px-3 text-xs text-slate-600">${d['Cidade'] || '—'}</td>
+                    <td class="py-2 px-3 text-xs text-slate-500 text-center whitespace-nowrap">${_fmDataBR(d._dataAberturaISO || d._dataISO)}</td>
+                    <td class="py-2 px-3 text-center">${badge(cls, d)}</td>
+                </tr>`).join('') || '<tr><td colspan="6" class="py-4 text-center text-xs text-slate-400 font-bold">Nenhum registro — tudo que abriu neste mês foi concluído dentro dele. 🎉</td></tr>';
+        }
+
+        function _fmRenderAll() {
+            const kpis = document.getElementById('fmKpiCards');
+            if (!globalData || globalData.length === 0) {
+                if (kpis) kpis.innerHTML = '<div class="col-span-full text-center text-xs text-slate-400 py-8 font-bold tracking-wide">Nenhum dado carregado ainda. Importe uma base para visualizar esta guia.</div>';
+                ['fmTabelaMensalBody', 'fmAssuntoBody', 'fmNaoInstaladasBody'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+                return;
+            }
+            const { lista, semData } = _fmAgregarMeses();
+            if (lista.length === 0) return;
+
+            // Select de mês (mantém a seleção; padrão = mês mais recente)
+            const sel = document.getElementById('fmMesSelect');
+            const mesesDesc = [...lista].reverse().map(m => m.mes);
+            if (mesesDesc.indexOf(_fmState.mes) === -1) _fmState.mes = mesesDesc[0];
+            if (sel) {
+                sel.innerHTML = mesesDesc.map(mes => `<option value="${mes}" ${mes === _fmState.mes ? 'selected' : ''}>${mes}</option>`).join('');
+                sel.onchange = () => { _fmState.mes = sel.value; _fmRenderAll(); };
+            }
+            const busca = document.getElementById('fmNaoInstBusca');
+            if (busca && !busca._fmLigado) {
+                busca._fmLigado = true;
+                busca.addEventListener('input', () => { _fmState.busca = busca.value; _fmRenderNaoInstaladas(_fmState.mes); });
+            }
+
+            const mesAtual = lista.find(m => m.mes === _fmState.mes) || lista[lista.length - 1];
+            _fmRenderKpis(mesAtual, semData);
+            _fmRenderChart(lista);
+            _fmRenderTabelaMensal(lista);
+            _fmRenderAssunto(_fmState.mes);
+            _fmRenderNaoInstaladas(_fmState.mes);
         }
 
     </script>
