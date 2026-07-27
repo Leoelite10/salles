@@ -2132,7 +2132,7 @@
                             <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-amber-500"></span> Fechamento Mensal
                             </h3>
-                            <p class="text-xs text-slate-400 font-medium mt-1">Guia exclusiva do admin · mês da venda = Data Abertura O.S (quando vazia, usa a data de ativação) · leitura sobre a base carregada, sem alterar dados.</p>
+                            <p class="text-xs text-slate-400 font-medium mt-1">Guia exclusiva do admin · mês da venda = Data Abertura O.S (quando vazia, usa a data de ativação) · somente canais MCV, PAP e Lojas · leitura sobre a base carregada, sem alterar dados.</p>
                         </div>
                         <div class="flex items-center gap-4 flex-wrap">
                             <div class="flex items-center gap-2">
@@ -2148,36 +2148,56 @@
                     </div>
 
                     <!-- KPIs do mês selecionado -->
-                    <div id="fmKpiCards" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4"></div>
+                    <div id="fmKpiCards" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4"></div>
                     <p id="fmNotaDados" class="text-[10px] text-slate-400 font-medium -mt-4"></p>
 
                     <!-- Detalhamento por Canal Operacional (meses selecionados) -->
                     <div class="glass-card p-5">
-                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2 mb-1">
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2 mb-4">
                             <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Por Canal Operacional · <span id="fmCanalMesLabel" class="text-blue-600"></span>
                         </h4>
-                        <p class="text-[10px] text-slate-400 font-medium mb-4">De quem foram as vendas abertas no período (campo Setor): o que cada canal concluiu dentro do período e o que virou backlog.</p>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left min-w-[600px]">
-                                <thead>
-                                    <tr>
-                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Canal</th>
-                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Brutas</th>
-                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Concluídas no período</th>
-                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Backlog</th>
-                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Não concluídas</th>
-                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">% Conv.</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="fmCanalBody"></tbody>
-                            </table>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-2">
+                                <h5 class="text-[11px] font-black text-slate-600 uppercase tracking-wider">Safra do Período — o que vendemos</h5>
+                                <p class="text-[10px] text-slate-400 font-medium mb-3">Das vendas abertas no período, quantas cada canal já instalou e o que virou backlog.</p>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left min-w-[560px]">
+                                        <thead>
+                                            <tr>
+                                                <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Canal</th>
+                                                <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Brutas</th>
+                                                <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Instaladas da safra</th>
+                                                <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Backlog</th>
+                                                <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Não concluídas</th>
+                                                <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">% Conv.</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fmCanalBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="text-[11px] font-black text-cyan-700 uppercase tracking-wider">Produção do Período — o que instalamos</h5>
+                                <p class="text-[10px] text-slate-400 font-medium mb-3">Instalações executadas no período, de qualquer safra (data de ativação).</p>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left">
+                                        <thead>
+                                            <tr>
+                                                <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Canal</th>
+                                                <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-cyan-600 border-b border-slate-200 text-center">Instalações Realizadas</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fmCanalProdBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Evolução mensal -->
                     <div class="glass-card p-5">
                         <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2 mb-4">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Evolução Mensal · Brutas × Concluídas no mês × Backlog
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Evolução Mensal · Brutas × Instaladas da safra × Instalações Realizadas × Backlog
                         </h4>
                         <div class="relative h-72"><canvas id="chartFmMensal"></canvas></div>
                     </div>
@@ -6899,6 +6919,86 @@
         }
 
         // -------------------------------------------------------------
+        // FECHAMENTO PARA RELATÓRIOS — cruzamento abertura × ativação
+        // sobre a BASE COMPLETA (o filtro de período da sidebar corta pela
+        // data de ativação e derruba pendentes, então a visão de safra não
+        // pode sair de filteredData). O recorte de meses vem das datas do
+        // filtro: só limita QUAIS safras aparecem, não como são contadas.
+        // -------------------------------------------------------------
+        function getMesesFiltroRelatorio() {
+            const mesDe = v => v ? `${v.split('-')[1]}/${v.split('-')[0]}` : null;
+            return {
+                mesIni: mesDe(document.getElementById('filterDataInicio').value),
+                mesFim: mesDe(document.getElementById('filterDataFim').value)
+            };
+        }
+        function calcularFechamentoPorMes(mesIni, mesFim) {
+            const meses = {};
+            const dentro = mes => !!mes
+                && (!mesIni || monthSortValue(mes) >= monthSortValue(mesIni))
+                && (!mesFim || monthSortValue(mes) <= monthSortValue(mesFim));
+            const novoMes = mes => ({ mes, brutas: 0, conclNoMes: 0, conclDepois: 0, pendentes: 0, naoConcl: 0, instAbertas: 0, instNoMes: 0, ativadasProducao: 0 });
+            // Mesmo recorte da guia Fechamento Mensal: somente canais MCV, PAP e LOJAS
+            globalData.filter(d => _FM_CANAIS.indexOf(d._setorUpper) !== -1).forEach(d => {
+                const mesVenda = taxaAtivMesDeISO(d._dataAberturaISO || d._dataISO);
+                // Produção: ativação contada no mês em que aconteceu, independente da safra
+                if (d._isConcluida) {
+                    const mAtivProd = taxaAtivMesDeISO(d._dataISO);
+                    if (dentro(mAtivProd)) {
+                        const ma = meses[mAtivProd] || (meses[mAtivProd] = novoMes(mAtivProd));
+                        ma.ativadasProducao++;
+                    }
+                }
+                if (!dentro(mesVenda)) return;
+                const m = meses[mesVenda] || (meses[mesVenda] = novoMes(mesVenda));
+                m.brutas++;
+                let cls;
+                if (d._isConcluida) {
+                    const mAtiv = taxaAtivMesDeISO(d._dataISO);
+                    cls = (mAtiv && monthSortValue(mAtiv) > monthSortValue(mesVenda)) ? 'conclDepois' : 'conclNoMes';
+                } else cls = (d._situacao === 'Pendente') ? 'pendente' : 'naoConcl';
+                if (cls === 'conclNoMes') m.conclNoMes++;
+                else if (cls === 'conclDepois') m.conclDepois++;
+                else if (cls === 'pendente') m.pendentes++;
+                else m.naoConcl++;
+                if (taxaAtivEhInstalacao(d)) {
+                    m.instAbertas++;
+                    if (cls === 'conclNoMes') m.instNoMes++;
+                }
+            });
+            return Object.values(meses).sort((a, b) => monthSortValue(a.mes) - monthSortValue(b.mes));
+        }
+        // Canais operacionais no período: concluída até o fim do período conta como concluída;
+        // backlog = concluídas após o período + pendentes (mesma lógica da guia Fechamento Mensal)
+        function calcularFechamentoPorCanal(mesIni, mesFim) {
+            const canais = {};
+            const dentro = mes => !!mes
+                && (!mesIni || monthSortValue(mes) >= monthSortValue(mesIni))
+                && (!mesFim || monthSortValue(mes) <= monthSortValue(mesFim));
+            const novoCanal = canal => ({ canal, brutas: 0, conclPeriodo: 0, conclFora: 0, pendentes: 0, naoConcl: 0, ativadasProducao: 0 });
+            // Mesmo recorte da guia Fechamento Mensal: somente canais MCV, PAP e LOJAS
+            globalData.filter(d => _FM_CANAIS.indexOf(d._setorUpper) !== -1).forEach(d => {
+                const key = d._setorUpper;
+                // Produção por canal: instalações executadas dentro do período, independente da safra
+                if (d._isConcluida && dentro(taxaAtivMesDeISO(d._dataISO))) {
+                    const cp = canais[key] || (canais[key] = novoCanal(key));
+                    cp.ativadasProducao++;
+                }
+                const mesVenda = taxaAtivMesDeISO(d._dataAberturaISO || d._dataISO);
+                if (!dentro(mesVenda)) return;
+                const c = canais[key] || (canais[key] = novoCanal(key));
+                c.brutas++;
+                if (d._isConcluida) {
+                    const mAtiv = taxaAtivMesDeISO(d._dataISO);
+                    if (mAtiv && mesFim && monthSortValue(mAtiv) > monthSortValue(mesFim)) c.conclFora++;
+                    else c.conclPeriodo++;
+                } else if (d._situacao === 'Pendente') c.pendentes++;
+                else c.naoConcl++;
+            });
+            return Object.values(canais).sort((a, b) => b.brutas - a.brutas);
+        }
+
+        // -------------------------------------------------------------
         // MÓDULO DE EXPORTAÇÃO EXECUTIVA (PDF e HTML)
         // -------------------------------------------------------------
 
@@ -7026,22 +7126,52 @@
             const worksheetRegional = ajustarLarguraWorksheet(XLSX.utils.json_to_sheet(regionalExportacao), [14, 16, 14, 18, 14, 18, 20, 10, 10, 10]);
             XLSX.utils.book_append_sheet(workbook, worksheetRegional, "Regional_RJ_SP");
 
-            // Taxa de Ativação oficial mês a mês (O.S de instalação abertas e finalizadas no mesmo mês)
-            const taxaAtivExcel = calcularTaxaAtivacaoTotal(filteredData);
-            const taxaAtivExportacao = taxaAtivExcel.porMes.map(m => ({
+            // Fechamento mês a mês (abertura × ativação — base completa, recorte de meses do filtro)
+            const mesesRelExcel = getMesesFiltroRelatorio();
+            const fechMesesExcel = calcularFechamentoPorMes(mesesRelExcel.mesIni, mesesRelExcel.mesFim);
+            const linhaFech = m => ({
                 'Mes': m.mes,
-                'OS Instalacao Abertas': m.abertas,
-                'Instaladas no Mes': m.instaladasNoMes,
-                'Taxa Ativacao %': Number(m.taxa.toFixed(2))
-            }));
-            taxaAtivExportacao.push({
-                'Mes': 'TOTAL PERIODO',
-                'OS Instalacao Abertas': taxaAtivExcel.abertas,
-                'Instaladas no Mes': taxaAtivExcel.instaladasNoMes,
-                'Taxa Ativacao %': Number(taxaAtivExcel.taxa.toFixed(2))
+                'Vendas Brutas': m.brutas,
+                'Concluidas no Mes': m.conclNoMes,
+                'Concluidas Depois': m.conclDepois,
+                'Pendentes': m.pendentes,
+                'Backlog': m.conclDepois + m.pendentes,
+                'Nao Concluidas': m.naoConcl,
+                'OS Instalacao Abertas': m.instAbertas,
+                'Instaladas no Mes': m.instNoMes,
+                'Taxa Ativacao %': m.instAbertas > 0 ? Number((m.instNoMes / m.instAbertas * 100).toFixed(2)) : 0,
+                'Producao (Instalacoes Realizadas)': m.ativadasProducao || 0
             });
-            const worksheetTaxaAtiv = ajustarLarguraWorksheet(XLSX.utils.json_to_sheet(taxaAtivExportacao), [16, 22, 18, 16]);
-            XLSX.utils.book_append_sheet(workbook, worksheetTaxaAtiv, "TaxaAtivacaoMensal");
+            const fechExportacao = fechMesesExcel.map(linhaFech);
+            const fechTotalExcel = fechMesesExcel.reduce((acc, m) => {
+                ['brutas', 'conclNoMes', 'conclDepois', 'pendentes', 'naoConcl', 'instAbertas', 'instNoMes', 'ativadasProducao'].forEach(k => acc[k] += m[k] || 0);
+                return acc;
+            }, { mes: 'TOTAL PERIODO', brutas: 0, conclNoMes: 0, conclDepois: 0, pendentes: 0, naoConcl: 0, instAbertas: 0, instNoMes: 0, ativadasProducao: 0 });
+            fechExportacao.push(linhaFech(fechTotalExcel));
+            const worksheetFechamento = ajustarLarguraWorksheet(XLSX.utils.json_to_sheet(fechExportacao), [16, 14, 18, 18, 12, 12, 16, 22, 18, 16, 24]);
+            XLSX.utils.book_append_sheet(workbook, worksheetFechamento, "FechamentoMensal");
+
+            // Canais operacionais no período (mesma lógica da guia Fechamento Mensal)
+            const canaisPeriodoExcel = calcularFechamentoPorCanal(mesesRelExcel.mesIni, mesesRelExcel.mesFim);
+            const linhaCanal = c => ({
+                'Canal': c.canal,
+                'Vendas Brutas (Safra)': c.brutas,
+                'Instaladas da Safra': c.conclPeriodo,
+                'Concluidas Apos Periodo': c.conclFora,
+                'Pendentes': c.pendentes,
+                'Backlog': c.conclFora + c.pendentes,
+                'Nao Concluidas': c.naoConcl,
+                'Conversao Safra %': c.brutas > 0 ? Number((c.conclPeriodo / c.brutas * 100).toFixed(2)) : 0,
+                'Producao (Instalacoes Realizadas)': c.ativadasProducao || 0
+            });
+            const canaisExportacao = canaisPeriodoExcel.map(linhaCanal);
+            const canaisTotalExcel = canaisPeriodoExcel.reduce((acc, c) => {
+                ['brutas', 'conclPeriodo', 'conclFora', 'pendentes', 'naoConcl', 'ativadasProducao'].forEach(k => acc[k] += c[k] || 0);
+                return acc;
+            }, { canal: 'TOTAL GERAL', brutas: 0, conclPeriodo: 0, conclFora: 0, pendentes: 0, naoConcl: 0, ativadasProducao: 0 });
+            canaisExportacao.push(linhaCanal(canaisTotalExcel));
+            const worksheetCanais = ajustarLarguraWorksheet(XLSX.utils.json_to_sheet(canaisExportacao), [18, 14, 20, 22, 12, 12, 16, 18, 26]);
+            XLSX.utils.book_append_sheet(workbook, worksheetCanais, "CanalOperacional");
 
             XLSX.writeFile(workbook, "Relatorio_SalesIntelligence5.xlsx");
             } catch(e) { alert('Erro ao gerar Excel: ' + e.message); }
@@ -7060,7 +7190,22 @@
             const totalPendentes = totalBrutas - totalConcluidas;
 
             const taxaConv = totalBrutas > 0 ? ((totalConcluidas / totalBrutas) * 100).toFixed(1) : 0;
-            const taxaAtivOficial = calcularTaxaAtivacaoTotal(filteredData);
+            const mesesRel = getMesesFiltroRelatorio();
+            const fechMeses = calcularFechamentoPorMes(mesesRel.mesIni, mesesRel.mesFim);
+            const fechCanais = calcularFechamentoPorCanal(mesesRel.mesIni, mesesRel.mesFim);
+            const fechCanaisTot = fechCanais.reduce((acc, c) => {
+                acc.brutas += c.brutas; acc.conclPeriodo += c.conclPeriodo; acc.conclFora += c.conclFora;
+                acc.pendentes += c.pendentes; acc.naoConcl += c.naoConcl; acc.ativadasProducao += c.ativadasProducao || 0;
+                return acc;
+            }, { brutas: 0, conclPeriodo: 0, conclFora: 0, pendentes: 0, naoConcl: 0, ativadasProducao: 0 });
+            const fechTotais = fechMeses.reduce((acc, m) => {
+                acc.brutas += m.brutas; acc.conclNoMes += m.conclNoMes; acc.conclDepois += m.conclDepois;
+                acc.pendentes += m.pendentes; acc.naoConcl += m.naoConcl;
+                acc.instAbertas += m.instAbertas; acc.instNoMes += m.instNoMes;
+                acc.ativadasProducao += m.ativadasProducao || 0;
+                return acc;
+            }, { brutas: 0, conclNoMes: 0, conclDepois: 0, pendentes: 0, naoConcl: 0, instAbertas: 0, instNoMes: 0, ativadasProducao: 0 });
+            const taxaAtivOficial = { taxa: fechTotais.instAbertas > 0 ? (fechTotais.instNoMes / fechTotais.instAbertas) * 100 : 0 };
             
             let sumValorCheio = 0;
             let sumValorDesconto = 0;
@@ -7349,31 +7494,118 @@
                         </tbody>
                     </table>
 
-                    ${taxaAtivOficial.porMes.length > 1 ? `
-                    <h2 class="pdf-section-title">Taxa de Ativação Mês a Mês (O.S de instalação abertas e finalizadas no mês)</h2>
+                    ${fechMeses.length > 0 ? `
+                    <h2 class="pdf-section-title">Safra Mês a Mês — o que vendemos (base completa)</h2>
                     <table class="pdf-table general-metrics">
                         <thead>
                             <tr>
                                 <th>Mês</th>
-                                <th class="val-col">O.S Instalação Abertas</th>
-                                <th class="val-col">Instaladas no Mês</th>
-                                <th class="val-col">Taxa de Ativação</th>
+                                <th class="val-col">Brutas</th>
+                                <th class="val-col">Concl. no Mês</th>
+                                <th class="val-col">Concl. Depois</th>
+                                <th class="val-col">Pendentes</th>
+                                <th class="val-col">Backlog</th>
+                                <th class="val-col">Taxa Ativação</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${taxaAtivOficial.porMes.map(m => `
+                            ${fechMeses.map(m => `
                                 <tr>
                                     <td class="bg-gray">${m.mes}</td>
-                                    <td class="val-col">${m.abertas}</td>
-                                    <td class="val-col">${m.instaladasNoMes}</td>
-                                    <td class="val-col">${m.taxa.toFixed(1)}%</td>
+                                    <td class="val-col">${m.brutas}</td>
+                                    <td class="val-col">${m.conclNoMes}</td>
+                                    <td class="val-col">${m.conclDepois}</td>
+                                    <td class="val-col">${m.pendentes}</td>
+                                    <td class="val-col">${m.conclDepois + m.pendentes}</td>
+                                    <td class="val-col">${(m.instAbertas > 0 ? m.instNoMes / m.instAbertas * 100 : 0).toFixed(1)}%</td>
                                 </tr>
                             `).join('')}
                             <tr>
                                 <td class="bg-gray" style="font-weight: bold;">Total do Período</td>
-                                <td class="val-col" style="font-weight: bold;">${taxaAtivOficial.abertas}</td>
-                                <td class="val-col" style="font-weight: bold;">${taxaAtivOficial.instaladasNoMes}</td>
+                                <td class="val-col" style="font-weight: bold;">${fechTotais.brutas}</td>
+                                <td class="val-col" style="font-weight: bold;">${fechTotais.conclNoMes}</td>
+                                <td class="val-col" style="font-weight: bold;">${fechTotais.conclDepois}</td>
+                                <td class="val-col" style="font-weight: bold;">${fechTotais.pendentes}</td>
+                                <td class="val-col" style="font-weight: bold;">${fechTotais.conclDepois + fechTotais.pendentes}</td>
                                 <td class="val-col" style="font-weight: bold;">${taxaAtivOficial.taxa.toFixed(1)}%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h2 class="pdf-section-title">Produção Mês a Mês — o que instalamos (qualquer safra)</h2>
+                    <table class="pdf-table general-metrics">
+                        <thead>
+                            <tr>
+                                <th>Mês</th>
+                                <th class="val-col">Instalações Realizadas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${fechMeses.map(m => `
+                                <tr>
+                                    <td class="bg-gray">${m.mes}</td>
+                                    <td class="val-col">${m.ativadasProducao || 0}</td>
+                                </tr>
+                            `).join('')}
+                            <tr>
+                                <td class="bg-gray" style="font-weight: bold;">Total do Período</td>
+                                <td class="val-col" style="font-weight: bold;">${fechTotais.ativadasProducao}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h2 class="pdf-section-title">Canais — Safra do Período (o que vendemos)</h2>
+                    <table class="pdf-table general-metrics">
+                        <thead>
+                            <tr>
+                                <th>Canal</th>
+                                <th class="val-col">Brutas</th>
+                                <th class="val-col">Instaladas da Safra</th>
+                                <th class="val-col">Backlog</th>
+                                <th class="val-col">Não Concl.</th>
+                                <th class="val-col">% Conv.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${fechCanais.map(c => `
+                                <tr>
+                                    <td class="bg-gray">${c.canal}</td>
+                                    <td class="val-col">${c.brutas}</td>
+                                    <td class="val-col">${c.conclPeriodo}</td>
+                                    <td class="val-col">${c.conclFora + c.pendentes}</td>
+                                    <td class="val-col">${c.naoConcl}</td>
+                                    <td class="val-col">${(c.brutas > 0 ? c.conclPeriodo / c.brutas * 100 : 0).toFixed(1)}%</td>
+                                </tr>
+                            `).join('')}
+                            <tr>
+                                <td class="bg-gray" style="font-weight: bold;">Total Geral</td>
+                                <td class="val-col" style="font-weight: bold;">${fechCanaisTot.brutas}</td>
+                                <td class="val-col" style="font-weight: bold;">${fechCanaisTot.conclPeriodo}</td>
+                                <td class="val-col" style="font-weight: bold;">${fechCanaisTot.conclFora + fechCanaisTot.pendentes}</td>
+                                <td class="val-col" style="font-weight: bold;">${fechCanaisTot.naoConcl}</td>
+                                <td class="val-col" style="font-weight: bold;">${(fechCanaisTot.brutas > 0 ? fechCanaisTot.conclPeriodo / fechCanaisTot.brutas * 100 : 0).toFixed(1)}%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h2 class="pdf-section-title">Canais — Produção do Período (o que instalamos)</h2>
+                    <table class="pdf-table general-metrics">
+                        <thead>
+                            <tr>
+                                <th>Canal</th>
+                                <th class="val-col">Instalações Realizadas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${[...fechCanais].sort((a, b) => (b.ativadasProducao || 0) - (a.ativadasProducao || 0)).map(c => `
+                                <tr>
+                                    <td class="bg-gray">${c.canal}</td>
+                                    <td class="val-col">${c.ativadasProducao || 0}</td>
+                                </tr>
+                            `).join('')}
+                            <tr>
+                                <td class="bg-gray" style="font-weight: bold;">Total Geral</td>
+                                <td class="val-col" style="font-weight: bold;">${fechCanaisTot.ativadasProducao}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -7555,7 +7787,22 @@
 
             const taxaConv = totalBrutas > 0 ? ((totalConcluidas / totalBrutas) * 100).toFixed(1) : 0;
             const taxaPendentes = totalBrutas > 0 ? ((totalPendentes / totalBrutas) * 100).toFixed(1) : 0;
-            const taxaAtivOficial = calcularTaxaAtivacaoTotal(filteredData);
+            const mesesRel = getMesesFiltroRelatorio();
+            const fechMeses = calcularFechamentoPorMes(mesesRel.mesIni, mesesRel.mesFim);
+            const fechCanais = calcularFechamentoPorCanal(mesesRel.mesIni, mesesRel.mesFim);
+            const fechCanaisTot = fechCanais.reduce((acc, c) => {
+                acc.brutas += c.brutas; acc.conclPeriodo += c.conclPeriodo; acc.conclFora += c.conclFora;
+                acc.pendentes += c.pendentes; acc.naoConcl += c.naoConcl; acc.ativadasProducao += c.ativadasProducao || 0;
+                return acc;
+            }, { brutas: 0, conclPeriodo: 0, conclFora: 0, pendentes: 0, naoConcl: 0, ativadasProducao: 0 });
+            const fechTotais = fechMeses.reduce((acc, m) => {
+                acc.brutas += m.brutas; acc.conclNoMes += m.conclNoMes; acc.conclDepois += m.conclDepois;
+                acc.pendentes += m.pendentes; acc.naoConcl += m.naoConcl;
+                acc.instAbertas += m.instAbertas; acc.instNoMes += m.instNoMes;
+                acc.ativadasProducao += m.ativadasProducao || 0;
+                return acc;
+            }, { brutas: 0, conclNoMes: 0, conclDepois: 0, pendentes: 0, naoConcl: 0, instAbertas: 0, instNoMes: 0, ativadasProducao: 0 });
+            const taxaAtivOficial = { taxa: fechTotais.instAbertas > 0 ? (fechTotais.instNoMes / fechTotais.instAbertas) * 100 : 0 };
 
             let sumValorCheio = 0;
             let sumValorDesconto = 0;
@@ -7772,13 +8019,40 @@
                     </tbody>
                 </table>
 
-                ${taxaAtivOficial.porMes.length > 1 ? `
-                <h2>Taxa de Ativação Mês a Mês</h2>
+                ${fechMeses.length > 0 ? `
+                <h2>Safra Mês a Mês — o que vendemos (base completa)</h2>
                 <table>
-                    <thead><tr><th>Mês</th><th class="val-col">O.S Instalação Abertas</th><th class="val-col">Instaladas no Mês</th><th class="val-col">Taxa de Ativação</th></tr></thead>
+                    <thead><tr><th>Mês</th><th class="val-col">Brutas</th><th class="val-col">Concl. no Mês</th><th class="val-col">Concl. Depois</th><th class="val-col">Pendentes</th><th class="val-col">Backlog</th><th class="val-col">Taxa Ativação</th></tr></thead>
                     <tbody>
-                        ${taxaAtivOficial.porMes.map(m => `<tr><td>${m.mes}</td><td class="val-col">${m.abertas}</td><td class="val-col">${m.instaladasNoMes}</td><td class="val-col">${m.taxa.toFixed(1)}%</td></tr>`).join('')}
-                        <tr><td><strong>Total do Período</strong></td><td class="val-col"><strong>${taxaAtivOficial.abertas}</strong></td><td class="val-col"><strong>${taxaAtivOficial.instaladasNoMes}</strong></td><td class="val-col highlight"><strong>${taxaAtivOficial.taxa.toFixed(1)}%</strong></td></tr>
+                        ${fechMeses.map(m => `<tr><td>${m.mes}</td><td class="val-col">${m.brutas}</td><td class="val-col">${m.conclNoMes}</td><td class="val-col">${m.conclDepois}</td><td class="val-col">${m.pendentes}</td><td class="val-col">${m.conclDepois + m.pendentes}</td><td class="val-col">${(m.instAbertas > 0 ? m.instNoMes / m.instAbertas * 100 : 0).toFixed(1)}%</td></tr>`).join('')}
+                        <tr><td><strong>Total do Período</strong></td><td class="val-col"><strong>${fechTotais.brutas}</strong></td><td class="val-col"><strong>${fechTotais.conclNoMes}</strong></td><td class="val-col"><strong>${fechTotais.conclDepois}</strong></td><td class="val-col"><strong>${fechTotais.pendentes}</strong></td><td class="val-col"><strong>${fechTotais.conclDepois + fechTotais.pendentes}</strong></td><td class="val-col highlight"><strong>${taxaAtivOficial.taxa.toFixed(1)}%</strong></td></tr>
+                    </tbody>
+                </table>
+
+                <div class="grid-2">
+                    <table>
+                        <thead><tr><th>Produção Mês a Mês (o que instalamos)</th><th class="val-col">Instalações Realizadas</th></tr></thead>
+                        <tbody>
+                            ${fechMeses.map(m => `<tr><td>${m.mes}</td><td class="val-col">${m.ativadasProducao || 0}</td></tr>`).join('')}
+                            <tr><td><strong>Total do Período</strong></td><td class="val-col highlight"><strong>${fechTotais.ativadasProducao}</strong></td></tr>
+                        </tbody>
+                    </table>
+
+                    <table>
+                        <thead><tr><th>Canais — Produção do Período</th><th class="val-col">Instalações Realizadas</th></tr></thead>
+                        <tbody>
+                            ${[...fechCanais].sort((a, b) => (b.ativadasProducao || 0) - (a.ativadasProducao || 0)).map(c => `<tr><td>${c.canal}</td><td class="val-col">${c.ativadasProducao || 0}</td></tr>`).join('')}
+                            <tr><td><strong>Total Geral</strong></td><td class="val-col highlight"><strong>${fechCanaisTot.ativadasProducao}</strong></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2>Canais — Safra do Período (o que vendemos)</h2>
+                <table>
+                    <thead><tr><th>Canal</th><th class="val-col">Brutas</th><th class="val-col">Instaladas da Safra</th><th class="val-col">Backlog</th><th class="val-col">Não Concl.</th><th class="val-col">% Conv.</th></tr></thead>
+                    <tbody>
+                        ${fechCanais.map(c => `<tr><td>${c.canal}</td><td class="val-col">${c.brutas}</td><td class="val-col">${c.conclPeriodo}</td><td class="val-col">${c.conclFora + c.pendentes}</td><td class="val-col">${c.naoConcl}</td><td class="val-col">${(c.brutas > 0 ? c.conclPeriodo / c.brutas * 100 : 0).toFixed(1)}%</td></tr>`).join('')}
+                        <tr><td><strong>Total Geral</strong></td><td class="val-col"><strong>${fechCanaisTot.brutas}</strong></td><td class="val-col highlight"><strong>${fechCanaisTot.conclPeriodo}</strong></td><td class="val-col"><strong>${fechCanaisTot.conclFora + fechCanaisTot.pendentes}</strong></td><td class="val-col"><strong>${fechCanaisTot.naoConcl}</strong></td><td class="val-col"><strong>${(fechCanaisTot.brutas > 0 ? fechCanaisTot.conclPeriodo / fechCanaisTot.brutas * 100 : 0).toFixed(1)}%</strong></td></tr>
                     </tbody>
                 </table>
                 ` : ''}
@@ -10331,7 +10605,13 @@
         let _fmChart = null;
 
         function _fmUfDe(d) { return d._ufOperacao || 'Não Identificado'; }
-        function _fmBase() { return _fmState.uf ? globalData.filter(d => _fmUfDe(d) === _fmState.uf) : globalData; }
+        // A guia considera apenas vendas dos canais operacionais MCV, PAP e LOJAS (campo Setor)
+        const _FM_CANAIS = ['MCV', 'PAP', 'LOJAS'];
+        function _fmBaseSemUf() { return globalData.filter(d => _FM_CANAIS.indexOf(d._setorUpper) !== -1); }
+        function _fmBase() {
+            const base = _fmBaseSemUf();
+            return _fmState.uf ? base.filter(d => _fmUfDe(d) === _fmState.uf) : base;
+        }
 
         function _fmNorm(s) { return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
         function _fmEhInstalacao(d) { return _fmNorm(d['Assunto']).indexOf('instal') !== -1; }
@@ -10405,7 +10685,13 @@
         // Concluída em mês posterior AINDA DENTRO da seleção conta como concluída do período (conclDentro);
         // Backlog do período = concluídas fora da seleção (conclFora, com racha por mês de ativação) + pendentes.
         function _fmAgregado(meses) {
-            const agg = { mes: meses.join(' · '), brutas: 0, canceladas: 0, conclNoMes: 0, conclDentro: 0, conclFora: 0, conclForaPorMes: {}, pendentes: 0, naoConcl: 0, instAbertas: 0, instNoMes: 0 };
+            const agg = { mes: meses.join(' · '), brutas: 0, canceladas: 0, conclNoMes: 0, conclDentro: 0, conclFora: 0, conclForaPorMes: {}, pendentes: 0, naoConcl: 0, instAbertas: 0, instNoMes: 0, ativadasProducao: 0 };
+            // Produção: instaladas nos meses selecionados, independente de quando a venda foi aberta
+            _fmBase().forEach(d => {
+                if (!d._isConcluida) return;
+                const mAtiv = _fmMesDeISO(d._dataISO);
+                if (mAtiv && meses.indexOf(mAtiv) !== -1) agg.ativadasProducao++;
+            });
             _fmRegistrosDosMeses(meses).forEach(d => {
                 agg.brutas++;
                 if (isCancelamentoReal(d)) agg.canceladas++;
@@ -10466,7 +10752,8 @@
             const subBacklog = `${(m.conclFora || 0) > 0 ? `concluídas depois: ${rachaFora}` : 'nenhuma concluída depois'} · ${_fmNum(m.pendentes)} pendentes · ${_fmNum(m.naoConcl)} não concluídas`;
             cont.innerHTML =
                 card('Vendas Brutas', _fmNum(m.brutas), subBrutas, 'border-l-blue-500') +
-                card(multi ? 'Concluídas no período' : 'Concluídas no mês', _fmNum(conclPeriodo), subConcl, 'border-l-emerald-500') +
+                card(multi ? 'Instaladas da safra do período' : 'Concluídas no mês', _fmNum(conclPeriodo), subConcl, 'border-l-emerald-500') +
+                card(multi ? 'Produção do período' : 'Produção do mês', _fmNum(m.ativadasProducao || 0), 'instalações realizadas, venha a venda de onde vier — mesma régua do Executivo', 'border-l-cyan-500') +
                 card('Taxa de Ativação', `${taxaAtiv.toFixed(1)}%`, `${_fmNum(m.instNoMes)} de ${_fmNum(m.instAbertas)} O.S de instalação abertas e instaladas no mês`, 'border-l-purple-500') +
                 card(multi ? 'Backlog do período' : 'Backlog', _fmNum(ficaram), subBacklog, 'border-l-red-500') +
                 card('Canceladas', _fmNum(m.canceladas), `${pctCanc.toFixed(1)}% das ativadas desta safra (contrato hoje Inativo)`, 'border-l-rose-600');
@@ -10486,7 +10773,8 @@
                     labels: lista.map(m => m.mes),
                     datasets: [
                         { label: 'Vendas Brutas', data: lista.map(m => m.brutas), backgroundColor: 'rgba(59,130,246,0.75)', borderRadius: 6 },
-                        { label: 'Concluídas no mês', data: lista.map(m => m.conclNoMes), backgroundColor: 'rgba(16,185,129,0.75)', borderRadius: 6 },
+                        { label: 'Instaladas da safra', data: lista.map(m => m.conclNoMes), backgroundColor: 'rgba(16,185,129,0.75)', borderRadius: 6 },
+                        { label: 'Instalações Realizadas (produção)', data: lista.map(m => m.ativadasNoMes || 0), backgroundColor: 'rgba(6,182,212,0.75)', borderRadius: 6 },
                         { label: 'Backlog', data: lista.map(m => m.conclDepois + m.pendentes), backgroundColor: 'rgba(239,68,68,0.7)', borderRadius: 6 }
                     ]
                 },
@@ -10536,19 +10824,66 @@
                 c.brutas++;
                 c[_fmClsPeriodo(d, meses)]++;
             });
-            body.innerHTML = Object.entries(porCanal)
-                .sort((a, b) => b[1].brutas - a[1].brutas)
-                .map(([canal, c]) => {
-                    const conv = c.brutas > 0 ? (c.conclPeriodo / c.brutas * 100) : 0;
-                    return `<tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                        <td class="py-2 px-3 text-xs font-black text-slate-700 uppercase">${canal}</td>
-                        <td class="py-2 px-3 text-xs font-bold text-slate-700 text-center">${_fmNum(c.brutas)}</td>
-                        <td class="py-2 px-3 text-xs font-bold text-emerald-700 text-center">${_fmNum(c.conclPeriodo)}</td>
-                        <td class="py-2 px-3 text-xs font-black text-red-600 text-center">${_fmNum(c.backlog)}</td>
-                        <td class="py-2 px-3 text-xs font-semibold text-slate-500 text-center">${_fmNum(c.naoConcl)}</td>
-                        <td class="py-2 px-3 text-xs font-black text-slate-700 text-center">${conv.toFixed(1)}%</td>
+            // Produção por canal: instalações executadas no período, independente da safra
+            const prodPorCanal = {};
+            _fmBase().forEach(d => {
+                if (!d._isConcluida) return;
+                const mAtiv = _fmMesDeISO(d._dataISO);
+                if (mAtiv && meses.indexOf(mAtiv) !== -1) {
+                    const k = d._setorUpper || 'Não Identificado';
+                    prodPorCanal[k] = (prodPorCanal[k] || 0) + 1;
+                }
+            });
+            // Tabela 1 — Safra do Período (o que vendemos)
+            const linhasCanal = Object.entries(porCanal).sort((a, b) => b[1].brutas - a[1].brutas);
+            if (linhasCanal.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-xs text-slate-400 font-bold">Sem registros no período selecionado.</td></tr>';
+            } else {
+                const totCanal = linhasCanal.reduce((acc, [, c]) => {
+                    acc.brutas += c.brutas; acc.conclPeriodo += c.conclPeriodo; acc.backlog += c.backlog; acc.naoConcl += c.naoConcl;
+                    return acc;
+                }, { brutas: 0, conclPeriodo: 0, backlog: 0, naoConcl: 0 });
+                const convTotal = totCanal.brutas > 0 ? (totCanal.conclPeriodo / totCanal.brutas * 100) : 0;
+                body.innerHTML = linhasCanal
+                    .map(([canal, c]) => {
+                        const conv = c.brutas > 0 ? (c.conclPeriodo / c.brutas * 100) : 0;
+                        return `<tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                            <td class="py-2 px-3 text-xs font-black text-slate-700 uppercase">${canal}</td>
+                            <td class="py-2 px-3 text-xs font-bold text-slate-700 text-center">${_fmNum(c.brutas)}</td>
+                            <td class="py-2 px-3 text-xs font-bold text-emerald-700 text-center">${_fmNum(c.conclPeriodo)}</td>
+                            <td class="py-2 px-3 text-xs font-black text-red-600 text-center">${_fmNum(c.backlog)}</td>
+                            <td class="py-2 px-3 text-xs font-semibold text-slate-500 text-center">${_fmNum(c.naoConcl)}</td>
+                            <td class="py-2 px-3 text-xs font-black text-slate-700 text-center">${conv.toFixed(1)}%</td>
+                        </tr>`;
+                    }).join('') +
+                    `<tr class="border-t-2 border-slate-300 bg-slate-50/80">
+                        <td class="py-2.5 px-3 text-xs font-black text-slate-800 uppercase">Total Geral</td>
+                        <td class="py-2.5 px-3 text-xs font-black text-slate-800 text-center">${_fmNum(totCanal.brutas)}</td>
+                        <td class="py-2.5 px-3 text-xs font-black text-emerald-700 text-center">${_fmNum(totCanal.conclPeriodo)}</td>
+                        <td class="py-2.5 px-3 text-xs font-black text-red-600 text-center">${_fmNum(totCanal.backlog)}</td>
+                        <td class="py-2.5 px-3 text-xs font-black text-slate-600 text-center">${_fmNum(totCanal.naoConcl)}</td>
+                        <td class="py-2.5 px-3 text-xs font-black text-slate-800 text-center">${convTotal.toFixed(1)}%</td>
                     </tr>`;
-                }).join('') || '<tr><td colspan="6" class="py-4 text-center text-xs text-slate-400 font-bold">Sem registros no período selecionado.</td></tr>';
+            }
+            // Tabela 2 — Produção do Período (o que instalamos)
+            const bodyProd = document.getElementById('fmCanalProdBody');
+            if (bodyProd) {
+                const linhasProd = Object.entries(prodPorCanal).sort((a, b) => b[1] - a[1]);
+                if (linhasProd.length === 0) {
+                    bodyProd.innerHTML = '<tr><td colspan="2" class="py-4 text-center text-xs text-slate-400 font-bold">Sem instalações no período.</td></tr>';
+                } else {
+                    const totProd = linhasProd.reduce((acc, [, n]) => acc + n, 0);
+                    bodyProd.innerHTML = linhasProd
+                        .map(([canal, n]) => `<tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                            <td class="py-2 px-3 text-xs font-black text-slate-700 uppercase">${canal}</td>
+                            <td class="py-2 px-3 text-xs font-black text-cyan-700 text-center">${_fmNum(n)}</td>
+                        </tr>`).join('') +
+                        `<tr class="border-t-2 border-slate-300 bg-slate-50/80">
+                            <td class="py-2.5 px-3 text-xs font-black text-slate-800 uppercase">Total Geral</td>
+                            <td class="py-2.5 px-3 text-xs font-black text-cyan-700 text-center">${_fmNum(totProd)}</td>
+                        </tr>`;
+                }
+            }
         }
 
         function _fmRenderAssunto(meses) {
@@ -10611,13 +10946,13 @@
             const kpis = document.getElementById('fmKpiCards');
             if (!globalData || globalData.length === 0) {
                 if (kpis) kpis.innerHTML = '<div class="col-span-full text-center text-xs text-slate-400 py-8 font-bold tracking-wide">Nenhum dado carregado ainda. Importe uma base para visualizar esta guia.</div>';
-                ['fmTabelaMensalBody', 'fmCanalBody', 'fmAssuntoBody', 'fmNaoInstaladasBody'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+                ['fmTabelaMensalBody', 'fmCanalBody', 'fmCanalProdBody', 'fmAssuntoBody', 'fmNaoInstaladasBody'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
                 return;
             }
             // Select de estado (opções a partir da base completa; mantém a seleção)
             const selUf = document.getElementById('fmUfSelect');
             if (selUf) {
-                const ufs = [...new Set(globalData.map(_fmUfDe))].sort();
+                const ufs = [...new Set(_fmBaseSemUf().map(_fmUfDe))].sort();
                 if (_fmState.uf && ufs.indexOf(_fmState.uf) === -1) _fmState.uf = '';
                 selUf.innerHTML = `<option value="">Todos</option>` + ufs.map(uf => `<option value="${uf}" ${uf === _fmState.uf ? 'selected' : ''}>${uf}</option>`).join('');
                 selUf.onchange = () => { _fmState.uf = selUf.value; _fmRenderAll(); };
@@ -10626,7 +10961,7 @@
             const { lista, semData } = _fmAgregarMeses();
             if (lista.length === 0) {
                 if (kpis) kpis.innerHTML = `<div class="col-span-full text-center text-xs text-slate-400 py-8 font-bold tracking-wide">Sem registros para o estado selecionado.</div>`;
-                ['fmTabelaMensalBody', 'fmCanalBody', 'fmAssuntoBody', 'fmNaoInstaladasBody'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+                ['fmTabelaMensalBody', 'fmCanalBody', 'fmCanalProdBody', 'fmAssuntoBody', 'fmNaoInstaladasBody'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
                 if (_fmChart) { _fmChart.destroy(); _fmChart = null; }
                 return;
             }
