@@ -2140,9 +2140,15 @@
                             </h3>
                             <p class="text-xs text-slate-400 font-medium mt-1">Guia exclusiva do admin · mês da venda = Data Abertura O.S (quando vazia, usa a data de ativação) · leitura sobre a base carregada, sem alterar dados.</p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mês de referência</label>
-                            <select id="fmMesSelect" class="border border-slate-200 rounded-lg p-2 text-sm font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors"></select>
+                        <div class="flex items-center gap-4 flex-wrap">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Estado</label>
+                                <select id="fmUfSelect" class="border border-slate-200 rounded-lg p-2 text-sm font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors"></select>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mês de referência</label>
+                                <select id="fmMesSelect" class="border border-slate-200 rounded-lg p-2 text-sm font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors"></select>
+                            </div>
                         </div>
                     </div>
 
@@ -10196,8 +10202,11 @@
         //  - O.S. Instalação = Assunto contém "instal" (sem acento/caixa);
         //    Instal. Novo Cliente = idem + "novo cliente".
         // ===========================================================
-        const _fmState = { mes: '', busca: '' };
+        const _fmState = { mes: '', uf: '', busca: '' };
         let _fmChart = null;
+
+        function _fmUfDe(d) { return d._ufOperacao || 'Não Identificado'; }
+        function _fmBase() { return _fmState.uf ? globalData.filter(d => _fmUfDe(d) === _fmState.uf) : globalData; }
 
         function _fmNorm(s) { return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
         function _fmMesDeISO(iso) { if (!iso) return null; const p = iso.split('-'); return `${p[1]}/${p[0]}`; }
@@ -10219,7 +10228,7 @@
         function _fmAgregarMeses() {
             const meses = {};
             let semData = 0;
-            globalData.forEach(d => {
+            _fmBase().forEach(d => {
                 const mes = _fmMesVenda(d);
                 if (!mes) { semData++; return; }
                 const m = meses[mes] || (meses[mes] = { mes, brutas: 0, canceladas: 0, conclNoMes: 0, conclDepois: 0, pendentes: 0, naoConcl: 0 });
@@ -10236,7 +10245,7 @@
         }
 
         function _fmRegistrosDoMes(mes) {
-            return globalData.filter(d => _fmMesVenda(d) === mes);
+            return _fmBase().filter(d => _fmMesVenda(d) === mes);
         }
 
         function _fmRenderKpis(m, semData) {
@@ -10252,8 +10261,18 @@
                 </div>`;
             const ativadasSafra = m.conclNoMes + m.conclDepois;
             const pctCanc = ativadasSafra > 0 ? (m.canceladas / ativadasSafra * 100) : 0;
+            // Sub do card Brutas: sem filtro de estado, mostra o racha por UF do mês
+            let subBrutas = `abertas em ${m.mes}`;
+            if (!_fmState.uf) {
+                const porUf = {};
+                _fmRegistrosDoMes(m.mes).forEach(d => { const uf = _fmUfDe(d); porUf[uf] = (porUf[uf] || 0) + 1; });
+                const split = Object.entries(porUf).sort((a, b) => b[1] - a[1]).map(([uf, n]) => `${uf} ${_fmNum(n)}`).join(' · ');
+                if (split) subBrutas = split;
+            } else {
+                subBrutas = `abertas em ${m.mes} · ${_fmState.uf}`;
+            }
             cont.innerHTML =
-                card('Vendas Brutas', _fmNum(m.brutas), `abertas em ${m.mes}`, 'border-l-blue-500') +
+                card('Vendas Brutas', _fmNum(m.brutas), subBrutas, 'border-l-blue-500') +
                 card('Concluídas no mês', _fmNum(m.conclNoMes), `${conv.toFixed(1)}% das brutas do mês`, 'border-l-emerald-500') +
                 card('Ficaram p/ mês seguinte', _fmNum(ficaram), `${_fmNum(m.conclDepois)} concluídas depois · ${_fmNum(m.pendentes)} pendentes · ${_fmNum(m.naoConcl)} não concluídas`, 'border-l-red-500') +
                 card('Canceladas', _fmNum(m.canceladas), `${pctCanc.toFixed(1)}% das ativadas desta safra (contrato hoje Inativo)`, 'border-l-rose-600');
@@ -10373,8 +10392,22 @@
                 ['fmTabelaMensalBody', 'fmAssuntoBody', 'fmNaoInstaladasBody'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
                 return;
             }
+            // Select de estado (opções a partir da base completa; mantém a seleção)
+            const selUf = document.getElementById('fmUfSelect');
+            if (selUf) {
+                const ufs = [...new Set(globalData.map(_fmUfDe))].sort();
+                if (_fmState.uf && ufs.indexOf(_fmState.uf) === -1) _fmState.uf = '';
+                selUf.innerHTML = `<option value="">Todos</option>` + ufs.map(uf => `<option value="${uf}" ${uf === _fmState.uf ? 'selected' : ''}>${uf}</option>`).join('');
+                selUf.onchange = () => { _fmState.uf = selUf.value; _fmRenderAll(); };
+            }
+
             const { lista, semData } = _fmAgregarMeses();
-            if (lista.length === 0) return;
+            if (lista.length === 0) {
+                if (kpis) kpis.innerHTML = `<div class="col-span-full text-center text-xs text-slate-400 py-8 font-bold tracking-wide">Sem registros para o estado selecionado.</div>`;
+                ['fmTabelaMensalBody', 'fmAssuntoBody', 'fmNaoInstaladasBody'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+                if (_fmChart) { _fmChart.destroy(); _fmChart = null; }
+                return;
+            }
 
             // Select de mês (mantém a seleção; padrão = mês mais recente)
             const sel = document.getElementById('fmMesSelect');
