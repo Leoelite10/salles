@@ -630,7 +630,7 @@
                         <div class="glass-card p-5 border-l-4 border-l-blue-500 relative overflow-hidden">
                             <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest transition-colors duration-300 relative z-10" id="labelVolBrutas">Vol. Vendas Brutas</span>
                             <span class="block text-3xl font-black text-slate-800 mt-2 relative z-10" id="kpiBrutas">0</span>
-                            <span class="text-xs text-slate-400 font-medium relative z-10">Total geral (Vazio + 340)</span>
+                            <span class="text-xs text-slate-400 font-medium relative z-10" id="subVolBrutas">Total geral (Vazio + 340)</span>
                             <svg class="absolute -bottom-4 -right-4 w-20 h-20 text-blue-50 opacity-50" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
                         </div>
                         <div class="glass-card p-5 border-l-4 border-l-green-500">
@@ -2139,9 +2139,10 @@
                                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Estado</label>
                                 <select id="fmUfSelect" class="border border-slate-200 rounded-lg p-2 text-sm font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors"></select>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 relative">
                                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mês de referência</label>
-                                <select id="fmMesSelect" class="border border-slate-200 rounded-lg p-2 text-sm font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors"></select>
+                                <button id="fmMesBtn" type="button" class="border border-slate-200 rounded-lg p-2 text-sm font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors min-w-[120px] text-left">—</button>
+                                <div id="fmMesPanel" class="hidden absolute top-full right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-30 max-h-64 overflow-y-auto min-w-[160px]"></div>
                             </div>
                         </div>
                     </div>
@@ -2149,6 +2150,29 @@
                     <!-- KPIs do mês selecionado -->
                     <div id="fmKpiCards" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4"></div>
                     <p id="fmNotaDados" class="text-[10px] text-slate-400 font-medium -mt-4"></p>
+
+                    <!-- Detalhamento por Canal Operacional (meses selecionados) -->
+                    <div class="glass-card p-5">
+                        <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2 mb-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Por Canal Operacional · <span id="fmCanalMesLabel" class="text-blue-600"></span>
+                        </h4>
+                        <p class="text-[10px] text-slate-400 font-medium mb-4">De quem foram as vendas abertas no período (campo Setor): o que cada canal concluiu dentro do período e o que virou backlog.</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left min-w-[600px]">
+                                <thead>
+                                    <tr>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Canal</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Brutas</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Concluídas no período</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Backlog</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Não concluídas</th>
+                                        <th class="py-2.5 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">% Conv.</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fmCanalBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
 
                     <!-- Evolução mensal -->
                     <div class="glass-card p-5">
@@ -2164,7 +2188,7 @@
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Resumo Mês a Mês
                         </h4>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left min-w-[900px]">
+                            <table class="w-full text-left min-w-[1000px]">
                                 <thead>
                                     <tr>
                                         <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Mês</th>
@@ -2176,6 +2200,7 @@
                                         <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Backlog</th>
                                         <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Canceladas</th>
                                         <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">% Conv. no mês</th>
+                                        <th class="py-3 px-3 font-bold text-[10px] uppercase tracking-wider text-cyan-600 border-b border-slate-200 text-center" title="Contagem pela Data de ativação (independente do mês de abertura da O.S) — mesma régua do card Vol. Vendas Concluídas da aba Executivo">Ativadas no mês ⓘ</th>
                                     </tr>
                                 </thead>
                                 <tbody id="fmTabelaMensalBody"></tbody>
@@ -4676,6 +4701,18 @@
                 labelVolBrutas.textContent = 'VOL. VENDAS BRUTAS';
                 labelVolBrutas.classList.remove('text-blue-600');
                 labelVolBrutas.classList.add('text-slate-500');
+            }
+
+            // Aviso no card Brutas quando há filtro de datas: o corte é pela data de ativação,
+            // então pendentes (sem ativação) ficam fora e "brutas" não representa a safra do período
+            const subVolBrutas = document.getElementById('subVolBrutas');
+            if (subVolBrutas) {
+                const filtroDataAtivo = !!(filterDataInicio.value || filterDataFim.value);
+                subVolBrutas.textContent = filtroDataAtivo
+                    ? '⚠ Período pela data de ativação — pendentes sem ativação fora da conta (safra real: guia Fechamento Mensal)'
+                    : 'Total geral (Vazio + 340)';
+                subVolBrutas.classList.toggle('text-amber-600', filtroDataAtivo);
+                subVolBrutas.classList.toggle('text-slate-400', !filtroDataAtivo);
             }
 
             document.getElementById('kpiConcluidas').textContent = totalConcluidas;
@@ -10290,7 +10327,7 @@
         //  - Taxa de Ativação = O.S de instalação abertas E finalizadas no
         //    próprio mês ÷ O.S de instalação abertas no mês.
         // ===========================================================
-        const _fmState = { mes: '', uf: '', busca: '' };
+        const _fmState = { meses: [], uf: '', busca: '' };
         let _fmChart = null;
 
         function _fmUfDe(d) { return d._ufOperacao || 'Não Identificado'; }
@@ -10333,44 +10370,105 @@
                     m.instAbertas++;
                     if (cls === 'conclNoMes') m.instNoMes++;
                 }
+                // Visão produção (mesma régua do Executivo): ativação contada no mês da Data ativação,
+                // independente do mês de abertura — permite conferir com "Vol. Vendas Concluídas"
+                if (d._isConcluida) {
+                    const mAtiv = _fmMesDeISO(d._dataISO);
+                    if (mAtiv) {
+                        const ma = meses[mAtiv] || (meses[mAtiv] = { mes: mAtiv, brutas: 0, canceladas: 0, conclNoMes: 0, conclDepois: 0, pendentes: 0, naoConcl: 0, instAbertas: 0, instNoMes: 0 });
+                        ma.ativadasNoMes = (ma.ativadasNoMes || 0) + 1;
+                    }
+                }
             });
             const lista = Object.values(meses).sort((a, b) => monthSortValue(a.mes) - monthSortValue(b.mes));
             return { lista, semData };
         }
 
-        function _fmRegistrosDoMes(mes) {
-            return _fmBase().filter(d => _fmMesVenda(d) === mes);
+        // Classificação relativa ao período selecionado: concluída dentro dele (no próprio mês ou em
+        // mês posterior ainda na seleção), backlog (concluída fora / pendente) ou não concluída
+        function _fmClsPeriodo(d, meses) {
+            const cls = _fmClassificar(d, _fmMesVenda(d));
+            if (cls === 'conclNoMes') return 'conclPeriodo';
+            if (cls === 'conclDepois') {
+                const mAtiv = _fmMesDeISO(d._dataISO);
+                return (mAtiv && meses.indexOf(mAtiv) !== -1) ? 'conclPeriodo' : 'backlog';
+            }
+            if (cls === 'pendente') return 'backlog';
+            return 'naoConcl';
+        }
+
+        function _fmRegistrosDosMeses(meses) {
+            return _fmBase().filter(d => meses.indexOf(_fmMesVenda(d)) !== -1);
+        }
+
+        // Agrega os meses selecionados no nível do registro (cada venda avaliada dentro do seu próprio mês).
+        // Concluída em mês posterior AINDA DENTRO da seleção conta como concluída do período (conclDentro);
+        // Backlog do período = concluídas fora da seleção (conclFora, com racha por mês de ativação) + pendentes.
+        function _fmAgregado(meses) {
+            const agg = { mes: meses.join(' · '), brutas: 0, canceladas: 0, conclNoMes: 0, conclDentro: 0, conclFora: 0, conclForaPorMes: {}, pendentes: 0, naoConcl: 0, instAbertas: 0, instNoMes: 0 };
+            _fmRegistrosDosMeses(meses).forEach(d => {
+                agg.brutas++;
+                if (isCancelamentoReal(d)) agg.canceladas++;
+                const cls = _fmClassificar(d, _fmMesVenda(d));
+                if (cls === 'conclNoMes') agg.conclNoMes++;
+                else if (cls === 'conclDepois') {
+                    const mAtiv = _fmMesDeISO(d._dataISO);
+                    if (mAtiv && meses.indexOf(mAtiv) !== -1) agg.conclDentro++;
+                    else {
+                        agg.conclFora++;
+                        const chave = mAtiv || 'sem data';
+                        agg.conclForaPorMes[chave] = (agg.conclForaPorMes[chave] || 0) + 1;
+                    }
+                }
+                else if (cls === 'pendente') agg.pendentes++;
+                else agg.naoConcl++;
+                if (_fmEhInstalacao(d)) {
+                    agg.instAbertas++;
+                    if (cls === 'conclNoMes') agg.instNoMes++;
+                }
+            });
+            return agg;
         }
 
         function _fmRenderKpis(m, semData) {
             const cont = document.getElementById('fmKpiCards');
             if (!cont) return;
-            const ficaram = m.conclDepois + m.pendentes;
-            const conv = m.brutas > 0 ? (m.conclNoMes / m.brutas * 100) : 0;
+            const multi = _fmState.meses.length > 1;
+            const conclPeriodo = m.conclNoMes + (m.conclDentro || 0);
+            const ficaram = (m.conclFora || 0) + m.pendentes;
+            const conv = m.brutas > 0 ? (conclPeriodo / m.brutas * 100) : 0;
             const card = (label, valor, sub, borda) => `
                 <div class="glass-card p-4 border-l-4 ${borda}">
                     <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400">${label}</span>
                     <span class="block text-2xl font-black text-slate-800 mt-1">${valor}</span>
                     <span class="block text-[10px] text-slate-400 font-medium mt-1">${sub}</span>
                 </div>`;
-            const ativadasSafra = m.conclNoMes + m.conclDepois;
+            const ativadasSafra = conclPeriodo + (m.conclFora || 0);
             const pctCanc = ativadasSafra > 0 ? (m.canceladas / ativadasSafra * 100) : 0;
             // Sub do card Brutas: sem filtro de estado, mostra o racha por UF do mês
             let subBrutas = `abertas em ${m.mes}`;
             if (!_fmState.uf) {
                 const porUf = {};
-                _fmRegistrosDoMes(m.mes).forEach(d => { const uf = _fmUfDe(d); porUf[uf] = (porUf[uf] || 0) + 1; });
+                _fmRegistrosDosMeses(_fmState.meses).forEach(d => { const uf = _fmUfDe(d); porUf[uf] = (porUf[uf] || 0) + 1; });
                 const split = Object.entries(porUf).sort((a, b) => b[1] - a[1]).map(([uf, n]) => `${uf} ${_fmNum(n)}`).join(' · ');
                 if (split) subBrutas = split;
             } else {
                 subBrutas = `abertas em ${m.mes} · ${_fmState.uf}`;
             }
             const taxaAtiv = (m.instAbertas || 0) > 0 ? (m.instNoMes / m.instAbertas * 100) : 0;
+            const subConcl = multi
+                ? `${_fmNum(m.conclNoMes)} no próprio mês · ${_fmNum(m.conclDentro)} em mês seguinte do período · ${conv.toFixed(1)}% das brutas`
+                : `${conv.toFixed(1)}% das brutas do mês`;
+            // Backlog: mostra em que mês cada parte foi concluída (fora do período) pra não gerar dúvida
+            const rachaFora = Object.entries(m.conclForaPorMes || {})
+                .sort((a, b) => monthSortValue(a[0]) - monthSortValue(b[0]))
+                .map(([mes, n]) => `${mes} ${_fmNum(n)}`).join(' · ');
+            const subBacklog = `${(m.conclFora || 0) > 0 ? `concluídas depois: ${rachaFora}` : 'nenhuma concluída depois'} · ${_fmNum(m.pendentes)} pendentes · ${_fmNum(m.naoConcl)} não concluídas`;
             cont.innerHTML =
                 card('Vendas Brutas', _fmNum(m.brutas), subBrutas, 'border-l-blue-500') +
-                card('Concluídas no mês', _fmNum(m.conclNoMes), `${conv.toFixed(1)}% das brutas do mês`, 'border-l-emerald-500') +
+                card(multi ? 'Concluídas no período' : 'Concluídas no mês', _fmNum(conclPeriodo), subConcl, 'border-l-emerald-500') +
                 card('Taxa de Ativação', `${taxaAtiv.toFixed(1)}%`, `${_fmNum(m.instNoMes)} de ${_fmNum(m.instAbertas)} O.S de instalação abertas e instaladas no mês`, 'border-l-purple-500') +
-                card('Backlog', _fmNum(ficaram), `${_fmNum(m.conclDepois)} concluídas depois · ${_fmNum(m.pendentes)} pendentes · ${_fmNum(m.naoConcl)} não concluídas`, 'border-l-red-500') +
+                card(multi ? 'Backlog do período' : 'Backlog', _fmNum(ficaram), subBacklog, 'border-l-red-500') +
                 card('Canceladas', _fmNum(m.canceladas), `${pctCanc.toFixed(1)}% das ativadas desta safra (contrato hoje Inativo)`, 'border-l-rose-600');
             const nota = document.getElementById('fmNotaDados');
             if (nota) nota.textContent = semData > 0
@@ -10410,7 +10508,7 @@
             body.innerHTML = [...lista].reverse().map(m => {
                 const ficaram = m.conclDepois + m.pendentes;
                 const conv = m.brutas > 0 ? (m.conclNoMes / m.brutas * 100) : 0;
-                const selecionado = m.mes === _fmState.mes;
+                const selecionado = _fmState.meses.indexOf(m.mes) !== -1;
                 return `<tr class="border-b border-slate-100 hover:bg-amber-50/40 transition-colors ${selecionado ? 'bg-amber-50/60' : ''}">
                     <td class="py-2.5 px-3 text-xs font-black text-slate-700">${m.mes}</td>
                     <td class="py-2.5 px-3 text-xs font-bold text-slate-700 text-center">${_fmNum(m.brutas)}</td>
@@ -10421,21 +10519,49 @@
                     <td class="py-2.5 px-3 text-xs font-black text-red-600 text-center">${_fmNum(ficaram)}</td>
                     <td class="py-2.5 px-3 text-xs font-black text-rose-600 text-center">${_fmNum(m.canceladas)}</td>
                     <td class="py-2.5 px-3 text-xs font-black text-slate-700 text-center">${conv.toFixed(1)}%</td>
+                    <td class="py-2.5 px-3 text-xs font-black text-cyan-700 text-center">${_fmNum(m.ativadasNoMes || 0)}</td>
                 </tr>`;
             }).join('');
         }
 
-        function _fmRenderAssunto(mes) {
+        function _fmRenderCanal(meses) {
+            const label = document.getElementById('fmCanalMesLabel');
+            if (label) label.textContent = (meses && meses.length ? meses.join(' · ') : '—');
+            const body = document.getElementById('fmCanalBody');
+            if (!body) return;
+            const porCanal = {};
+            _fmRegistrosDosMeses(meses).forEach(d => {
+                const key = d._setorUpper || 'Não Identificado';
+                const c = porCanal[key] || (porCanal[key] = { brutas: 0, conclPeriodo: 0, backlog: 0, naoConcl: 0 });
+                c.brutas++;
+                c[_fmClsPeriodo(d, meses)]++;
+            });
+            body.innerHTML = Object.entries(porCanal)
+                .sort((a, b) => b[1].brutas - a[1].brutas)
+                .map(([canal, c]) => {
+                    const conv = c.brutas > 0 ? (c.conclPeriodo / c.brutas * 100) : 0;
+                    return `<tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        <td class="py-2 px-3 text-xs font-black text-slate-700 uppercase">${canal}</td>
+                        <td class="py-2 px-3 text-xs font-bold text-slate-700 text-center">${_fmNum(c.brutas)}</td>
+                        <td class="py-2 px-3 text-xs font-bold text-emerald-700 text-center">${_fmNum(c.conclPeriodo)}</td>
+                        <td class="py-2 px-3 text-xs font-black text-red-600 text-center">${_fmNum(c.backlog)}</td>
+                        <td class="py-2 px-3 text-xs font-semibold text-slate-500 text-center">${_fmNum(c.naoConcl)}</td>
+                        <td class="py-2 px-3 text-xs font-black text-slate-700 text-center">${conv.toFixed(1)}%</td>
+                    </tr>`;
+                }).join('') || '<tr><td colspan="6" class="py-4 text-center text-xs text-slate-400 font-bold">Sem registros no período selecionado.</td></tr>';
+        }
+
+        function _fmRenderAssunto(meses) {
             const label = document.getElementById('fmAssuntoMesLabel');
-            if (label) label.textContent = mes || '—';
+            if (label) label.textContent = (meses && meses.length ? meses.join(' · ') : '—');
             const body = document.getElementById('fmAssuntoBody');
             if (!body) return;
             const porAssunto = {};
-            _fmRegistrosDoMes(mes).forEach(d => {
+            _fmRegistrosDosMeses(meses).forEach(d => {
                 const key = (d['Assunto'] || 'Não informado').trim() || 'Não informado';
                 const a = porAssunto[key] || (porAssunto[key] = { qtd: 0, concl: 0, naoInst: 0 });
                 a.qtd++;
-                if (_fmClassificar(d, mes) === 'conclNoMes') a.concl++;
+                if (_fmClassificar(d, _fmMesVenda(d)) === 'conclNoMes') a.concl++;
                 else a.naoInst++;
             });
             body.innerHTML = Object.entries(porAssunto)
@@ -10445,18 +10571,18 @@
                     <td class="py-2 px-3 text-xs font-bold text-slate-700 text-center">${_fmNum(a.qtd)}</td>
                     <td class="py-2 px-3 text-xs font-bold text-emerald-700 text-center">${_fmNum(a.concl)}</td>
                     <td class="py-2 px-3 text-xs font-bold text-red-600 text-center">${_fmNum(a.naoInst)}</td>
-                </tr>`).join('') || '<tr><td colspan="4" class="py-4 text-center text-xs text-slate-400 font-bold">Sem registros no mês selecionado.</td></tr>';
+                </tr>`).join('') || '<tr><td colspan="4" class="py-4 text-center text-xs text-slate-400 font-bold">Sem registros no período selecionado.</td></tr>';
         }
 
-        function _fmRenderNaoInstaladas(mes) {
+        function _fmRenderNaoInstaladas(meses) {
             const label = document.getElementById('fmNaoInstMesLabel');
-            if (label) label.textContent = mes || '—';
+            if (label) label.textContent = (meses && meses.length ? meses.join(' · ') : '—');
             const body = document.getElementById('fmNaoInstaladasBody');
             if (!body) return;
             const busca = _fmNorm(_fmState.busca);
             const pesoSituacao = { pendente: 0, naoConcl: 1, conclDepois: 2 };
-            const itens = _fmRegistrosDoMes(mes)
-                .map(d => ({ d, cls: _fmClassificar(d, mes) }))
+            const itens = _fmRegistrosDosMeses(meses)
+                .map(d => ({ d, cls: _fmClassificar(d, _fmMesVenda(d)) }))
                 .filter(x => x.cls !== 'conclNoMes')
                 .filter(x => {
                     if (!busca) return true;
@@ -10478,14 +10604,14 @@
                     <td class="py-2 px-3 text-xs text-slate-600">${d['Cidade'] || '—'}</td>
                     <td class="py-2 px-3 text-xs text-slate-500 text-center whitespace-nowrap">${_fmDataBR(d._dataAberturaISO || d._dataISO)}</td>
                     <td class="py-2 px-3 text-center">${badge(cls, d)}</td>
-                </tr>`).join('') || '<tr><td colspan="6" class="py-4 text-center text-xs text-slate-400 font-bold">Nenhum registro — tudo que abriu neste mês foi concluído dentro dele. 🎉</td></tr>';
+                </tr>`).join('') || '<tr><td colspan="6" class="py-4 text-center text-xs text-slate-400 font-bold">Nenhum registro — tudo que abriu no período foi concluído dentro do próprio mês. 🎉</td></tr>';
         }
 
         function _fmRenderAll() {
             const kpis = document.getElementById('fmKpiCards');
             if (!globalData || globalData.length === 0) {
                 if (kpis) kpis.innerHTML = '<div class="col-span-full text-center text-xs text-slate-400 py-8 font-bold tracking-wide">Nenhum dado carregado ainda. Importe uma base para visualizar esta guia.</div>';
-                ['fmTabelaMensalBody', 'fmAssuntoBody', 'fmNaoInstaladasBody'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+                ['fmTabelaMensalBody', 'fmCanalBody', 'fmAssuntoBody', 'fmNaoInstaladasBody'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
                 return;
             }
             // Select de estado (opções a partir da base completa; mantém a seleção)
@@ -10500,31 +10626,51 @@
             const { lista, semData } = _fmAgregarMeses();
             if (lista.length === 0) {
                 if (kpis) kpis.innerHTML = `<div class="col-span-full text-center text-xs text-slate-400 py-8 font-bold tracking-wide">Sem registros para o estado selecionado.</div>`;
-                ['fmTabelaMensalBody', 'fmAssuntoBody', 'fmNaoInstaladasBody'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+                ['fmTabelaMensalBody', 'fmCanalBody', 'fmAssuntoBody', 'fmNaoInstaladasBody'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
                 if (_fmChart) { _fmChart.destroy(); _fmChart = null; }
                 return;
             }
 
-            // Select de mês (mantém a seleção; padrão = mês mais recente)
-            const sel = document.getElementById('fmMesSelect');
+            // Seleção de mês(es): dropdown com checkboxes (mantém a seleção; padrão = mês mais recente)
             const mesesDesc = [...lista].reverse().map(m => m.mes);
-            if (mesesDesc.indexOf(_fmState.mes) === -1) _fmState.mes = mesesDesc[0];
-            if (sel) {
-                sel.innerHTML = mesesDesc.map(mes => `<option value="${mes}" ${mes === _fmState.mes ? 'selected' : ''}>${mes}</option>`).join('');
-                sel.onchange = () => { _fmState.mes = sel.value; _fmRenderAll(); };
+            _fmState.meses = _fmState.meses.filter(mes => mesesDesc.indexOf(mes) !== -1);
+            if (_fmState.meses.length === 0) _fmState.meses = [mesesDesc[0]];
+            const btnMes = document.getElementById('fmMesBtn');
+            const panelMes = document.getElementById('fmMesPanel');
+            if (btnMes && panelMes) {
+                btnMes.textContent = _fmState.meses.length === 1
+                    ? _fmState.meses[0]
+                    : `${_fmState.meses.length} meses selecionados`;
+                panelMes.innerHTML = mesesDesc.map(mes => `
+                    <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-sm font-bold text-slate-700 whitespace-nowrap">
+                        <input type="checkbox" value="${mes}" ${_fmState.meses.indexOf(mes) !== -1 ? 'checked' : ''} class="accent-amber-500">${mes}
+                    </label>`).join('');
+                panelMes.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+                    chk.onchange = () => {
+                        _fmState.meses = [...panelMes.querySelectorAll('input:checked')].map(c => c.value);
+                        _fmRenderAll(); // painel continua aberto para marcar vários meses em sequência
+                    };
+                });
+                if (!btnMes._fmLigado) {
+                    btnMes._fmLigado = true;
+                    btnMes.onclick = (e) => { e.stopPropagation(); panelMes.classList.toggle('hidden'); };
+                    document.addEventListener('click', (e) => {
+                        if (!panelMes.contains(e.target) && e.target !== btnMes) panelMes.classList.add('hidden');
+                    });
+                }
             }
             const busca = document.getElementById('fmNaoInstBusca');
             if (busca && !busca._fmLigado) {
                 busca._fmLigado = true;
-                busca.addEventListener('input', () => { _fmState.busca = busca.value; _fmRenderNaoInstaladas(_fmState.mes); });
+                busca.addEventListener('input', () => { _fmState.busca = busca.value; _fmRenderNaoInstaladas(_fmState.meses); });
             }
 
-            const mesAtual = lista.find(m => m.mes === _fmState.mes) || lista[lista.length - 1];
-            _fmRenderKpis(mesAtual, semData);
+            _fmRenderKpis(_fmAgregado(_fmState.meses), semData);
             _fmRenderChart(lista);
             _fmRenderTabelaMensal(lista);
-            _fmRenderAssunto(_fmState.mes);
-            _fmRenderNaoInstaladas(_fmState.mes);
+            _fmRenderCanal(_fmState.meses);
+            _fmRenderAssunto(_fmState.meses);
+            _fmRenderNaoInstaladas(_fmState.meses);
         }
 
     </script>
