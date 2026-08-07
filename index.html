@@ -638,6 +638,16 @@
                             <span class="block text-3xl font-black text-green-600 mt-2" id="kpiConcluidas">0</span>
                             <span class="text-xs text-slate-400 font-medium">Diagnóstico 340</span>
                         </div>
+                        <div class="glass-card p-5 border-l-4 border-l-violet-500">
+                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">vs. Mês Anterior (mesmo período)</span>
+                            <div class="flex items-baseline gap-2 mt-2">
+                                <span class="text-3xl font-black text-slate-300" id="kpiVsMesPct">—</span>
+                                <span class="text-xs font-bold text-slate-400" id="kpiVsMesQtd"></span>
+                            </div>
+                            <span class="text-[11px] font-bold mt-1 block text-slate-400" id="kpiVsMesAtivadas">—</span>
+                            <span class="text-[10px] text-slate-400 font-medium mt-1 block" id="kpiVsMesPeriodo"></span>
+                        </div>
+
                         <div class="glass-card p-5 border-l-4 border-l-cyan-500">
                             <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Projeção (Ativ. 340)</span>
                             <div class="flex items-baseline gap-2 mt-2">
@@ -763,6 +773,7 @@
                         <div id="cardFuturas" title="Clique para filtrar Vendas Futuras (Pendentes) na Base de Contratos" class="glass-card p-4 border-b-4 border-b-pink-500 text-center cursor-pointer hover:ring-2 hover:ring-pink-400 hover:-translate-y-1 transition-all">
                             <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest block mb-1">Vendas Futuras</span>
                             <span class="block text-2xl font-black text-pink-600" id="kpiVendasFuturas">0</span>
+                            <span class="block text-[9px] font-bold text-slate-400 leading-tight mt-1" id="subVendasFuturas">Fila pendente hoje</span>
                         </div>
                         <div class="glass-card p-4 bg-emerald-50/50 border border-emerald-100 border-b-4 border-b-emerald-500 text-center">
                             <span class="text-emerald-800 text-[10px] font-bold uppercase tracking-widest block mb-1">Potencial Cresc.</span>
@@ -972,9 +983,10 @@
 
                 <!-- NOVO BLOCO 3.7: Análise de Vendas Futuras -->
                 <div>
-                    <h3 class="text-sm font-extrabold text-slate-800 mb-4 uppercase tracking-widest flex items-center gap-2">
+                    <h3 class="text-sm font-extrabold text-slate-800 mb-1 uppercase tracking-widest flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-cyan-500"></span> Visão Detalhada de Vendas Futuras
                     </h3>
+                    <p class="text-[11px] text-slate-400 font-medium mb-4" id="vfNotaCorte">Fila de vendas pendentes hoje.</p>
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         
                         <!-- Card Canais Operacionais -->
@@ -3915,8 +3927,68 @@
             });
         }
 
+        // ---------------------------------------------------------------
+        // BACKLOG DE VENDAS FUTURAS NA DATA DE CORTE DO PERÍODO FILTRADO
+        // O filtro de período corta por _dataISO (Data ativação) e pendentes
+        // não têm ativação — por isso sumiam ao filtrar um mês passado.
+        // Aqui remontamos a fila que existia no último dia do período:
+        // O.S aberta até a data de corte que ainda não estava ativada nela.
+        // ---------------------------------------------------------------
+
+        // Filtros do usuário sem os temporais (_mes) e sem _situacao — a
+        // situação é justamente o que o backlog recalcula para a data de corte.
+        function _vfPassaFiltrosNaoTemporais(d) {
+            for (const [col, values] of Object.entries(activeFilters)) {
+                if (col === '_mes' || col === '_situacao') continue;
+                if (values.length > 0 && !values.includes(d[col])) return false;
+            }
+            return true;
+        }
+
+        // Último dia do período filtrado (ISO) ou null quando não há filtro de data
+        function _vfDataCorte() {
+            if (filterDataFim.value) return filterDataFim.value;
+
+            if (activeFilters['_mes'] && activeFilters['_mes'].length > 0) {
+                const ultimoMes = [...activeFilters['_mes']]
+                    .sort((a, b) => monthSortValue(a) - monthSortValue(b)).pop();
+                const dataMes = dateFromMonthKey(ultimoMes, 1);
+                if (dataMes) {
+                    const ultimoDia = lastDayOfMonth(dataMes.getFullYear(), dataMes.getMonth());
+                    return isoFromDate(new Date(dataMes.getFullYear(), dataMes.getMonth(), ultimoDia));
+                }
+            }
+
+            return null;
+        }
+
+        function _vfBacklogPeriodo() {
+            const corte = _vfDataCorte();
+            const base = globalData.filter(_vfPassaFiltrosNaoTemporais);
+
+            // Sem data de corte: a fila é simplesmente o que está pendente hoje
+            if (!corte) return { corte: null, lista: base.filter(d => !d._isConcluida) };
+
+            const lista = base.filter(d => {
+                const abertura = d._dataAberturaISO || d._dataISO;
+                if (!abertura || abertura > corte) return false;   // ainda não existia na data de corte
+                if (!d._isConcluida) return true;                   // segue pendente até hoje
+                return !!(d._dataISO && d._dataISO > corte);        // ativou, mas só depois do corte
+            });
+
+            return { corte, lista };
+        }
+
+        function _vfLabelCorte(corte) {
+            return corte
+                ? `Fila acumulada em ${formatDateISOToBR(corte)} — O.S abertas até essa data e ainda não ativadas nela.`
+                : 'Fila de vendas pendentes hoje.';
+        }
+
         // Renderiza o novo Bloco de Vendas Futuras
-        function renderVendasFuturasCards(filteredData) {
+        // Recebe o backlog já apurado por _vfBacklogPeriodo (não refiltra por situação)
+        function renderVendasFuturasCards(backlog) {
+            const lista = backlog.lista;
             let totalFuturas = 0;
             let setorStats = {
                 'LOJAS': 0,
@@ -3925,16 +3997,17 @@
             };
             let cidadeStats = {};
 
-            filteredData.forEach(d => {
-                if (!d._isConcluida) {
-                    totalFuturas++;
-                    const setor = (d['Setor'] || '').trim().toUpperCase();
-                    if (setorStats[setor] !== undefined) {
-                        setorStats[setor]++;
-                    }
-                    const cidade = d['Cidade'] || 'Não Identificada';
-                    cidadeStats[cidade] = (cidadeStats[cidade] || 0) + 1;
+            const notaEl = document.getElementById('vfNotaCorte');
+            if (notaEl) notaEl.textContent = _vfLabelCorte(backlog.corte);
+
+            lista.forEach(d => {
+                totalFuturas++;
+                const setor = (d['Setor'] || '').trim().toUpperCase();
+                if (setorStats[setor] !== undefined) {
+                    setorStats[setor]++;
                 }
+                const cidade = d['Cidade'] || 'Não Identificada';
+                cidadeStats[cidade] = (cidadeStats[cidade] || 0) + 1;
             });
 
             document.getElementById('vfTotal').textContent = totalFuturas;
@@ -4304,6 +4377,62 @@
             };
         }
 
+        // ------------------------------------------------------------------
+        // CARD "vs. MÊS ANTERIOR (mesmo período)" — Visão Geral de Vendas
+        // Reaproveita calcularComparativoPeriodoFiltrado: desloca o período
+        // filtrado em -1 mês e compara brutas (principal) e ativadas 340.
+        // ------------------------------------------------------------------
+        function _vmFormatPct(valor) {
+            const sinal = valor > 0 ? '+' : '';
+            return `${sinal}${valor.toFixed(1).replace('.', ',')}%`;
+        }
+
+        function renderVariacaoMesAnterior(dataSet) {
+            const elPct = document.getElementById('kpiVsMesPct');
+            const elQtd = document.getElementById('kpiVsMesQtd');
+            const elAtiv = document.getElementById('kpiVsMesAtivadas');
+            const elPer = document.getElementById('kpiVsMesPeriodo');
+            if (!elPct || !elQtd || !elAtiv || !elPer) return;
+
+            const comp = calcularComparativoPeriodoFiltrado(dataSet);
+
+            if (!comp || !comp.anterior || comp.anterior.brutas === 0) {
+                elPct.textContent = '—';
+                elPct.className = 'text-3xl font-black text-slate-300';
+                elQtd.textContent = '';
+                elAtiv.textContent = 'Sem período anterior comparável na base.';
+                elAtiv.className = 'text-[11px] font-bold mt-1 block text-slate-400';
+                elPer.textContent = comp ? comp.periodoAtual.label : '';
+                return;
+            }
+
+            const atual = comp.atual;
+            const anterior = comp.anterior;
+
+            const diffBrutas = atual.brutas - anterior.brutas;
+            const pctBrutas = (diffBrutas / anterior.brutas) * 100;
+            const setaBrutas = diffBrutas > 0 ? '▲' : (diffBrutas < 0 ? '▼' : '▬');
+            const corBrutas = diffBrutas > 0 ? 'text-green-600' : (diffBrutas < 0 ? 'text-red-600' : 'text-slate-500');
+
+            elPct.textContent = `${setaBrutas} ${_vmFormatPct(pctBrutas)}`;
+            elPct.className = `text-3xl font-black ${corBrutas}`;
+            elQtd.textContent = `${atual.brutas} vs ${anterior.brutas} (${diffBrutas > 0 ? '+' : ''}${diffBrutas})`;
+
+            const diffAtiv = atual.concluidas - anterior.concluidas;
+            if (anterior.concluidas > 0) {
+                const pctAtiv = (diffAtiv / anterior.concluidas) * 100;
+                const setaAtiv = diffAtiv > 0 ? '▲' : (diffAtiv < 0 ? '▼' : '▬');
+                const corAtiv = diffAtiv > 0 ? 'text-green-600' : (diffAtiv < 0 ? 'text-red-600' : 'text-slate-500');
+                elAtiv.textContent = `Ativadas ${setaAtiv} ${_vmFormatPct(pctAtiv)} (${anterior.concluidas} → ${atual.concluidas})`;
+                elAtiv.className = `text-[11px] font-bold mt-1 block ${corAtiv}`;
+            } else {
+                elAtiv.textContent = `Ativadas: ${atual.concluidas} (sem base anterior)`;
+                elAtiv.className = 'text-[11px] font-bold mt-1 block text-slate-400';
+            }
+
+            elPer.textContent = `${comp.periodoAnterior.label} vs ${comp.periodoAtual.label}`;
+        }
+
         function calcularComparativoMensal(dataSet) {
             const baseComparativa = globalData.filter(aplicaFiltrosComparativoSemMesEPeriodo);
             const mesSelecionado = getMesSelecionadoComparativo(dataSet);
@@ -4638,7 +4767,7 @@
             
             // Variáveis para Churn, Previsão e Metas Setorizadas
             let ativos = 0, inativos = 0;
-            let ativacoesAtuais = 0, vendasFuturas = 0;
+            let ativacoesAtuais = 0;
             
             let realAtendimento = 0, realVendasInterno = 0, realVendasExterno = 0;
 
@@ -4700,9 +4829,6 @@
                     if (setorObj === 'LOJAS') realAtendimento++;
                     if (setorObj === 'MCV') realVendasInterno++;
                     if (setorObj === 'PAP') realVendasExterno++;
-
-                } else {
-                    vendasFuturas++;
                 }
             });
 
@@ -4811,15 +4937,29 @@
             document.getElementById('kpiChurnMensal').textContent = churnMensalNum.toFixed(1) + '%';
 
             // Atualiza Forecast
-            const potencialTotal = ativacoesAtuais + vendasFuturas;
+            // Vendas futuras = fila que existia na data de corte do período filtrado
+            // (pendentes não entram em filteredData porque o corte é pela data de ativação)
+            const backlogFuturas = _vfBacklogPeriodo();
+            const totalFuturasPeriodo = backlogFuturas.lista.length;
+            const potencialTotal = ativacoesAtuais + totalFuturasPeriodo;
             document.getElementById('kpiAtivacoesReais').textContent = ativacoesAtuais;
-            document.getElementById('kpiVendasFuturas').textContent = vendasFuturas;
+            document.getElementById('kpiVendasFuturas').textContent = totalFuturasPeriodo;
             document.getElementById('kpiPotencialTotal').textContent = potencialTotal;
+
+            const subFuturas = document.getElementById('subVendasFuturas');
+            if (subFuturas) {
+                subFuturas.textContent = backlogFuturas.corte
+                    ? `Fila em ${formatDateISOToBR(backlogFuturas.corte)}`
+                    : 'Fila pendente hoje';
+                subFuturas.classList.toggle('text-pink-500', !!backlogFuturas.corte);
+                subFuturas.classList.toggle('text-slate-400', !backlogFuturas.corte);
+            }
 
             // --- Renderização dos novos Cards de Setor, Canais e Vendas Futuras ---
             renderSectorCards(setorStats);
             renderCanaisCards(filteredData);
-            renderVendasFuturasCards(filteredData);
+            renderVendasFuturasCards(backlogFuturas);
+            renderVariacaoMesAnterior(filteredData);
             renderCanceladosAnalytics(filteredData);
             renderComparativoMensal(filteredData);
             renderEvolucaoVendedoresPorSetor(filteredData);
