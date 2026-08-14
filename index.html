@@ -1394,7 +1394,7 @@
 
                     <!-- Legenda de Intensidade -->
                     <div class="glass-card p-4">
-                        <div class="flex items-center gap-4 flex-wrap">
+                        <div id="legendaModoVolume" class="flex items-center gap-4 flex-wrap">
                             <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0">Intensidade de Vendas:</span>
                             <div class="flex items-center gap-1.5">
                                 <span class="w-5 h-5 rounded-md" style="background:#dbeafe;border:1px solid #bfdbfe;"></span>
@@ -1418,6 +1418,30 @@
                             </div>
                             <span class="text-[10px] text-slate-400 font-medium ml-auto">Clique em um bairro para ver os detalhes</span>
                         </div>
+                        <div id="legendaModoVariacao" class="hidden flex items-center gap-4 flex-wrap">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0">Variação vs Período Ant.:</span>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-md" style="background:#7f1d1d;border:1px solid #5f0f0f;"></span>
+                                <span class="text-[10px] text-slate-500 font-medium">Queda Forte</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-md" style="background:#dc2626;border:1px solid #b91c1c;"></span>
+                                <span class="text-[10px] text-slate-500 font-medium">Queda</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-md" style="background:#cbd5e1;border:1px solid #94a3b8;"></span>
+                                <span class="text-[10px] text-slate-500 font-medium">Estável</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-md" style="background:#22c55e;border:1px solid #16a34a;"></span>
+                                <span class="text-[10px] text-slate-500 font-medium">Crescimento</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-md" style="background:#15803d;border:1px solid #166534;"></span>
+                                <span class="text-[10px] text-slate-500 font-medium">Crescimento Forte</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-medium ml-auto">Tamanho = volume atual | Cor = tendência</span>
+                        </div>
                     </div>
 
                     <!-- Heatmap + Ranking -->
@@ -1429,6 +1453,9 @@
                                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mr-2">Mapa — Métrica:</span>
                                 <button type="button" class="bairro-metrica-btn px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors bg-blue-600 text-white border-blue-300" data-metrica="brutas">Vendas Brutas</button>
                                 <button type="button" class="bairro-metrica-btn px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors bg-slate-50 text-slate-600 border-slate-200" data-metrica="ativacoes">Ativações</button>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4 mr-2">Modo:</span>
+                                <button type="button" class="bairro-modo-btn px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors bg-blue-600 text-white border-blue-300" data-modo="volume">Volume</button>
+                                <button type="button" class="bairro-modo-btn px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors bg-slate-50 text-slate-600 border-slate-200" data-modo="variacao">Variação vs Período</button>
                             </div>
                             <!-- Status de geocodificação progressiva -->
                             <div id="geocodingStatus" class="hidden glass-card p-2.5 flex items-center gap-2.5">
@@ -2425,6 +2452,27 @@
                         b.classList.toggle('border-slate-200', !active);
                     });
                     renderMapaLeaflet();
+                });
+            });
+
+            document.querySelectorAll('.bairro-modo-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    window._mapaCalorModo = btn.dataset.modo;
+                    const legendaVol = document.getElementById('legendaModoVolume');
+                    const legendaVar = document.getElementById('legendaModoVariacao');
+                    const modoVolume = window._mapaCalorModo === 'volume';
+                    if (legendaVol) legendaVol.classList.toggle('hidden', !modoVolume);
+                    if (legendaVar) legendaVar.classList.toggle('hidden', modoVolume);
+                    document.querySelectorAll('.bairro-modo-btn').forEach(b => {
+                        const active = b === btn;
+                        b.classList.toggle('bg-blue-600', active);
+                        b.classList.toggle('text-white', active);
+                        b.classList.toggle('border-blue-300', active);
+                        b.classList.toggle('bg-slate-50', !active);
+                        b.classList.toggle('text-slate-600', !active);
+                        b.classList.toggle('border-slate-200', !active);
+                    });
+                    renderMapaCalorBairros();
                 });
             });
 
@@ -6354,6 +6402,93 @@
             return           { bg: `hsl(${hue},92%,26%)`,  text: '#ffffff',              border: `hsl(${hue},90%,18%)` };
         }
 
+        function _deltaColor(pctMudanca, minAmostral = 5) {
+            if (pctMudanca === null || isNaN(pctMudanca)) {
+                return { bg: '#cbd5e1', text: '#475569', border: '#94a3b8', badge: 'Amostra baixa' };
+            }
+            const saturado = Math.max(-50, Math.min(50, pctMudanca));
+            const isPositivo = saturado > 1;
+            const isNegativo = saturado < -1;
+            if (!isPositivo && !isNegativo) {
+                return { bg: '#cbd5e1', text: '#475569', border: '#94a3b8', badge: 'Estável' };
+            }
+            if (isPositivo) {
+                const intensidade = Math.min(saturado / 50, 1);
+                if (intensidade < 0.5) {
+                    return { bg: '#86efac', text: '#166534', border: '#4ade80', badge: `+${saturado.toFixed(0)}%` };
+                }
+                return { bg: '#22c55e', text: '#fff', border: '#16a34a', badge: `+${saturado.toFixed(0)}%` };
+            }
+            const intensidade = Math.min(Math.abs(saturado) / 50, 1);
+            if (intensidade < 0.5) {
+                return { bg: '#fca5a5', text: '#7f1d1d', border: '#f87171', badge: `${saturado.toFixed(0)}%` };
+            }
+            return { bg: '#dc2626', text: '#fff', border: '#b91c1c', badge: `${saturado.toFixed(0)}%` };
+        }
+
+        function _agregarBairrosPorModo(dataSet, modo, dadosAnterior = null) {
+            const cidadeMap = {};
+            const cidadeMapAnt = {};
+            const comparativa = calcularComparativoPeriodoFiltrado(dataSet);
+            const baseAnt = comparativa?.dadosAnterior || (dadosAnterior || []);
+            baseAnt.forEach(d => {
+                const cidade = ((d['Cidade'] || '').trim()) || 'Não Identificada';
+                const bairroRaw = ((d['Bairro'] || '').trim()) || 'Não Identificado';
+                const bairroKey = _normalizarBairro(bairroRaw);
+                if (!cidadeMapAnt[cidade]) cidadeMapAnt[cidade] = { bairros: {} };
+                if (!cidadeMapAnt[cidade].bairros[bairroKey]) {
+                    cidadeMapAnt[cidade].bairros[bairroKey] = { total: 0, concluidas: 0, nomeCount: {} };
+                }
+                cidadeMapAnt[cidade].bairros[bairroKey].total++;
+                if (d._isConcluida) cidadeMapAnt[cidade].bairros[bairroKey].concluidas++;
+                cidadeMapAnt[cidade].bairros[bairroKey].nomeCount[bairroRaw] =
+                    (cidadeMapAnt[cidade].bairros[bairroKey].nomeCount[bairroRaw] || 0) + 1;
+            });
+            dataSet.forEach(d => {
+                const cidade = ((d['Cidade'] || '').trim()) || 'Não Identificada';
+                const bairroRaw = ((d['Bairro'] || '').trim()) || 'Não Identificado';
+                const bairroKey = _normalizarBairro(bairroRaw);
+                if (!cidadeMap[cidade]) cidadeMap[cidade] = { total: 0, concluidas: 0, bairros: {} };
+                cidadeMap[cidade].total++;
+                if (d._isConcluida) cidadeMap[cidade].concluidas++;
+                if (!cidadeMap[cidade].bairros[bairroKey]) {
+                    cidadeMap[cidade].bairros[bairroKey] = { total: 0, concluidas: 0, nomeCount: {} };
+                }
+                cidadeMap[cidade].bairros[bairroKey].total++;
+                if (d._isConcluida) cidadeMap[cidade].bairros[bairroKey].concluidas++;
+                cidadeMap[cidade].bairros[bairroKey].nomeCount[bairroRaw] =
+                    (cidadeMap[cidade].bairros[bairroKey].nomeCount[bairroRaw] || 0) + 1;
+            });
+            const cidades = Object.entries(cidadeMap)
+                .map(([nome, data]) => ({ nome, ...data }))
+                .sort((a, b) => b.total - a.total);
+            if (modo === 'variacao' && Object.keys(cidadeMapAnt).length > 0) {
+                cidades.forEach(c => {
+                    const antCidade = cidadeMapAnt[c.nome];
+                    Object.entries(c.bairros).forEach(([key, data]) => {
+                        const antBairro = antCidade?.bairros[key];
+                        data.totalAnt = antBairro?.total || 0;
+                        data.concluidasAnt = antBairro?.concluidas || 0;
+                        const diff = data.total - data.totalAnt;
+                        data.variacao = data.totalAnt > 0 ? ((diff / data.totalAnt) * 100) : (data.total > 0 ? 100 : 0);
+                        data.variacaoDiff = diff;
+                    });
+                    Object.entries(cidadeMapAnt[c.nome]?.bairros || {}).forEach(([key, antData]) => {
+                        if (!(key in c.bairros)) {
+                            c.bairros[key] = {
+                                total: 0, concluidas: 0, nomeCount: antData.nomeCount,
+                                totalAnt: antData.total, concluidasAnt: antData.concluidas,
+                                variacao: -100, variacaoDiff: -antData.total
+                            };
+                        }
+                    });
+                });
+            }
+            return { cidadeMap, cidades, cidadeMapAnt };
+        }
+
+        window._mapaCalorModo = 'volume';
+
         // ─── GEOCODIFICAÇÃO PROGRESSIVA DE BAIRROS (Nominatim/OpenStreetMap) ────
         const _BAIRROS_CACHE_KEY = 'si_bairros_coords_v2';
 
@@ -6382,6 +6517,7 @@
             const cache = _getBairrosCache();
             const bairroStats = window._bairroStatsParaMapa || {};
             const globalMax = window._bairroGlobalMax || 1;
+            const modo = window._bairroModo || 'volume';
             let mapeados = 0, pendentes = 0;
 
             Object.entries(bairroStats).forEach(([cacheKey, stats]) => {
@@ -6391,12 +6527,25 @@
                 mapeados++;
 
                 const hue = stats.hue !== undefined ? stats.hue : _getCidadeHue(stats.cidade);
-                const col = _heatColorCity(stats.total, globalMax, hue);
                 const r = Math.min(5 + Math.sqrt(stats.total) * 1.8, 22);
+                let col;
+                if (modo === 'volume') {
+                    col = _heatColorCity(stats.total, globalMax, hue);
+                } else {
+                    col = _deltaColor(stats.variacao !== undefined ? stats.variacao : null, 5);
+                }
                 const circle = L.circleMarker(coords, {
                     radius: r, fillColor: col.bg, color: col.border,
                     weight: 2, opacity: 1, fillOpacity: 0.88
                 });
+                const tabelaPopup = modo === 'volume'
+                    ? `<tr><td style="color:#475569;padding:2px 4px">Vendas brutas</td><td style="text-align:right;font-weight:700;padding:2px 4px">${stats.total}</td></tr>
+                       <tr><td style="color:#475569;padding:2px 4px">Ativações</td><td style="text-align:right;font-weight:700;color:#16a34a;padding:2px 4px">${stats.concluidas}</td></tr>
+                       <tr><td style="color:#475569;padding:2px 4px">% da cidade</td><td style="text-align:right;font-weight:700;padding:2px 4px">${stats.pctCidade.toFixed(1)}%</td></tr>`
+                    : `<tr><td style="color:#475569;padding:2px 4px">Variação</td><td style="text-align:right;font-weight:700;padding:2px 4px">${stats.variacao !== null && stats.variacao !== undefined ? (stats.variacao >= 0 ? '+' : '') + stats.variacao.toFixed(1) + '%' : '—'}</td></tr>
+                       <tr><td style="color:#475569;padding:2px 4px">Período anterior</td><td style="text-align:right;font-weight:700;padding:2px 4px">${stats.totalAnt || 0}</td></tr>
+                       <tr><td style="color:#475569;padding:2px 4px">Período atual</td><td style="text-align:right;font-weight:700;padding:2px 4px">${stats.total}</td></tr>
+                       <tr><td style="color:#475569;padding:2px 4px">Diferença</td><td style="text-align:right;font-weight:700;color:${stats.total > stats.totalAnt ? '#16a34a' : '#dc2626'};padding:2px 4px">${stats.total - stats.totalAnt >= 0 ? '+' : ''}${stats.total - stats.totalAnt}</td></tr>`;
                 circle.bindPopup(`
                     <div style="font-family:sans-serif;min-width:185px">
                         <div style="font-weight:800;font-size:13px;margin-bottom:5px;border-bottom:1px solid #e2e8f0;padding-bottom:4px">
@@ -6404,9 +6553,7 @@
                             <div style="font-size:10px;color:#64748b;font-weight:500;margin-top:2px">${escapeHTML(stats.cidade)}</div>
                         </div>
                         <table style="font-size:11px;width:100%;border-collapse:collapse">
-                            <tr><td style="color:#475569;padding:2px 4px">Vendas brutas</td><td style="text-align:right;font-weight:700;padding:2px 4px">${stats.total}</td></tr>
-                            <tr><td style="color:#475569;padding:2px 4px">Ativações</td><td style="text-align:right;font-weight:700;color:#16a34a;padding:2px 4px">${stats.concluidas}</td></tr>
-                            <tr><td style="color:#475569;padding:2px 4px">% da cidade</td><td style="text-align:right;font-weight:700;padding:2px 4px">${stats.pctCidade.toFixed(1)}%</td></tr>
+                            ${tabelaPopup}
                         </table>
                     </div>
                 `);
@@ -6630,34 +6777,18 @@
             // Verificar existência da coluna Bairro
             const hasBairroCol = headersList.length > 0 && headersList.includes('Bairro');
 
-            // Agregar dados por Cidade → Bairro (com normalização para juntar nomes parecidos)
-            const cidadeMap = {};
-            filteredData.forEach(d => {
-                const cidade = ((d['Cidade'] || '').trim()) || 'Não Identificada';
-                const bairroRaw = ((d['Bairro'] || '').trim()) || 'Não Identificado';
-                const bairroKey = _normalizarBairro(bairroRaw);
-                if (!cidadeMap[cidade]) cidadeMap[cidade] = { total: 0, concluidas: 0, bairros: {} };
-                cidadeMap[cidade].total++;
-                if (d._isConcluida) cidadeMap[cidade].concluidas++;
-                if (!cidadeMap[cidade].bairros[bairroKey]) {
-                    cidadeMap[cidade].bairros[bairroKey] = { total: 0, concluidas: 0, nomeCount: {} };
-                }
-                cidadeMap[cidade].bairros[bairroKey].total++;
-                if (d._isConcluida) cidadeMap[cidade].bairros[bairroKey].concluidas++;
-                cidadeMap[cidade].bairros[bairroKey].nomeCount[bairroRaw] =
-                    (cidadeMap[cidade].bairros[bairroKey].nomeCount[bairroRaw] || 0) + 1;
-            });
+            // Agregar dados por Cidade → Bairro usando modo (volume ou variação)
+            const modo = window._mapaCalorModo || 'volume';
+            const { cidadeMap, cidades, cidadeMapAnt } = _agregarBairrosPorModo(filteredData, modo);
 
             // Calcular cidadesMap para o mapa Leaflet e armazenar globalmente
             window._mapaCidadesMap = buildCidadesMap(filteredData);
 
-            const cidades = Object.entries(cidadeMap)
-                .map(([nome, data]) => ({ nome, ...data }))
-                .sort((a, b) => b.total - a.total);
-
             // Máximo global por bairro (para escala de cores)
             let globalMax = 0;
-            cidades.forEach(c => Object.values(c.bairros).forEach(b => { if (b.total > globalMax) globalMax = b.total; }));
+            if (modo === 'volume') {
+                cidades.forEach(c => Object.values(c.bairros).forEach(b => { if (b.total > globalMax) globalMax = b.total; }));
+            }
 
             // Preparar dados de bairros para geocodificação no mapa Leaflet
             {
@@ -6667,59 +6798,105 @@
                         const nd = Object.entries(data.nomeCount).sort((a, b) => b[1] - a[1])[0][0];
                         const ck = key + '||' + c.nome;
                         const pct = c.total > 0 ? (data.total / c.total) * 100 : 0;
-                        sm[ck] = { key, nomeDisplay: nd, cidade: c.nome, total: data.total, concluidas: data.concluidas, pctCidade: pct, hue: _getCidadeHue(c.nome) };
+                        const statsObj = { key, nomeDisplay: nd, cidade: c.nome, total: data.total, concluidas: data.concluidas, pctCidade: pct, hue: _getCidadeHue(c.nome) };
+                        if (modo === 'variacao') {
+                            statsObj.variacao = data.variacao !== undefined ? data.variacao : null;
+                            statsObj.totalAnt = data.totalAnt || 0;
+                        }
+                        sm[ck] = statsObj;
                         gq.push({ key, nomeDisplay: nd, cidade: c.nome, cacheKey: ck });
                     });
                 });
                 window._bairroStatsParaMapa = sm;
                 window._bairrosParaGeocod = gq;
                 window._bairroGlobalMax = globalMax;
+                window._bairroModo = modo;
             }
 
             // KPIs
             const bairroSet = new Set();
             let sumVendas = 0, bairroMaiorVol = null, maxBVol = 0;
+            let bairroMaiorAlta = null, maxAlta = -Infinity;
+            let bairroMaiorQueda = null, minQueda = Infinity;
+            let saldoLiquido = 0;
             cidades.forEach(c => {
                 Object.entries(c.bairros).forEach(([key, data]) => {
                     bairroSet.add(key + '|' + c.nome);
                     sumVendas += data.total;
                     const nomeDisplay = Object.entries(data.nomeCount).sort((a, b) => b[1] - a[1])[0][0];
                     if (data.total > maxBVol) { maxBVol = data.total; bairroMaiorVol = { nome: nomeDisplay, cidade: c.nome, total: data.total }; }
+                    if (modo === 'variacao' && data.variacaoDiff !== undefined) {
+                        saldoLiquido += data.variacaoDiff;
+                        if (data.variacaoDiff > maxAlta) { maxAlta = data.variacaoDiff; bairroMaiorAlta = { nome: nomeDisplay, cidade: c.nome, diff: data.variacaoDiff, variacao: data.variacao }; }
+                        if (data.variacaoDiff < minQueda) { minQueda = data.variacaoDiff; bairroMaiorQueda = { nome: nomeDisplay, cidade: c.nome, diff: data.variacaoDiff, variacao: data.variacao }; }
+                    }
                 });
             });
             const cidadeMaiorVol = cidades[0] || null;
             const mediaPorBairro = bairroSet.size > 0 ? (sumVendas / bairroSet.size) : 0;
             const participMaior = bairroMaiorVol && cidadeMap[bairroMaiorVol.cidade]
                 ? (bairroMaiorVol.total / cidadeMap[bairroMaiorVol.cidade].total) * 100 : 0;
+            const bairrosEmAlta = cidades.reduce((acc, c) => acc + Object.values(c.bairros).filter(b => b.variacaoDiff > 0).length, 0);
+            const bairrosEmQueda = cidades.reduce((acc, c) => acc + Object.values(c.bairros).filter(b => b.variacaoDiff < 0).length, 0);
 
             if (kpisEl) {
-                kpisEl.innerHTML = `
-                    <div class="glass-card p-5 border-l-4 border-l-blue-600">
-                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Cidade Destaque</span>
-                        <span class="block text-lg font-black text-blue-700 mt-2 truncate" title="${cidadeMaiorVol ? escapeHTML(cidadeMaiorVol.nome) : '-'}">${cidadeMaiorVol ? escapeHTML(cidadeMaiorVol.nome) : '-'}</span>
-                        <span class="text-xs text-slate-400 font-medium">${cidadeMaiorVol ? cidadeMaiorVol.total + ' vendas' : 'sem dados'}</span>
-                    </div>
-                    <div class="glass-card p-5 border-l-4 border-l-indigo-600">
-                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Bairro Destaque</span>
-                        <span class="block text-lg font-black text-indigo-700 mt-2 truncate" title="${bairroMaiorVol ? escapeHTML(bairroMaiorVol.nome) : '-'}">${bairroMaiorVol ? escapeHTML(bairroMaiorVol.nome) : '-'}</span>
-                        <span class="text-xs text-slate-400 font-medium">${bairroMaiorVol ? bairroMaiorVol.total + ' vendas' : 'sem dados'}</span>
-                    </div>
-                    <div class="glass-card p-5 border-l-4 border-l-teal-500">
-                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Total de Bairros</span>
-                        <span class="block text-3xl font-black text-teal-600 mt-2">${bairroSet.size}</span>
-                        <span class="text-xs text-slate-400 font-medium">Com pelo menos 1 venda</span>
-                    </div>
-                    <div class="glass-card p-5 border-l-4 border-l-emerald-500">
-                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Média por Bairro</span>
-                        <span class="block text-3xl font-black text-emerald-600 mt-2">${mediaPorBairro.toFixed(1)}</span>
-                        <span class="text-xs text-slate-400 font-medium">Vendas / Bairro</span>
-                    </div>
-                    <div class="glass-card p-5 border-l-4 border-l-purple-500">
-                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Part. Maior Bairro</span>
-                        <span class="block text-3xl font-black text-purple-600 mt-2">${participMaior.toFixed(1)}%</span>
-                        <span class="text-xs text-slate-400 font-medium">Do total da cidade</span>
-                    </div>
-                `;
+                if (modo === 'volume') {
+                    kpisEl.innerHTML = `
+                        <div class="glass-card p-5 border-l-4 border-l-blue-600">
+                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Cidade Destaque</span>
+                            <span class="block text-lg font-black text-blue-700 mt-2 truncate" title="${cidadeMaiorVol ? escapeHTML(cidadeMaiorVol.nome) : '-'}">${cidadeMaiorVol ? escapeHTML(cidadeMaiorVol.nome) : '-'}</span>
+                            <span class="text-xs text-slate-400 font-medium">${cidadeMaiorVol ? cidadeMaiorVol.total + ' vendas' : 'sem dados'}</span>
+                        </div>
+                        <div class="glass-card p-5 border-l-4 border-l-indigo-600">
+                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Bairro Destaque</span>
+                            <span class="block text-lg font-black text-indigo-700 mt-2 truncate" title="${bairroMaiorVol ? escapeHTML(bairroMaiorVol.nome) : '-'}">${bairroMaiorVol ? escapeHTML(bairroMaiorVol.nome) : '-'}</span>
+                            <span class="text-xs text-slate-400 font-medium">${bairroMaiorVol ? bairroMaiorVol.total + ' vendas' : 'sem dados'}</span>
+                        </div>
+                        <div class="glass-card p-5 border-l-4 border-l-teal-500">
+                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Total de Bairros</span>
+                            <span class="block text-3xl font-black text-teal-600 mt-2">${bairroSet.size}</span>
+                            <span class="text-xs text-slate-400 font-medium">Com pelo menos 1 venda</span>
+                        </div>
+                        <div class="glass-card p-5 border-l-4 border-l-emerald-500">
+                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Média por Bairro</span>
+                            <span class="block text-3xl font-black text-emerald-600 mt-2">${mediaPorBairro.toFixed(1)}</span>
+                            <span class="text-xs text-slate-400 font-medium">Vendas / Bairro</span>
+                        </div>
+                        <div class="glass-card p-5 border-l-4 border-l-purple-500">
+                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Part. Maior Bairro</span>
+                            <span class="block text-3xl font-black text-purple-600 mt-2">${participMaior.toFixed(1)}%</span>
+                            <span class="text-xs text-slate-400 font-medium">Do total da cidade</span>
+                        </div>
+                    `;
+                } else {
+                    kpisEl.innerHTML = `
+                        <div class="glass-card p-5 border-l-4 border-l-green-600">
+                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Bairros em Alta</span>
+                            <span class="block text-3xl font-black text-green-700 mt-2">${bairrosEmAlta}</span>
+                            <span class="text-xs text-slate-400 font-medium">Crescimento positivo</span>
+                        </div>
+                        <div class="glass-card p-5 border-l-4 border-l-red-600">
+                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Bairros em Queda</span>
+                            <span class="block text-3xl font-black text-red-700 mt-2">${bairrosEmQueda}</span>
+                            <span class="text-xs text-slate-400 font-medium">Redução de vendas</span>
+                        </div>
+                        <div class="glass-card p-5 border-l-4 border-l-green-500">
+                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Maior Alta</span>
+                            <span class="block text-lg font-black text-green-600 mt-2 truncate">${bairroMaiorAlta ? escapeHTML(bairroMaiorAlta.nome) : '-'}</span>
+                            <span class="text-xs text-slate-400 font-medium">${bairroMaiorAlta ? '+' + bairroMaiorAlta.diff + ' vendas' : 'sem dados'}</span>
+                        </div>
+                        <div class="glass-card p-5 border-l-4 border-l-red-500">
+                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Maior Queda</span>
+                            <span class="block text-lg font-black text-red-600 mt-2 truncate">${bairroMaiorQueda ? escapeHTML(bairroMaiorQueda.nome) : '-'}</span>
+                            <span class="text-xs text-slate-400 font-medium">${bairroMaiorQueda ? bairroMaiorQueda.diff + ' vendas' : 'sem dados'}</span>
+                        </div>
+                        <div class="glass-card p-5 border-l-4 ${saldoLiquido >= 0 ? 'border-l-green-500' : 'border-l-red-500'}">
+                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Saldo Líquido</span>
+                            <span class="block text-3xl font-black ${saldoLiquido >= 0 ? 'text-green-600' : 'text-red-600'} mt-2">${saldoLiquido >= 0 ? '+' : ''}${saldoLiquido}</span>
+                            <span class="text-xs text-slate-400 font-medium">Variação total de vendas</span>
+                        </div>
+                    `;
+                }
             }
 
             // Sem dados
@@ -6751,22 +6928,33 @@
                         const nomeDisplay = Object.entries(data.nomeCount).sort((a, b) => b[1] - a[1])[0][0];
                         return { key, nomeDisplay, ...data, pctCidade: c.total > 0 ? (data.total / c.total) * 100 : 0 };
                     })
-                    .sort((a, b) => b.total - a.total);
+                    .sort((a, b) => modo === 'volume' ? b.total - a.total : (b.variacaoDiff || 0) - (a.variacaoDiff || 0));
 
                 const TOP_N = 6;
                 const extraId = 'bxtra_' + cidIdx;
                 const makeCard = (b) => {
-                    const col = _heatColorCity(b.total, globalMax, cityHue);
                     const bKey = b.key.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                     const cNome = c.nome.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    let col, tituloCard;
+                    if (modo === 'volume') {
+                        col = _heatColorCity(b.total, globalMax, cityHue);
+                        tituloCard = `${escapeHTML(b.nomeDisplay)}: ${b.total} vendas (${b.pctCidade.toFixed(1)}% de ${escapeHTML(c.nome)})`;
+                    } else {
+                        col = _deltaColor(b.variacao !== undefined ? b.variacao : null, 5);
+                        const variacaoStr = b.variacao !== null && b.variacao !== undefined ? `${b.variacao >= 0 ? '+' : ''}${b.variacao.toFixed(1)}%` : 'amostra baixa';
+                        tituloCard = `${escapeHTML(b.nomeDisplay)}: ${variacaoStr} (${b.totalAnt || 0} → ${b.total} vendas)`;
+                    }
                     return `
                         <div class="bairro-card rounded-xl p-2.5 cursor-pointer"
                              style="background:${col.bg};border:1px solid ${col.border};"
                              onclick="abrirDetalheBairro('${bKey}','${cNome}')"
-                             title="${escapeHTML(b.nomeDisplay)}: ${b.total} vendas (${b.pctCidade.toFixed(1)}% de ${escapeHTML(c.nome)})">
+                             title="${tituloCard}">
                             <div class="text-[9px] font-extrabold uppercase tracking-wide truncate leading-tight" style="color:${col.text};">${escapeHTML(b.nomeDisplay)}</div>
-                            <div class="text-base font-black mt-0.5 leading-none" style="color:${col.text};">${b.total}</div>
-                            <div class="text-[9px] font-bold leading-none mt-0.5" style="color:${col.text};opacity:0.75;">${b.pctCidade.toFixed(1)}%</div>
+                            ${modo === 'volume'
+                              ? `<div class="text-base font-black mt-0.5 leading-none" style="color:${col.text};">${b.total}</div>
+                                 <div class="text-[9px] font-bold leading-none mt-0.5" style="color:${col.text};opacity:0.75;">${b.pctCidade.toFixed(1)}%</div>`
+                              : `<div class="text-base font-black mt-0.5 leading-none" style="color:${col.text};">${b.variacao !== null && b.variacao !== undefined ? (b.variacao >= 0 ? '▲' : '▼') + b.variacao.toFixed(1) + '%' : '—'}</div>
+                                 <div class="text-[9px] font-bold leading-none mt-0.5" style="color:${col.text};opacity:0.75;">${(b.totalAnt || 0)} → ${b.total}</div>`}
                         </div>`;
                 };
 
@@ -6811,16 +6999,28 @@
             cidades.forEach(c => {
                 Object.entries(c.bairros).forEach(([key, data]) => {
                     const nomeDisplay = Object.entries(data.nomeCount).sort((a, b) => b[1] - a[1])[0][0];
-                    rankingGlobal.push({ key, nomeDisplay, cidade: c.nome, total: data.total, concluidas: data.concluidas, totalCidade: c.total, pctCidade: c.total > 0 ? (data.total / c.total) * 100 : 0 });
+                    rankingGlobal.push({
+                        key, nomeDisplay, cidade: c.nome, total: data.total, concluidas: data.concluidas,
+                        totalCidade: c.total, pctCidade: c.total > 0 ? (data.total / c.total) * 100 : 0,
+                        variacao: data.variacao !== undefined ? data.variacao : null,
+                        variacaoDiff: data.variacaoDiff !== undefined ? data.variacaoDiff : null,
+                        totalAnt: data.totalAnt !== undefined ? data.totalAnt : 0
+                    });
                 });
             });
-            rankingGlobal.sort((a, b) => b.total - a.total);
+            if (modo === 'volume') {
+                rankingGlobal.sort((a, b) => b.total - a.total);
+            } else {
+                rankingGlobal.sort((a, b) => (b.variacaoDiff || 0) - (a.variacaoDiff || 0));
+            }
 
             bairroRanking.innerHTML = rankingGlobal.slice(0, 30).map((b, idx) => {
                 const rHue = _getCidadeHue(b.cidade);
                 const bgBadge = `hsl(${rHue},82%,46%)`;
                 const bKey = b.key.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 const cNome = b.cidade.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const metricaBaixa = modo === 'volume' ? b.total : b.variacaoDiff;
+                const metricaAlta = modo === 'volume' ? b.pctCidade.toFixed(1) + '%' : (b.variacao !== null && b.variacao !== undefined ? (b.variacao >= 0 ? '▲' : '▼') + b.variacao.toFixed(1) + '%' : '—');
                 return `
                     <div class="flex items-center gap-3 p-2.5 rounded-xl border border-transparent cursor-pointer transition-all mb-1.5"
                          onmouseover="this.style.background='hsl(${rHue},80%,96%)';this.style.borderColor='hsl(${rHue},60%,84%)'"
@@ -6836,8 +7036,8 @@
                             </div>
                         </div>
                         <div class="text-right shrink-0">
-                            <div class="text-sm font-black text-slate-800">${b.total}</div>
-                            <div class="text-[9px] font-bold text-slate-400">${b.pctCidade.toFixed(1)}%</div>
+                            <div class="text-sm font-black text-slate-800">${metricaBaixa}</div>
+                            <div class="text-[9px] font-bold text-slate-400">${metricaAlta}</div>
                         </div>
                     </div>`;
             }).join('') || '<div class="text-center text-xs text-slate-400 py-6">Sem dados disponíveis.</div>';
