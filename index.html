@@ -6975,12 +6975,20 @@
                     </button>` : '';
 
                 const taxaAtiv = c.total > 0 ? ((c.concluidas / c.total) * 100).toFixed(1) : '0.0';
+                const totalAnt = c.bairros && Object.values(c.bairros).reduce((sum, b) => sum + (b.totalAnt || 0), 0);
+                const variacaoCity = totalAnt > 0 ? ((c.total - totalAnt) / totalAnt) * 100 : (c.total > 0 ? 100 : 0);
+                const sinalVariacao = variacaoCity > 0 ? '▲' : (variacaoCity < 0 ? '▼' : '▬');
+                const corVariacao = variacaoCity > 0 ? '#16a34a' : (variacaoCity < 0 ? '#dc2626' : '#64748b');
+
                 return `
                     <div class="glass-card p-5" style="border-left:4px solid hsl(${cityHue},80%,48%);">
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center gap-2 min-w-0">
                                 <div class="w-3 h-3 rounded-full shrink-0" style="background:hsl(${cityHue},80%,48%);box-shadow:0 0 0 3px hsl(${cityHue},80%,88%);"></div>
-                                <h4 class="text-sm font-extrabold uppercase tracking-wide truncate" style="color:hsl(${cityHue},65%,26%);" title="${escapeHTML(c.nome)}">${escapeHTML(c.nome)}</h4>
+                                <div class="min-w-0">
+                                    <h4 class="text-sm font-extrabold uppercase tracking-wide truncate" style="color:hsl(${cityHue},65%,26%);" title="${escapeHTML(c.nome)}">${escapeHTML(c.nome)}</h4>
+                                    ${modo === 'variacao' ? `<div class="text-[10px] font-bold mt-1" style="color:${corVariacao};">${sinalVariacao} ${variacaoCity.toFixed(1)}% | ${totalAnt || 0} → ${c.total}</div>` : ''}
+                                </div>
                             </div>
                             <div class="flex items-center gap-2 shrink-0 ml-2">
                                 <span class="text-[10px] font-black text-green-600 bg-green-50 border border-green-100 px-2 py-1 rounded-lg">${c.concluidas} ativ. (${taxaAtiv}%)</span>
