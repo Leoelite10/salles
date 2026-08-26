@@ -6367,6 +6367,9 @@
             if (m.includes('CTO') && m.includes('VAGA')) return 'CTO sem vaga';
             if (m.includes('POTENCIA')) return 'Sem potência';
             if (m.includes('INVIAV')) return 'Inviabilidade';
+            if (m.includes('DESIST')) return 'Desistência';
+            if (m.includes('AUSENTE')) return 'Cliente ausente';
+            if (m.includes('NAO CONCLUIDA')) return 'Não concluída';
             return 'Outros';
         }
 
@@ -6428,7 +6431,9 @@
             if (cidade) lista = lista.filter(c => ((c.atual['Cidade']||'').trim() || 'Não Identificada') === cidade);
             if (bairro) lista = lista.filter(c => ((c.atual['Bairro']||'').trim() || 'Não Identificado') === bairro);
             if (categoria) lista = lista.filter(c => _categorizarMotivoInviabilidade(c.motivoConsolidado) === categoria);
-            abrirModalContratos(lista, categoria || cidade || 'Inviabilidades', `${lista.length} contrato(s)`);
+            const local = [bairro, cidade].filter(Boolean).join(' — ');
+            const titulo = categoria ? `${categoria}${local ? ' · ' + local : ''}` : (local || 'Inviabilidades');
+            abrirModalContratos(lista, titulo, `${lista.length} contrato(s) sem instalação`);
         }
 
         function renderDataQuality() {
@@ -6570,20 +6575,60 @@
                 matriz[cidade].bairros[bairro].motivos[categoria] = (matriz[cidade].bairros[bairro].motivos[categoria] || 0) + 1;
             });
 
-            return { matriz, categorias: Array.from(categorias).sort() };
+            const presentes = _MOTIVO_ORDEM.filter(c => categorias.has(c));
+            return { matriz, categorias: presentes };
         }
+
+        // Ordem canônica das colunas: problemas de infraestrutura primeiro,
+        // depois os motivos que não dependem de rede.
+        const _MOTIVO_ORDEM = ['CTO sem vaga', 'Sem potência', 'Inviabilidade', 'Não concluída', 'Desistência', 'Cliente ausente', 'Outros'];
 
         const _MOTIVO_HUES = {
             'CTO sem vaga': 0,
             'Sem potência': 24,
             'Inviabilidade': 280,
+            'Não concluída': 45,
+            'Desistência': 199,
+            'Cliente ausente': 160,
             'Outros': 240
         };
+
+        // Índice de alvos clicáveis: evita interpolar nomes de cidade/bairro
+        // dentro do onclick (um apóstrofo em "Sant'Ana" quebraria o JS).
+        let _invLookup = [];
+        function _invAlvo(cidade, bairro, categoria) {
+            _invLookup.push({ cidade, bairro, categoria });
+            return _invLookup.length - 1;
+        }
+        function abrirModalInviabilidadePorIndice(i) {
+            const alvo = _invLookup[i];
+            if (!alvo) return;
+            abrirModalInviabilidade(alvo.cidade, alvo.bairro, alvo.categoria);
+        }
+        function _toggleBairrosInviabilidade(idx) {
+            const linha = document.getElementById(`invBairros_${idx}`);
+            const seta = document.getElementById(`invCaret_${idx}`);
+            if (!linha) return;
+            const oculta = linha.classList.toggle('hidden');
+            if (seta) seta.textContent = oculta ? '▸' : '▾';
+        }
+
+        function _celulasMotivos(dados, categorias, maxPorCategoria, cidade, bairro, extraClass = '') {
+            return categorias.map(cat => {
+                const val = dados.motivos[cat] || 0;
+                const cor = _heatColorCity(val, maxPorCategoria[cat], _MOTIVO_HUES[cat] ?? 180);
+                const clicavel = val > 0
+                    ? `cursor-pointer hover:opacity-80 transition-opacity" onclick="abrirModalInviabilidadePorIndice(${_invAlvo(cidade, bairro, cat)})`
+                    : '';
+                return `<td class="py-2.5 px-4 text-center font-bold ${extraClass} ${clicavel}" style="background-color:${cor.bg}; color:${cor.text}; border:1px solid ${cor.border};">${val > 0 ? val : '–'}</td>`;
+            }).join('');
+        }
 
         function renderMapaInviabilidades() {
             const container = document.getElementById('mapaInviabilidadesBody');
             if (!container) return;
 
+            _invLookup = [];
             const { matriz, categorias } = _construirMatrizInviabilidades();
             const cidades = Object.entries(matriz).map(([nome, data]) => ({ nome, ...data })).sort((a, b) => b.total - a.total);
 
@@ -6592,33 +6637,62 @@
                 return;
             }
 
-            let html = `<table class="w-full text-left border-collapse text-xs"><thead class="bg-slate-50"><tr><th class="py-3 px-4 font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">Cidade</th>`;
-            categorias.forEach(cat => {
-                html += `<th class="py-3 px-4 font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" style="cursor:pointer;">${cat}</th>`;
-            });
-            html += `<th class="py-3 px-4 font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Total</th></tr></thead><tbody>`;
-
-            let maxPorCategoria = {};
+            const maxPorCategoria = {};
             categorias.forEach(cat => {
                 maxPorCategoria[cat] = Math.max(...cidades.map(c => c.motivos[cat] || 0));
             });
+            const totalGeral = cidades.reduce((acc, c) => acc + c.total, 0);
 
-            cidades.forEach(cidade => {
-                html += `<tr class="border-b border-slate-100"><td class="py-3 px-4 font-bold text-slate-800 cursor-pointer hover:bg-blue-50" onclick="abrirModalInviabilidade('${escapeHTML(cidade.nome)}', null, null)">${escapeHTML(cidade.nome)}</td>`;
+            const cabecalho = `
+                <thead class="bg-slate-50 sticky top-0 z-10">
+                    <tr>
+                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Cidade</th>
+                        ${categorias.map(cat => `<th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">${escapeHTML(cat)}</th>`).join('')}
+                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Total</th>
+                    </tr>
+                </thead>`;
 
+            const corpo = cidades.map((cidade, idx) => {
+                const bairros = Object.entries(cidade.bairros)
+                    .map(([nome, data]) => ({ nome, ...data }))
+                    .sort((a, b) => b.total - a.total);
+
+                const maxBairro = {};
                 categorias.forEach(cat => {
-                    const val = cidade.motivos[cat] || 0;
-                    const max = maxPorCategoria[cat];
-                    const hue = _MOTIVO_HUES[cat] || 180;
-                    const cor = _heatColorCity(val, max, hue);
-                    html += `<td class="py-3 px-4 text-center font-bold text-slate-800 cursor-pointer hover:opacity-80 transition-opacity" style="background-color:${cor.bg}; color:${cor.text}; border:1px solid ${cor.border};" onclick="abrirModalInviabilidade('${escapeHTML(cidade.nome)}', null, '${escapeHTML(cat)}')">${val > 0 ? val : '-'}</td>`;
+                    maxBairro[cat] = Math.max(...bairros.map(b => b.motivos[cat] || 0));
                 });
 
-                html += `<td class="py-3 px-4 text-center font-bold text-slate-800" style="background-color:#f1f5f9;">${cidade.total}</td></tr>`;
-            });
+                const linhaCidade = `
+                    <tr class="border-b border-slate-100">
+                        <td class="py-2.5 px-4 font-bold text-slate-800 text-xs cursor-pointer hover:bg-blue-50 select-none" onclick="_toggleBairrosInviabilidade(${idx})">
+                            <span id="invCaret_${idx}" class="text-slate-400 mr-1.5">▸</span>${escapeHTML(cidade.nome)}
+                            <span class="text-[10px] font-medium text-slate-400 ml-1">(${bairros.length} bairro${bairros.length > 1 ? 's' : ''})</span>
+                        </td>
+                        ${_celulasMotivos(cidade, categorias, maxPorCategoria, cidade.nome, null, 'text-xs')}
+                        <td class="py-2.5 px-4 text-center font-black text-slate-800 text-xs bg-slate-100 cursor-pointer hover:bg-slate-200 transition-colors" onclick="abrirModalInviabilidadePorIndice(${_invAlvo(cidade.nome, null, null)})">${cidade.total}</td>
+                    </tr>`;
 
-            html += `</tbody></table>`;
-            container.innerHTML = html;
+                const linhasBairro = bairros.map(bairro => `
+                    <tr class="border-b border-slate-100 bg-slate-50/40">
+                        <td class="py-2 px-4 pl-10 text-slate-600 text-[11px] font-medium">${escapeHTML(bairro.nome)}</td>
+                        ${_celulasMotivos(bairro, categorias, maxBairro, cidade.nome, bairro.nome, 'text-[11px]')}
+                        <td class="py-2 px-4 text-center font-bold text-slate-700 text-[11px] bg-slate-100/70 cursor-pointer hover:bg-slate-200 transition-colors" onclick="abrirModalInviabilidadePorIndice(${_invAlvo(cidade.nome, bairro.nome, null)})">${bairro.total}</td>
+                    </tr>`).join('');
+
+                return `${linhaCidade}
+                    <tr id="invBairros_${idx}" class="hidden">
+                        <td colspan="${categorias.length + 2}" class="p-0">
+                            <table class="w-full border-collapse">${linhasBairro}</table>
+                        </td>
+                    </tr>`;
+            }).join('');
+
+            container.innerHTML = `
+                <table class="w-full text-left border-collapse">
+                    ${cabecalho}
+                    <tbody>${corpo}</tbody>
+                </table>
+                <p class="text-[11px] text-slate-400 px-4 py-3">${totalGeral} contrato(s) sem instalação com motivo diagnosticado. Clique na cidade para abrir os bairros; clique em um número para ver os contratos.</p>`;
         }
 
         // ─────────────────────────────────────────────────────────────
