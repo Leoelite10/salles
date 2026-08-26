@@ -3612,7 +3612,7 @@
                 obj._vendedorNome = (obj['Vendedor'] || 'Não Identificado').trim();
                 obj._statusLower = (obj['Status contrato'] || '').trim().toLowerCase();
                 obj._canalOriginalVazio = canalRaw.trim() === '';
-                obj._chaveContrato = (obj['ID CONTRATO'] || '').trim() || (obj['ID O.S'] || '').trim();
+                obj._chaveContrato = (obj['ID CONTRATO'] || '').trim() || (obj['ID CLIENTE'] || '').trim() || (obj['ID O.S'] || '').trim();
 
                 rawData.push(obj);
 
@@ -6391,7 +6391,7 @@
                 c.registros.forEach(r => {
                     if (r._isConcluida || r._motivoDiagnostico === 'Sem diagnóstico') return;
                     const dias = _diffDias(r._dataAberturaISO, fim);
-                    if (dias === null) return;
+                    if (dias === null || dias < 0) return;
                     if (!mapa.has(r._motivoDiagnostico)) mapa.set(r._motivoDiagnostico, []);
                     mapa.get(r._motivoDiagnostico).push(dias);
                 });
@@ -6415,10 +6415,11 @@
         function _diasContrato(c) {
             if (c.isConcluida) {
                 const fim = c.atual._dataISO ? dateFromISO(c.atual._dataISO) : null;
+                if (!fim) return null;
                 const impedimentos = c.registros
-                    .filter(r => !r._isConcluida && r._motivoDiagnostico !== 'Sem diagnóstico' && r._dataAberturaISO)
+                    .filter(r => !r._isConcluida && r._motivoDiagnostico !== 'Sem diagnóstico' && r._dataAberturaISO && dateFromISO(r._dataAberturaISO) <= fim)
                     .sort((a, b) => dateFromISO(a._dataAberturaISO) - dateFromISO(b._dataAberturaISO));
-                if (!fim || !impedimentos.length) return null;
+                if (!impedimentos.length) return null;
                 const dias = _diffDias(impedimentos[0]._dataAberturaISO, fim);
                 return dias === null ? null : { dias, tipo: 'resolvido' };
             }
