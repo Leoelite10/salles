@@ -1579,6 +1579,19 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Mapa de Inviabilidades de Instalação -->
+                    <div class="glass-card overflow-hidden parent-overflow flex flex-col">
+                        <div class="p-5 border-b border-slate-100 bg-white">
+                            <h2 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest">Mapa de Inviabilidades de Instalação</h2>
+                            <p class="text-xs text-slate-400 font-medium mt-1">Clique em qualquer célula ou cidade para ver os contratos detalhados</p>
+                        </div>
+                        <div class="overflow-x-auto table-container flex-1 bg-white" style="max-height: 500px;">
+                            <div id="mapaInviabilidadesBody">
+                                <!-- JS Inject -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- ===== ABA: CRESCIMENTO DE VENDAS ===== -->
@@ -2364,6 +2377,25 @@
         </div>
     </div>
 
+    <!-- Modal: Detalhe de Contratos (Funil + Inviabilidades) -->
+    <div id="modalContratosDetalhe" class="hidden fixed inset-0 z-[180] bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 pt-12 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl mb-8">
+            <div class="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
+                <div>
+                    <h2 id="modalContratosTitulo" class="text-sm font-extrabold text-slate-800 uppercase tracking-widest"></h2>
+                    <p id="modalContratosSubtitulo" class="text-xs text-slate-400 mt-1"></p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btnExportarModalContratos" class="text-xs font-bold text-blue-600 hover:text-blue-800 px-3 py-2 rounded hover:bg-blue-50 transition-colors">Exportar Excel</button>
+                    <button id="btnFecharModalContratos" class="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6" id="modalContratosContent"></div>
+        </div>
+    </div>
+
     <script>
         // Dados globais
         let rawData = [];
@@ -2832,6 +2864,15 @@
         document.getElementById('btnInstalacaoCidade').addEventListener('click', _abrirModalInstalacaoCidade);
         document.getElementById('btnFecharInstalacaoCidade').addEventListener('click', _fecharModalInstalacaoCidade);
         document.getElementById('modalInstalacaoCidade').addEventListener('click', (e) => { if (e.target.id === 'modalInstalacaoCidade') _fecharModalInstalacaoCidade(); });
+        document.getElementById('btnFecharModalContratos').addEventListener('click', _fecharModalContratos);
+        document.getElementById('modalContratosDetalhe').addEventListener('click', (e) => { if (e.target.id === 'modalContratosDetalhe') _fecharModalContratos(); });
+        document.getElementById('btnExportarModalContratos').addEventListener('click', () => {
+            const linhas = _modalContratosListaAtual.map(c => ({ 'Cliente': _nomeClienteContrato(c.atual), 'ID Contrato': c.chave, 'Nº O.S.': c.atual['ID O.S'], 'Cidade': c.atual['Cidade'], 'Bairro': c.atual['Bairro'], 'Diagnóstico': c.motivoConsolidado, 'Data O.S.': formatDateISOToBR(c.atual._dataAberturaISO || c.atual._dataISO), 'Status': c.situacaoConsolidada }));
+            const ws = XLSX.utils.json_to_sheet(linhas);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Contratos');
+            XLSX.writeFile(wb, 'contratos_detalhe.xlsx');
+        });
         document.getElementById('btnFecharAdmin').addEventListener('click', () => {
             document.getElementById('adminPanel').classList.add('hidden');
         });
@@ -3563,6 +3604,7 @@
                 obj._vendedorNome = (obj['Vendedor'] || 'Não Identificado').trim();
                 obj._statusLower = (obj['Status contrato'] || '').trim().toLowerCase();
                 obj._canalOriginalVazio = canalRaw.trim() === '';
+                obj._chaveContrato = (obj['ID CONTRATO'] || '').trim() || (obj['ID O.S'] || '').trim();
 
                 rawData.push(obj);
 
@@ -6275,6 +6317,120 @@
             XLSX.writeFile(workbook, `${nomeArquivo}.xlsx`);
         }
 
+        // ─────────────────────────────────────────────────────────────
+        // CONSOLIDAÇÃO DE CONTRATOS POR ID CONTRATO
+        // ─────────────────────────────────────────────────────────────
+
+        function _dataHibridaTimestamp(d) {
+            const iso = d._dataAberturaISO || d._dataISO;
+            const dt = iso ? dateFromISO(iso) : null;
+            return dt ? dt.getTime() : -Infinity;
+        }
+
+        function _construirConsolidadoContratos() {
+            const grupos = new Map();
+            rawData.forEach(d => {
+                if (!grupos.has(d._chaveContrato)) grupos.set(d._chaveContrato, []);
+                grupos.get(d._chaveContrato).push(d);
+            });
+
+            const consolidado = new Map();
+            grupos.forEach((registros, chave) => {
+                const ordenados = [...registros].sort((a, b) => _dataHibridaTimestamp(b) - _dataHibridaTimestamp(a));
+                const concluidos = ordenados.filter(r => r._isConcluida);
+                const atual = concluidos.length > 0 ? concluidos[0] : ordenados[0];
+                const isConcluida = concluidos.length > 0;
+                consolidado.set(chave, {
+                    chave,
+                    atual,
+                    isConcluida,
+                    situacaoConsolidada: isConcluida ? 'Concluída' : atual._situacao,
+                    motivoConsolidado: isConcluida ? 'Instalação concluída (340)' : atual._motivoDiagnostico,
+                    registros: ordenados
+                });
+            });
+            return consolidado;
+        }
+
+        function _contratosNoEscopoFiltro() {
+            const consolidado = _construirConsolidadoContratos();
+            const chaves = new Set(rawFilteredData.map(d => d._chaveContrato));
+            return [...chaves].map(k => consolidado.get(k)).filter(Boolean);
+        }
+
+        function _nomeClienteContrato(d) {
+            return d['RAZAO SOCIAL'] || d['NOME'] || d['Nome Cliente'] || d['Cliente'] || d['ID CLIENTE'] || '-';
+        }
+
+        function _categorizarMotivoInviabilidade(motivo) {
+            const m = normalizarTextoChave(motivo);
+            if (m.includes('CTO') && m.includes('VAGA')) return 'CTO sem vaga';
+            if (m.includes('POTENCIA')) return 'Sem potência';
+            if (m.includes('INVIAV')) return 'Inviabilidade';
+            return 'Outros';
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // MODAL DRILL-DOWN DE CONTRATOS
+        // ─────────────────────────────────────────────────────────────
+
+        let _modalContratosListaAtual = [];
+
+        function abrirModalContratos(listaConsolidada, titulo, subtitulo) {
+            _modalContratosListaAtual = listaConsolidada;
+            document.getElementById('modalContratosTitulo').textContent = titulo;
+            document.getElementById('modalContratosSubtitulo').textContent = subtitulo || `${listaConsolidada.length} contrato(s)`;
+
+            const colunas = ['Cliente', 'ID Contrato', 'Nº O.S.', 'Cidade', 'Bairro', 'Diagnóstico', 'Data O.S.', 'Status'];
+            const rows = listaConsolidada.slice(0, 300).map(c => `
+                <tr>
+                    <td class="py-2.5 px-4 text-slate-800 font-medium text-xs">${escapeHTML(_nomeClienteContrato(c.atual))}</td>
+                    <td class="py-2.5 px-4 text-slate-700 text-xs">${escapeHTML(c.chave)}</td>
+                    <td class="py-2.5 px-4 text-slate-700 text-xs">${escapeHTML(c.atual['ID O.S'] || '')}</td>
+                    <td class="py-2.5 px-4 text-slate-700 text-xs">${escapeHTML(c.atual['Cidade'] || '')}</td>
+                    <td class="py-2.5 px-4 text-slate-700 text-xs">${escapeHTML(c.atual['Bairro'] || '')}</td>
+                    <td class="py-2.5 px-4 text-slate-700 text-xs">${escapeHTML(c.motivoConsolidado)}</td>
+                    <td class="py-2.5 px-4 text-slate-700 text-xs text-center">${formatDateISOToBR(c.atual._dataAberturaISO || c.atual._dataISO)}</td>
+                    <td class="py-2.5 px-4 text-slate-700 text-xs font-bold">${escapeHTML(c.situacaoConsolidada)}</td>
+                </tr>`).join('') || '<tr><td colspan="8" class="py-4 px-4 text-center text-xs text-slate-400">Nenhum contrato encontrado.</td></tr>';
+
+            document.getElementById('modalContratosContent').innerHTML = `
+                <div class="overflow-x-auto table-container" style="max-height: 500px;">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-slate-50 sticky top-0 z-10">
+                            <tr>
+                                ${colunas.map(c => `<th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">${c}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+                ${listaConsolidada.length > 300 ? `<p class="text-xs text-slate-400 mt-3">Exibindo 300 de ${listaConsolidada.length}. Use "Exportar Excel" para a lista completa.</p>` : ''}`;
+
+            document.getElementById('modalContratosDetalhe').classList.remove('hidden');
+        }
+
+        function _fecharModalContratos() {
+            document.getElementById('modalContratosDetalhe').classList.add('hidden');
+        }
+
+        function abrirModalDiagnostico(idx) {
+            const motivo = window._diagnosticosMotivos[idx];
+            if (!motivo) return;
+            const lista = _contratosNoEscopoFiltro().filter(c => c.motivoConsolidado === motivo);
+            abrirModalContratos(lista, motivo, `${lista.length} contrato(s) — Funil por Diagnóstico`);
+        }
+
+        function abrirModalInviabilidade(cidade, bairro, categoria) {
+            let lista = _contratosNoEscopoFiltro().filter(c => !c.isConcluida && c.situacaoConsolidada !== 'Pendente');
+            if (cidade) lista = lista.filter(c => ((c.atual['Cidade']||'').trim() || 'Não Identificada') === cidade);
+            if (bairro) lista = lista.filter(c => ((c.atual['Bairro']||'').trim() || 'Não Identificado') === bairro);
+            if (categoria) lista = lista.filter(c => _categorizarMotivoInviabilidade(c.motivoConsolidado) === categoria);
+            abrirModalContratos(lista, categoria || cidade || 'Inviabilidades', `${lista.length} contrato(s)`);
+        }
+
         function renderDataQuality() {
             const cards = document.getElementById('qualidadeCards');
             const tbody = document.getElementById('diagnosticoTableBody');
@@ -6310,14 +6466,18 @@
                 if (d['ID CLIENTE'] && d._dataISO && d['Plano de venda']) {
                     duplicidades[key] = (duplicidades[key] || 0) + 1;
                 }
-
-                const diag = d._motivoDiagnostico || 'Sem diagnóstico';
-                diagnosticos[diag] = (diagnosticos[diag] || 0) + 1;
             });
 
             const gruposDuplicados = Object.values(duplicidades).filter(count => count > 1);
             const linhasDuplicadas = gruposDuplicados.reduce((acc, count) => acc + count, 0);
-            const pct = (valor) => total > 0 ? ((valor / total) * 100).toFixed(1) : '0.0';
+
+            const listaContratos = _contratosNoEscopoFiltro();
+            const totalContratos = listaContratos.length;
+            listaContratos.forEach(c => {
+                diagnosticos[c.motivoConsolidado] = (diagnosticos[c.motivoConsolidado] || 0) + 1;
+            });
+
+            const pct = (valor) => totalContratos > 0 ? ((valor / totalContratos) * 100).toFixed(1) : '0.0';
 
             cards.innerHTML = `
                 <div class="glass-card p-5 border-l-4 border-l-red-500">
@@ -6346,8 +6506,9 @@
                 .map(([nome, count]) => ({ nome, count }))
                 .sort((a, b) => b.count - a.count);
 
-            tbody.innerHTML = diagnosticosOrdenados.map(item => `
-                <tr class="hover:bg-blue-50/50 transition-colors">
+            window._diagnosticosMotivos = diagnosticosOrdenados.map(d => d.nome);
+            tbody.innerHTML = diagnosticosOrdenados.map((item, idx) => `
+                <tr class="hover:bg-blue-50/50 transition-colors cursor-pointer" onclick="abrirModalDiagnostico(${idx})">
                     <td class="py-2.5 px-5 text-slate-800 font-bold text-xs truncate max-w-[420px]" title="${escapeHTML(item.nome)}">${escapeHTML(item.nome)}</td>
                     <td class="py-2.5 px-5 text-slate-600 text-center font-black">${item.count}</td>
                     <td class="py-2.5 px-5 text-slate-500 text-center font-bold">${pct(item.count)}%</td>
@@ -6377,6 +6538,87 @@
                     <span class="text-sm font-black ${toneClass[item.tone]} bg-white border border-slate-200 rounded-lg px-3 py-1">${item.value}</span>
                 </div>
             `).join('');
+
+            renderMapaInviabilidades();
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // MAPA DE INVIABILIDADES DE INSTALAÇÃO
+        // ─────────────────────────────────────────────────────────────
+
+        function _construirMatrizInviabilidades() {
+            const pendentesComMotivo = _contratosNoEscopoFiltro().filter(c => !c.isConcluida && c.situacaoConsolidada !== 'Pendente');
+            const matriz = {};
+            const categorias = new Set();
+
+            pendentesComMotivo.forEach(c => {
+                const cidade = (c.atual['Cidade'] || '').trim() || 'Não Identificada';
+                const bairro = (c.atual['Bairro'] || '').trim() || 'Não Identificado';
+                const categoria = _categorizarMotivoInviabilidade(c.motivoConsolidado);
+                categorias.add(categoria);
+
+                if (!matriz[cidade]) {
+                    matriz[cidade] = { total: 0, motivos: {}, bairros: {} };
+                }
+                matriz[cidade].total++;
+                matriz[cidade].motivos[categoria] = (matriz[cidade].motivos[categoria] || 0) + 1;
+
+                if (!matriz[cidade].bairros[bairro]) {
+                    matriz[cidade].bairros[bairro] = { total: 0, motivos: {} };
+                }
+                matriz[cidade].bairros[bairro].total++;
+                matriz[cidade].bairros[bairro].motivos[categoria] = (matriz[cidade].bairros[bairro].motivos[categoria] || 0) + 1;
+            });
+
+            return { matriz, categorias: Array.from(categorias).sort() };
+        }
+
+        const _MOTIVO_HUES = {
+            'CTO sem vaga': 0,
+            'Sem potência': 24,
+            'Inviabilidade': 280,
+            'Outros': 240
+        };
+
+        function renderMapaInviabilidades() {
+            const container = document.getElementById('mapaInviabilidadesBody');
+            if (!container) return;
+
+            const { matriz, categorias } = _construirMatrizInviabilidades();
+            const cidades = Object.entries(matriz).map(([nome, data]) => ({ nome, ...data })).sort((a, b) => b.total - a.total);
+
+            if (cidades.length === 0) {
+                container.innerHTML = '<p class="py-6 px-4 text-center text-xs text-slate-400">Nenhuma inviabilidade de instalação encontrada no filtro atual.</p>';
+                return;
+            }
+
+            let html = `<table class="w-full text-left border-collapse text-xs"><thead class="bg-slate-50"><tr><th class="py-3 px-4 font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">Cidade</th>`;
+            categorias.forEach(cat => {
+                html += `<th class="py-3 px-4 font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" style="cursor:pointer;">${cat}</th>`;
+            });
+            html += `<th class="py-3 px-4 font-bold uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Total</th></tr></thead><tbody>`;
+
+            let maxPorCategoria = {};
+            categorias.forEach(cat => {
+                maxPorCategoria[cat] = Math.max(...cidades.map(c => c.motivos[cat] || 0));
+            });
+
+            cidades.forEach(cidade => {
+                html += `<tr class="border-b border-slate-100"><td class="py-3 px-4 font-bold text-slate-800 cursor-pointer hover:bg-blue-50" onclick="abrirModalInviabilidade('${escapeHTML(cidade.nome)}', null, null)">${escapeHTML(cidade.nome)}</td>`;
+
+                categorias.forEach(cat => {
+                    const val = cidade.motivos[cat] || 0;
+                    const max = maxPorCategoria[cat];
+                    const hue = _MOTIVO_HUES[cat] || 180;
+                    const cor = _heatColorCity(val, max, hue);
+                    html += `<td class="py-3 px-4 text-center font-bold text-slate-800 cursor-pointer hover:opacity-80 transition-opacity" style="background-color:${cor.bg}; color:${cor.text}; border:1px solid ${cor.border};" onclick="abrirModalInviabilidade('${escapeHTML(cidade.nome)}', null, '${escapeHTML(cat)}')">${val > 0 ? val : '-'}</td>`;
+                });
+
+                html += `<td class="py-3 px-4 text-center font-bold text-slate-800" style="background-color:#f1f5f9;">${cidade.total}</td></tr>`;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
         }
 
         // ─────────────────────────────────────────────────────────────
