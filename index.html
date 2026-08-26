@@ -1549,17 +1549,22 @@
                         <!-- JS Inject -->
                     </div>
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                        <div class="glass-card overflow-hidden parent-overflow flex flex-col">
+                        <div class="glass-card overflow-hidden parent-overflow flex flex-col xl:col-span-2">
                             <div class="p-5 border-b border-slate-100 bg-white">
                                 <h2 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest">Funil por Diagnóstico</h2>
+                                <p class="text-xs text-slate-400 font-medium mt-1">Situação atual consolidada por contrato. Clique numa linha para ver os contratos.</p>
                             </div>
                             <div class="overflow-x-auto table-container flex-1 bg-white" style="max-height: 460px;">
                                 <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
                                     <thead class="bg-slate-50 sticky top-0 z-10">
                                         <tr>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Diagnóstico</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Registros</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Contratos que hoje estão nessa situação">Contratos</th>
                                             <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">% Base</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Contratos que tiveram esse diagnóstico e depois foram instalados">Resolvidos</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Da abertura da O.S. com esse diagnóstico até a data de ativação">Tempo Médio</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Metade dos casos resolveu em até esse prazo">Mediana</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Resolvidos que passaram de 72 horas">&gt; 72h</th>
                                         </tr>
                                     </thead>
                                     <tbody id="diagnosticoTableBody" class="divide-y divide-slate-100">
@@ -2867,7 +2872,10 @@
         document.getElementById('btnFecharModalContratos').addEventListener('click', _fecharModalContratos);
         document.getElementById('modalContratosDetalhe').addEventListener('click', (e) => { if (e.target.id === 'modalContratosDetalhe') _fecharModalContratos(); });
         document.getElementById('btnExportarModalContratos').addEventListener('click', () => {
-            const linhas = _modalContratosListaAtual.map(c => ({ 'Cliente': _nomeClienteContrato(c.atual), 'ID Contrato': c.chave, 'Nº O.S.': c.atual['ID O.S'], 'Cidade': c.atual['Cidade'], 'Bairro': c.atual['Bairro'], 'Diagnóstico': c.motivoConsolidado, 'Data O.S.': formatDateISOToBR(c.atual._dataAberturaISO || c.atual._dataISO), 'Status': c.situacaoConsolidada }));
+            const linhas = _modalContratosListaAtual.map(c => {
+                const t = _diasContrato(c);
+                return { 'Cliente': _nomeClienteContrato(c.atual), 'ID Contrato': c.chave, 'Nº O.S.': c.atual['ID O.S'], 'Cidade': c.atual['Cidade'], 'Bairro': c.atual['Bairro'], 'Diagnóstico': c.motivoConsolidado, 'Data O.S.': formatDateISOToBR(c.atual._dataAberturaISO || c.atual._dataISO), 'Status': c.situacaoConsolidada, 'Dias': t ? t.dias : '', 'Tipo do prazo': t ? (t.tipo === 'parado' ? 'Parado há' : 'Resolvido em') : '' };
+            });
             const ws = XLSX.utils.json_to_sheet(linhas);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Contratos');
@@ -6362,6 +6370,67 @@
             return d['Razão social/nome'] || d['RAZAO SOCIAL'] || d['NOME'] || d['Nome Cliente'] || d['Cliente'] || d['ID CLIENTE'] || '-';
         }
 
+        // ── Tempo entre o diagnóstico de impedimento e a instalação ──
+        const _DIA_MS = 86400000;
+        const _SLA_DIAS = 3; // 72 horas
+
+        function _diffDias(iniISO, fimData) {
+            const ini = iniISO ? dateFromISO(iniISO) : null;
+            if (!ini || !fimData) return null;
+            return Math.round((fimData - ini) / _DIA_MS);
+        }
+
+        // Para cada motivo de impedimento, os prazos dos contratos que
+        // depois foram instalados: da abertura daquela O.S. até a ativação.
+        function _statsResolucaoPorMotivo(listaContratos) {
+            const mapa = new Map();
+            listaContratos.forEach(c => {
+                if (!c.isConcluida) return;
+                const fim = c.atual._dataISO ? dateFromISO(c.atual._dataISO) : null;
+                if (!fim) return;
+                c.registros.forEach(r => {
+                    if (r._isConcluida || r._motivoDiagnostico === 'Sem diagnóstico') return;
+                    const dias = _diffDias(r._dataAberturaISO, fim);
+                    if (dias === null) return;
+                    if (!mapa.has(r._motivoDiagnostico)) mapa.set(r._motivoDiagnostico, []);
+                    mapa.get(r._motivoDiagnostico).push(dias);
+                });
+            });
+
+            const stats = new Map();
+            mapa.forEach((dias, motivo) => {
+                const s = [...dias].sort((a, b) => a - b);
+                const meio = Math.floor(s.length / 2);
+                stats.set(motivo, {
+                    n: s.length,
+                    media: s.reduce((acc, v) => acc + v, 0) / s.length,
+                    mediana: s.length % 2 ? s[meio] : (s[meio - 1] + s[meio]) / 2,
+                    foraSLA: s.filter(v => v > _SLA_DIAS).length
+                });
+            });
+            return stats;
+        }
+
+        // Dias de um contrato: resolvido = quanto demorou; parado = há quanto tempo espera.
+        function _diasContrato(c) {
+            if (c.isConcluida) {
+                const fim = c.atual._dataISO ? dateFromISO(c.atual._dataISO) : null;
+                const impedimentos = c.registros
+                    .filter(r => !r._isConcluida && r._motivoDiagnostico !== 'Sem diagnóstico' && r._dataAberturaISO)
+                    .sort((a, b) => dateFromISO(a._dataAberturaISO) - dateFromISO(b._dataAberturaISO));
+                if (!fim || !impedimentos.length) return null;
+                const dias = _diffDias(impedimentos[0]._dataAberturaISO, fim);
+                return dias === null ? null : { dias, tipo: 'resolvido' };
+            }
+            const dias = _diffDias(c.atual._dataAberturaISO || c.atual._dataISO, new Date());
+            return dias === null ? null : { dias, tipo: 'parado' };
+        }
+
+        function _fmtDias(valor, casas = 0) {
+            if (valor === null || valor === undefined || isNaN(valor)) return '–';
+            return `${valor.toFixed(casas)}d`;
+        }
+
         function _categorizarMotivoInviabilidade(motivo) {
             const m = normalizarTextoChave(motivo);
             if (m.includes('CTO') && m.includes('VAGA')) return 'CTO sem vaga';
@@ -6384,8 +6453,18 @@
             document.getElementById('modalContratosTitulo').textContent = titulo;
             document.getElementById('modalContratosSubtitulo').textContent = subtitulo || `${listaConsolidada.length} contrato(s)`;
 
-            const colunas = ['Cliente', 'ID Contrato', 'Nº O.S.', 'Cidade', 'Bairro', 'Diagnóstico', 'Data O.S.', 'Status'];
-            const rows = listaConsolidada.slice(0, 300).map(c => `
+            const colunas = ['Cliente', 'ID Contrato', 'Nº O.S.', 'Cidade', 'Bairro', 'Diagnóstico', 'Data O.S.', 'Status', 'Dias'];
+            const rows = listaConsolidada.slice(0, 300).map(c => {
+                const t = _diasContrato(c);
+                let celulaDias = '<td class="py-2.5 px-4 text-center text-slate-300 text-xs">–</td>';
+                if (t) {
+                    const tom = t.dias > _SLA_DIAS
+                        ? (t.tipo === 'parado' ? 'text-red-600' : 'text-amber-600')
+                        : 'text-emerald-600';
+                    const rotulo = t.tipo === 'parado' ? 'parado há' : 'resolvido em';
+                    celulaDias = `<td class="py-2.5 px-4 text-center text-xs font-black ${tom}" title="${rotulo} ${t.dias} dia(s)">${t.dias}d</td>`;
+                }
+                return `
                 <tr>
                     <td class="py-2.5 px-4 text-slate-800 font-medium text-xs">${escapeHTML(_nomeClienteContrato(c.atual))}</td>
                     <td class="py-2.5 px-4 text-slate-700 text-xs">${escapeHTML(c.chave)}</td>
@@ -6395,7 +6474,9 @@
                     <td class="py-2.5 px-4 text-slate-700 text-xs">${escapeHTML(c.motivoConsolidado)}</td>
                     <td class="py-2.5 px-4 text-slate-700 text-xs text-center">${formatDateISOToBR(c.atual._dataAberturaISO || c.atual._dataISO)}</td>
                     <td class="py-2.5 px-4 text-slate-700 text-xs font-bold">${escapeHTML(c.situacaoConsolidada)}</td>
-                </tr>`).join('') || '<tr><td colspan="8" class="py-4 px-4 text-center text-xs text-slate-400">Nenhum contrato encontrado.</td></tr>';
+                    ${celulaDias}
+                </tr>`;
+            }).join('') || '<tr><td colspan="9" class="py-4 px-4 text-center text-xs text-slate-400">Nenhum contrato encontrado.</td></tr>';
 
             document.getElementById('modalContratosContent').innerHTML = `
                 <div class="overflow-x-auto table-container" style="max-height: 500px;">
@@ -6512,13 +6593,31 @@
                 .sort((a, b) => b.count - a.count);
 
             window._diagnosticosMotivos = diagnosticosOrdenados.map(d => d.nome);
-            tbody.innerHTML = diagnosticosOrdenados.map((item, idx) => `
+            const statsResolucao = _statsResolucaoPorMotivo(listaContratos);
+
+            tbody.innerHTML = diagnosticosOrdenados.map((item, idx) => {
+                const s = statsResolucao.get(item.nome);
+                let colsTempo;
+                if (!s) {
+                    colsTempo = '<td class="py-2.5 px-5 text-center text-slate-300">–</td>'.repeat(4);
+                } else {
+                    const pctFora = (s.foraSLA / s.n) * 100;
+                    const tomFora = pctFora >= 50 ? 'text-red-600' : (pctFora > 0 ? 'text-amber-600' : 'text-emerald-600');
+                    const tomMedia = s.media > _SLA_DIAS ? 'text-red-600' : 'text-emerald-600';
+                    colsTempo = `
+                        <td class="py-2.5 px-5 text-center font-bold text-slate-600">${s.n}</td>
+                        <td class="py-2.5 px-5 text-center font-black ${tomMedia}">${_fmtDias(s.media, 1)}</td>
+                        <td class="py-2.5 px-5 text-center font-bold text-slate-600">${_fmtDias(s.mediana, s.mediana % 1 ? 1 : 0)}</td>
+                        <td class="py-2.5 px-5 text-center font-black ${tomFora}">${s.foraSLA} <span class="text-[10px] font-bold opacity-70">(${pctFora.toFixed(0)}%)</span></td>`;
+                }
+                return `
                 <tr class="hover:bg-blue-50/50 transition-colors cursor-pointer" onclick="abrirModalDiagnostico(${idx})">
                     <td class="py-2.5 px-5 text-slate-800 font-bold text-xs truncate max-w-[420px]" title="${escapeHTML(item.nome)}">${escapeHTML(item.nome)}</td>
                     <td class="py-2.5 px-5 text-slate-600 text-center font-black">${item.count}</td>
                     <td class="py-2.5 px-5 text-slate-500 text-center font-bold">${pct(item.count)}%</td>
-                </tr>
-            `).join('') || '<tr><td colspan="3" class="py-4 px-5 text-center text-xs text-slate-400">Sem diagnósticos para o filtro atual.</td></tr>';
+                    ${colsTempo}
+                </tr>`;
+            }).join('') || '<tr><td colspan="7" class="py-4 px-5 text-center text-xs text-slate-400">Sem diagnósticos para o filtro atual.</td></tr>';
 
             const alertItems = [
                 { label: 'Canais vazios prejudicam o ranking de origem', value: metricas.canalVazio, tone: 'red' },
