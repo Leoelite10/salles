@@ -599,6 +599,7 @@
                     </button>
                     <div class="flex gap-2 overflow-x-auto custom-scrollbar" id="dashboardTabs">
                         <button type="button" data-tab="executivo" class="dashboard-tab-btn active px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Executivo</button>
+                        <button type="button" data-tab="buscaCliente" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-violet-50 hover:text-violet-700 transition-colors">Buscar Cliente</button>
                         <button type="button" data-tab="fechamentoMensal" class="dashboard-tab-btn hidden px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-amber-50 hover:text-amber-700 transition-colors">Fechamento Mensal</button>
                         <button type="button" data-tab="crescimento" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">Crescimento</button>
                         <button type="button" data-tab="funil" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Funil</button>
@@ -2342,6 +2343,61 @@
                 </div>
                 <!-- ===== FIM ABA: FECHAMENTO MENSAL ===== -->
 
+                <!-- ===== ABA: BUSCAR CLIENTE (guia isolada _bc*) ===== -->
+                <div id="secaoBuscaCliente" class="space-y-6 dashboard-section-hidden">
+
+                    <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-violet-600"></span> Buscar Cliente
+                            </h3>
+                            <p class="text-xs text-slate-400 font-medium mt-1">Procura em toda a base carregada (nome, ID do cliente, nº da O.S., cidade, bairro, vendedor, plano e demais colunas do CSV) · resultado consolidado por cliente · somente leitura, não altera filtros nem dados.</p>
+                        </div>
+                        <button type="button" id="bcBtnExportar" class="px-4 py-2 rounded-xl border border-violet-200 bg-violet-50 text-[10px] font-black uppercase tracking-wider text-violet-700 hover:bg-violet-100 transition-colors shrink-0">Exportar resultados (Excel)</button>
+                    </div>
+
+                    <div class="glass-card p-5">
+                        <div class="flex flex-col lg:flex-row lg:items-start gap-4">
+                            <div class="flex-1 min-w-0">
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Termo da busca</label>
+                                <div class="relative">
+                                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+                                    <input type="text" id="bcInput" autocomplete="off" placeholder="Nome do cliente, ID, nº da O.S., cidade, bairro..." class="w-full pl-9 pr-10 py-3 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all">
+                                    <button type="button" id="bcBtnLimpar" title="Limpar busca" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                                <p class="text-[10px] text-slate-400 font-medium mt-1.5">Mínimo de 2 caracteres · vários termos separados por espaço são combinados (E) · acentos e maiúsculas são ignorados.</p>
+                            </div>
+                            <div class="lg:w-72 shrink-0">
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Escopo</label>
+                                <label for="bcRespeitarFiltros" class="flex items-center gap-2.5 border border-slate-200 rounded-xl px-3 py-3.5 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                                    <input type="checkbox" id="bcRespeitarFiltros" class="w-4 h-4 accent-violet-600 shrink-0">
+                                    <span class="text-xs font-semibold text-slate-600 leading-tight">Restringir aos filtros da barra lateral</span>
+                                </label>
+                                <p class="text-[10px] text-slate-400 font-medium mt-1.5">Desmarcado, a busca varre a base inteira, ignorando período e filtros.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="bcKpis" class="grid grid-cols-2 lg:grid-cols-5 gap-4"></div>
+
+                    <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+                        <div class="xl:col-span-2 glass-card overflow-hidden">
+                            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
+                                <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-violet-400"></span> Resultados
+                                </h4>
+                                <span id="bcResumoContagem" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"></span>
+                            </div>
+                            <div id="bcResultados" class="max-h-[600px] overflow-y-auto custom-scrollbar divide-y divide-slate-100"></div>
+                        </div>
+                        <div class="xl:col-span-3 glass-card p-5" id="bcDetalhe"></div>
+                    </div>
+
+                </div>
+                <!-- ===== FIM ABA: BUSCAR CLIENTE ===== -->
+
             </div>
         </div>
     </main>
@@ -2460,7 +2516,8 @@
             { tabs: ['funil', 'qualidade'] },
             { tabs: ['crescimento'] },
             { tabs: ['desempenhoVendedores'] },
-            { tabs: ['fechamentoMensal'] }
+            { tabs: ['fechamentoMensal'] },
+            { tabs: ['buscaCliente'] }
         ];
 
         function setupDashboardTabs() {
@@ -2559,6 +2616,7 @@
             if (tabName === 'bairros') { setTimeout(() => renderMapaLeaflet(), 80); }
             if (tabName === 'desempenhoVendedores') { _dvInit(); _dvRenderAll(); }
             if (tabName === 'fechamentoMensal') { _fmRenderAll(); }
+            if (tabName === 'buscaCliente') { _bcInit(); }
         }
 
         // DOM Inputs Fixos
@@ -6367,7 +6425,7 @@
         }
 
         function _nomeClienteContrato(d) {
-            return d['Razão social/nome'] || d['RAZAO SOCIAL'] || d['NOME'] || d['Nome Cliente'] || d['Cliente'] || d['ID CLIENTE'] || '-';
+            return d['Razão social/nome'] || d['RazÃ£o social/nome'] || d['RAZAO SOCIAL'] || d['NOME'] || d['Nome Cliente'] || d['Cliente'] || d['ID CLIENTE'] || '-';
         }
 
         // ── Tempo entre o diagnóstico de impedimento e a instalação ──
@@ -11783,6 +11841,346 @@
             _fmRenderCanal(_fmState.meses);
             _fmRenderAssunto(_fmState.meses);
             _fmRenderNaoInstaladas(_fmState.meses);
+        }
+
+        // =====================================================================
+        // ABA: BUSCAR CLIENTE (guia isolada _bc*)
+        // =====================================================================
+        // Busca textual sobre TODA a base carregada (rawData), consolidada por
+        // contrato via _construirConsolidadoContratos() — chave = ID CONTRATO ||
+        // ID CLIENTE || ID O.S. Guia somente leitura: nao altera activeFilters,
+        // filteredData nem qualquer render das demais abas.
+
+        const _BC_MAX_LISTA = 200;
+        let _bcIndice = null;
+        let _bcIndiceToken = '';
+        let _bcResultados = [];
+        let _bcSelecionadoIdx = -1;
+        let _bcDebounce = null;
+        let _bcLigado = false;
+
+        function _bcNorm(v) {
+            return String(v ?? '')
+                .normalize('NFD').replace(/[̀-ͯ]/g, '')
+                .toLowerCase().replace(/\s+/g, ' ').trim();
+        }
+
+        // Token barato para saber se a base mudou (nova importacao / novo login)
+        function _bcTokenBase() {
+            const ultimo = rawData[rawData.length - 1];
+            return rawData.length + '|' + headersList.length + '|' + (ultimo ? (ultimo._chaveContrato || '') : '');
+        }
+
+        function _bcCanalPermitido(registros) {
+            if (!_currentCanais) return true;
+            return registros.some(r => _currentCanais.includes(r._setorUpper));
+        }
+
+        function _bcConstruirIndice() {
+            const token = _bcTokenBase();
+            if (_bcIndice && _bcIndiceToken === token) return _bcIndice;
+
+            const lista = [];
+            _construirConsolidadoContratos().forEach(c => {
+                if (!c.chave) return;
+                if (!_bcCanalPermitido(c.registros)) return;
+                const partes = new Set([c.chave]);
+                c.registros.forEach(r => {
+                    headersList.forEach(h => { const v = r[h]; if (v) partes.add(String(v)); });
+                });
+                lista.push({ c, txt: _bcNorm([...partes].join(' ')) });
+            });
+
+            _bcIndice = lista;
+            _bcIndiceToken = token;
+            return lista;
+        }
+
+        function _bcBuscar(termoRaw) {
+            const termo = _bcNorm(termoRaw);
+            if (termo.length < 2) return [];
+
+            const tokens = termo.split(' ').filter(Boolean);
+            const respeitar = document.getElementById('bcRespeitarFiltros')?.checked;
+            const permitidas = respeitar ? new Set(rawFilteredData.map(d => d._chaveContrato)) : null;
+
+            const achados = [];
+            for (const item of _bcConstruirIndice()) {
+                if (permitidas && !permitidas.has(item.c.chave)) continue;
+                if (!tokens.every(t => item.txt.includes(t))) continue;
+
+                const nome = _bcNorm(_nomeClienteContrato(item.c.atual));
+                let score = 1;
+                if (_bcNorm(item.c.chave) === termo || nome === termo) score = 4;
+                else if (nome.startsWith(termo)) score = 3;
+                else if (nome.includes(termo)) score = 2;
+                achados.push({ c: item.c, score });
+            }
+
+            achados.sort((a, b) => (b.score - a.score) || (_dataHibridaTimestamp(b.c.atual) - _dataHibridaTimestamp(a.c.atual)));
+            return achados.map(a => a.c);
+        }
+
+        function _bcBadgeSituacao(c) {
+            if (c.isConcluida) {
+                return isCancelamentoReal(c.atual)
+                    ? '<span class="bg-red-100 border border-red-200 text-red-700 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest shrink-0">Cancelado</span>'
+                    : '<span class="bg-green-100 border border-green-200 text-green-700 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest shrink-0">Instalado</span>';
+            }
+            return c.atual._isDiagnosticoVazio
+                ? '<span class="bg-amber-100 border border-amber-200 text-amber-700 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest shrink-0">Pendente</span>'
+                : '<span class="bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest shrink-0">Nao concluida</span>';
+        }
+
+        function _bcRenderKpis(lista) {
+            const el = document.getElementById('bcKpis');
+            if (!el) return;
+
+            const instalados = lista.filter(c => c.isConcluida).length;
+            const cancelados = lista.filter(c => isCancelamentoReal(c.atual)).length;
+            const pendentes = lista.length - instalados;
+            const valores = lista.map(c => c.atual._valorCheio || 0).filter(v => v > 0);
+            const ticket = valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
+
+            const card = (rotulo, valor, cor) => `
+                <div class="glass-card p-4">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${rotulo}</p>
+                    <p class="text-xl font-extrabold ${cor} mt-1">${valor}</p>
+                </div>`;
+
+            el.innerHTML = [
+                card('Clientes encontrados', lista.length, 'text-slate-800'),
+                card('Instalados (340)', instalados, 'text-green-600'),
+                card('Em aberto', pendentes, 'text-amber-600'),
+                card('Cancelados', cancelados, 'text-red-600'),
+                card('Ticket médio', formatBRL(ticket), 'text-blue-600')
+            ].join('');
+        }
+
+        function _bcRenderLista(termo) {
+            const box = document.getElementById('bcResultados');
+            const contador = document.getElementById('bcResumoContagem');
+            if (!box) return;
+
+            if (_bcNorm(termo).length < 2) {
+                if (contador) contador.textContent = '';
+                box.innerHTML = '<p class="px-5 py-10 text-center text-xs text-slate-400 font-medium">Digite ao menos 2 caracteres para buscar.</p>';
+                return;
+            }
+
+            if (_bcResultados.length === 0) {
+                if (contador) contador.textContent = '0 clientes';
+                box.innerHTML = '<p class="px-5 py-10 text-center text-xs text-slate-400 font-medium">Nenhum cliente encontrado para este termo.</p>';
+                return;
+            }
+
+            const exibidos = _bcResultados.slice(0, _BC_MAX_LISTA);
+            if (contador) contador.textContent = `${_bcResultados.length} cliente(s)`;
+
+            box.innerHTML = exibidos.map((c, i) => {
+                const d = c.atual;
+                const local = [d['Cidade'], d['Bairro']].filter(Boolean).join(' · ');
+                const ativo = _bcSelecionadoIdx === i ? 'bg-violet-50' : '';
+                return `
+                <button type="button" onclick="_bcSelecionar(${i})" class="w-full text-left px-5 py-3 hover:bg-violet-50/70 transition-colors ${ativo}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-xs font-extrabold text-slate-800 uppercase tracking-wide truncate">${escapeHTML(_nomeClienteContrato(d))}</p>
+                            <p class="text-[10px] text-slate-400 font-semibold mt-0.5 truncate">${escapeHTML(c.chave)}${local ? ' · ' + escapeHTML(local) : ''}</p>
+                            <p class="text-[10px] text-slate-400 font-medium mt-0.5 truncate">${escapeHTML(d._vendedorNome)} · ${escapeHTML(d['Setor'] || '-')} · ${c.registros.length} O.S.</p>
+                        </div>
+                        ${_bcBadgeSituacao(c)}
+                    </div>
+                </button>`;
+            }).join('');
+
+            if (_bcResultados.length > exibidos.length) {
+                box.innerHTML += `<p class="px-5 py-3 text-center text-[10px] text-slate-400 font-medium bg-slate-50">Exibindo ${exibidos.length} de ${_bcResultados.length}. Refine o termo ou use "Exportar resultados".</p>`;
+            }
+        }
+
+        function _bcLinhaCampo(rotulo, valor) {
+            return `
+                <div class="min-w-0">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${escapeHTML(rotulo)}</p>
+                    <p class="text-xs font-semibold text-slate-700 mt-0.5 break-words">${escapeHTML(valor || '-')}</p>
+                </div>`;
+        }
+
+        function _bcRenderDetalhe() {
+            const box = document.getElementById('bcDetalhe');
+            if (!box) return;
+
+            const c = _bcResultados[_bcSelecionadoIdx];
+            if (!c) {
+                box.innerHTML = '<div class="flex flex-col items-center justify-center h-full py-16 text-center"><svg class="w-10 h-10 text-slate-200 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg><p class="text-xs text-slate-400 font-medium">Selecione um cliente na lista para ver a ficha completa.</p></div>';
+                return;
+            }
+
+            const d = c.atual;
+            const osOrdenadas = [...c.registros].sort((a, b) => _dataHibridaTimestamp(a) - _dataHibridaTimestamp(b));
+
+            const linhasOS = osOrdenadas.map(r => {
+                const sit = r._isConcluida
+                    ? '<span class="text-green-600 font-bold">Concluída</span>'
+                    : (r._isDiagnosticoVazio ? '<span class="text-amber-600 font-bold">Pendente</span>' : '<span class="text-slate-500 font-bold">Não concluída</span>');
+                return `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-3 text-[11px] text-slate-700 font-semibold">${escapeHTML(r['ID O.S'] || '-')}</td>
+                    <td class="py-2 px-3 text-[11px] text-slate-600 truncate max-w-[180px]" title="${escapeHTML(r['Assunto'] || '')}">${escapeHTML(r['Assunto'] || '-')}</td>
+                    <td class="py-2 px-3 text-[11px] text-slate-600 text-center">${escapeHTML(formatDateISOToBR(r._dataAberturaISO) || '-')}</td>
+                    <td class="py-2 px-3 text-[11px] text-slate-600 text-center">${escapeHTML(r['Data ativação'] || '-')}</td>
+                    <td class="py-2 px-3 text-[11px] text-slate-600 truncate max-w-[200px]" title="${escapeHTML(r._motivoDiagnostico || '')}">${escapeHTML(r._motivoDiagnostico || '-')}</td>
+                    <td class="py-2 px-3 text-[11px] text-center">${sit}</td>
+                    <td class="py-2 px-3 text-[11px] text-slate-600 truncate max-w-[140px]" title="${escapeHTML(r._vendedorNome || '')}">${escapeHTML(r._vendedorNome || '-')}</td>
+                </tr>`;
+            }).join('');
+
+            const camposBrutos = headersList.map(h => _bcLinhaCampo(h, d[h])).join('');
+
+            box.innerHTML = `
+                <div class="flex items-start justify-between gap-3 pb-4 border-b border-slate-100">
+                    <div class="min-w-0">
+                        <h4 class="text-sm font-extrabold text-slate-800 uppercase tracking-wide break-words">${escapeHTML(_nomeClienteContrato(d))}</h4>
+                        <p class="text-[10px] text-slate-400 font-semibold mt-1">Chave do contrato: ${escapeHTML(c.chave)} · ${c.registros.length} ordem(ns) de serviço na base</p>
+                    </div>
+                    ${_bcBadgeSituacao(c)}
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-b border-slate-100">
+                    ${_bcLinhaCampo('Status do contrato', d['Status contrato'])}
+                    ${_bcLinhaCampo('Situação da instalação', c.situacaoConsolidada)}
+                    ${_bcLinhaCampo('Data de ativação', d['Data ativação'])}
+                    ${_bcLinhaCampo('Valor do contrato', d._valorCheio ? formatBRL(d._valorCheio) : '')}
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-b border-slate-100">
+                    ${_bcLinhaCampo('Cidade', d['Cidade'])}
+                    ${_bcLinhaCampo('Bairro', d['Bairro'])}
+                    ${_bcLinhaCampo('Filial', d['Filial'])}
+                    ${_bcLinhaCampo('UF da operação', d._ufOperacao)}
+                    ${_bcLinhaCampo('Vendedor', d._vendedorNome)}
+                    ${_bcLinhaCampo('Canal operacional', d['Setor'])}
+                    ${_bcLinhaCampo('Origem do lead', d['Canal'])}
+                    ${_bcLinhaCampo('Plano de venda', d['Plano de venda'])}
+                </div>
+
+                <div class="py-4">
+                    <h5 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2">Histórico de ordens de serviço</h5>
+                    <div class="overflow-x-auto table-container" style="max-height: 280px;">
+                        <table class="w-full text-left border-collapse min-w-[720px]">
+                            <thead class="bg-slate-50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="py-2 px-3 font-bold text-[9px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Nº O.S.</th>
+                                    <th class="py-2 px-3 font-bold text-[9px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Assunto</th>
+                                    <th class="py-2 px-3 font-bold text-[9px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Abertura</th>
+                                    <th class="py-2 px-3 font-bold text-[9px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Ativação</th>
+                                    <th class="py-2 px-3 font-bold text-[9px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Diagnóstico</th>
+                                    <th class="py-2 px-3 font-bold text-[9px] uppercase tracking-wider text-slate-500 border-b border-slate-200 text-center">Situação</th>
+                                    <th class="py-2 px-3 font-bold text-[9px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">${linhasOS}</tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <details class="border-t border-slate-100 pt-4">
+                    <summary class="cursor-pointer text-[10px] font-extrabold text-violet-600 uppercase tracking-widest hover:text-violet-800">Ver todos os campos do registro mais recente</summary>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">${camposBrutos}</div>
+                </details>`;
+        }
+
+        function _bcSelecionar(idx) {
+            _bcSelecionadoIdx = idx;
+            _bcRenderLista(document.getElementById('bcInput')?.value || '');
+            _bcRenderDetalhe();
+        }
+
+        function _bcExecutarBusca() {
+            const input = document.getElementById('bcInput');
+            const termo = input ? input.value : '';
+            _bcResultados = _bcBuscar(termo);
+            _bcSelecionadoIdx = _bcResultados.length === 1 ? 0 : -1;
+            _bcRenderKpis(_bcResultados);
+            _bcRenderLista(termo);
+            _bcRenderDetalhe();
+        }
+
+        function _bcExportar() {
+            if (typeof XLSX === 'undefined') return alert('Biblioteca XLSX não carregada.');
+            if (_bcResultados.length === 0) return alert('Nenhum resultado para exportar. Faça uma busca primeiro.');
+
+            const clientes = _bcResultados.map(c => ({
+                'Cliente': _nomeClienteContrato(c.atual),
+                'Chave do contrato': c.chave,
+                'ID CLIENTE': c.atual['ID CLIENTE'] || '',
+                'Cidade': c.atual['Cidade'] || '',
+                'Bairro': c.atual['Bairro'] || '',
+                'Filial': c.atual['Filial'] || '',
+                'UF Operacao': c.atual._ufOperacao || '',
+                'Vendedor': c.atual._vendedorNome || '',
+                'Canal Operacional': c.atual['Setor'] || '',
+                'Origem do Lead': c.atual['Canal'] || '',
+                'Plano de venda': c.atual['Plano de venda'] || '',
+                'Status contrato': c.atual['Status contrato'] || '',
+                'Situacao da instalacao': c.situacaoConsolidada,
+                'Diagnostico': c.motivoConsolidado,
+                'Data ativacao': c.atual['Data ativação'] || '',
+                'Valor contrato': c.atual._valorCheio || 0,
+                'Qtd O.S.': c.registros.length
+            }));
+
+            const ordens = [];
+            _bcResultados.forEach(c => c.registros.forEach(r => ordens.push({
+                'Cliente': _nomeClienteContrato(c.atual),
+                'Chave do contrato': c.chave,
+                'ID O.S': r['ID O.S'] || '',
+                'Assunto': r['Assunto'] || '',
+                'Data Abertura O.S': formatDateISOToBR(r._dataAberturaISO) || '',
+                'Data ativacao': r['Data ativação'] || '',
+                'Diagnostico': r._motivoDiagnostico || '',
+                'Situacao': r._situacao || '',
+                'Vendedor': r._vendedorNome || '',
+                'Canal Operacional': r['Setor'] || '',
+                'Cidade': r['Cidade'] || '',
+                'Bairro': r['Bairro'] || ''
+            })));
+
+            const wb = XLSX.utils.book_new();
+            const meta = getMetadadosRelatorio({ relatorio: 'Busca de Clientes', registros: clientes.length });
+            XLSX.utils.book_append_sheet(wb, ajustarLarguraWorksheet(XLSX.utils.json_to_sheet(montarLinhasMetadados(meta)), [26, 90]), 'Metadados');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientes), 'Clientes');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ordens), 'Ordens de Servico');
+
+            const hoje = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(wb, `Busca_Clientes_${hoje}.xlsx`);
+        }
+
+        function _bcInit() {
+            const input = document.getElementById('bcInput');
+            if (!input) return;
+
+            if (!_bcLigado) {
+                _bcLigado = true;
+                input.addEventListener('input', () => {
+                    clearTimeout(_bcDebounce);
+                    _bcDebounce = setTimeout(_bcExecutarBusca, 180);
+                });
+                input.addEventListener('keydown', e => {
+                    if (e.key === 'Escape') { input.value = ''; _bcExecutarBusca(); }
+                });
+                document.getElementById('bcBtnLimpar')?.addEventListener('click', () => {
+                    input.value = '';
+                    input.focus();
+                    _bcExecutarBusca();
+                });
+                document.getElementById('bcRespeitarFiltros')?.addEventListener('change', _bcExecutarBusca);
+                document.getElementById('bcBtnExportar')?.addEventListener('click', _bcExportar);
+            }
+
+            _bcExecutarBusca();
+            setTimeout(() => input.focus(), 80);
         }
 
     </script>
