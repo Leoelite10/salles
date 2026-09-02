@@ -602,17 +602,16 @@
                         <button type="button" data-tab="buscaCliente" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-violet-50 hover:text-violet-700 transition-colors">Buscar Cliente</button>
                         <button type="button" data-tab="fechamentoMensal" class="dashboard-tab-btn hidden px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-amber-50 hover:text-amber-700 transition-colors">Fechamento Mensal</button>
                         <button type="button" data-tab="crescimento" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">Crescimento</button>
+                        <button type="button" data-tab="vendedores" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">Vendedores</button>
                         <button type="button" data-tab="funil" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Funil</button>
                         <button type="button" data-tab="bairros" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Mapa de Calor</button>
                         <button type="button" data-tab="cancelados" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Cancelados</button>
                         <button type="button" data-tab="canais" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Leads</button>
-                        <button type="button" data-tab="vendedores" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Vendedores</button>
                         <button type="button" data-tab="setores" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Canais Op.</button>
                         <button type="button" data-tab="cidades" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Cidades</button>
                         <button type="button" data-tab="planos" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Planos</button>
                         <button type="button" data-tab="cruzamentos" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Cruzamentos</button>
                         <button type="button" data-tab="qualidade" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">Qualidade</button>
-                        <button type="button" data-tab="desempenhoVendedores" class="dashboard-tab-btn px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">Desempenho de Vendedores</button>
                     </div>
                 </div>
                 
@@ -1153,82 +1152,8 @@
                         </div>
                     </div>
 
-                    <!-- NOVO: Top 15 Vendedores Gerais (Vendas e Faturamento) -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="glass-card overflow-hidden parent-overflow flex flex-col">
-                            <div class="p-5 border-b border-slate-100 bg-white">
-                                <h2 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest">Top 15 Vendedores (Por Vendas)</h2>
-                            </div>
-                            <div class="overflow-x-auto table-container flex-1 bg-white" style="max-height: 400px;">
-                                <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
-                                    <thead class="bg-slate-50 sticky top-0 z-10">
-                                        <tr>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Vendas</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Contratos concluídos com Status Ativo">Ativas</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Faturamento</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200" title="Ticket Médio Atual (com desconto)">T.M. Atual</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200" title="Ticket Médio Após 1 Ano (valor cheio)">T.M. 1 Ano</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tbodyTop15Vol" class="divide-y divide-slate-100">
-                                        <!-- Linhas via JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="glass-card overflow-hidden parent-overflow flex flex-col">
-                            <div class="p-5 border-b border-slate-100 bg-white">
-                                <h2 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest">Top 15 Vendedores (Por Faturamento)</h2>
-                            </div>
-                            <div class="overflow-x-auto table-container flex-1 bg-white" style="max-height: 400px;">
-                                <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
-                                    <thead class="bg-slate-50 sticky top-0 z-10">
-                                        <tr>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Vendas</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Contratos concluídos com Status Ativo">Ativas</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Faturamento</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200" title="Ticket Médio Atual (com desconto)">T.M. Atual</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200" title="Ticket Médio Após 1 Ano (valor cheio)">T.M. 1 Ano</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tbodyTop15Fat" class="divide-y divide-slate-100">
-                                        <!-- Linhas via JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Resumo por Vendedor (Canais Operacionais) e Detalhes Base -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        
-                        <!-- Resumo por Vendedor -->
-                        <div class="glass-card overflow-hidden parent-overflow flex flex-col">
-                            <div class="p-5 border-b border-slate-100 bg-white">
-                                <h2 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest">Ranking Geral de Performance <span class="text-xs text-slate-400 font-medium normal-case ml-1 tracking-normal">(Todos os Vendedores)</span></h2>
-                            </div>
-                            <div class="overflow-x-auto table-container flex-1 bg-white" style="max-height: 400px;" id="containerVendedor">
-                                <table class="w-full text-left border-collapse text-sm">
-                                    <thead class="bg-slate-50 sticky top-0 z-10">
-                                        <tr>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Canal Op.</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Brutas</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Concluídas</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Contratos concluídos com Status Ativo">Ativas</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Ativação</th>
-                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Rec. (Desconto)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="vendedorTableBody" class="divide-y divide-slate-100">
-                                        <!-- Linhas via JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <!-- Base de Contratos (o ranking de vendedores vive na guia Vendedores) -->
+                    <div class="grid grid-cols-1 gap-8">
 
                         <!-- Tabela Detalhada (Apenas Visão em Tela, Oculta na Exportação Executiva) -->
                         <div class="glass-card overflow-hidden parent-overflow flex flex-col" id="blocoTabelaDetalhada">
@@ -1890,15 +1815,15 @@
                 </div>
                 <!-- ===== FIM ABA: CRESCIMENTO DE VENDAS ===== -->
 
-                <!-- ===== ABA: DESEMPENHO DE VENDEDORES (guia isolada, somente leitura) ===== -->
+                <!-- ===== ABA: VENDEDORES (guia unica: ranking + desempenho, permissao por usuario) ===== -->
                 <div id="secaoDesempenhoVendedores" class="space-y-8 dashboard-section-hidden">
 
                     <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
                         <div>
                             <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-indigo-600"></span> Desempenho de Vendedores
+                                <span class="w-2 h-2 rounded-full bg-indigo-600"></span> Vendedores
                             </h3>
-                            <p class="text-xs text-slate-400 font-medium mt-1">Guia com filtros próprios (não interferem nas demais abas) · leitura sobre a base já carregada, sem alterar dados de origem.</p>
+                            <p class="text-xs text-slate-400 font-medium mt-1">Visão única de vendedores: ranking com canal operacional, vendas, instalações e cancelamentos, mais comparação individual, geografia e cruzamentos · filtros próprios que não interferem nas demais abas · leitura sobre a base já carregada.</p>
                         </div>
                     </div>
 
@@ -2007,14 +1932,22 @@
                         <div class="p-5 border-b border-slate-100 bg-white flex justify-between items-center flex-wrap gap-3">
                             <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-widest flex items-center gap-2">
                                 <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Ranking de Vendedores
+                                <span id="dvRankingInfo" class="text-[10px] font-bold text-slate-400 normal-case tracking-normal"></span>
                             </h4>
-                            <select id="dvOrdenacaoRanking" onchange="_dvOnOrdenacaoChange()" class="border border-slate-200 rounded-lg p-2 text-xs font-bold text-slate-600 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
-                                <option value="faturamento">Ordenar por: Maior faturamento</option>
-                                <option value="vendas">Ordenar por: Maior quantidade de vendas</option>
-                                <option value="ticket">Ordenar por: Maior ticket médio</option>
-                                <option value="crescimento">Ordenar por: Maior crescimento</option>
-                                <option value="clientes">Ordenar por: Maior número de clientes</option>
-                            </select>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <div class="relative">
+                                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+                                    <input type="text" id="dvBuscaRanking" oninput="_dvOnBuscaRanking(this.value)" autocomplete="off" placeholder="Buscar vendedor ou canal..." class="w-56 pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                                </div>
+                                <select id="dvOrdenacaoRanking" onchange="_dvOnOrdenacaoChange()" class="border border-slate-200 rounded-lg p-2 text-xs font-bold text-slate-600 bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="faturamento">Ordenar por: Maior faturamento</option>
+                                    <option value="vendas">Ordenar por: Maior quantidade de vendas</option>
+                                    <option value="cancelamentos">Ordenar por: Mais cancelamentos</option>
+                                    <option value="ticket">Ordenar por: Maior ticket médio</option>
+                                    <option value="crescimento">Ordenar por: Maior crescimento</option>
+                                    <option value="clientes">Ordenar por: Maior número de clientes</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="overflow-x-auto table-container flex-1 bg-white" style="max-height: 460px;">
                             <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
@@ -2022,13 +1955,15 @@
                                     <tr>
                                         <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">#</th>
                                         <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Canal operacional com mais vendas do vendedor no período">Canal Op.</th>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Vendas brutas (todas as O.S. do período)">Vendas</th>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-green-600 text-center border-b border-slate-200" title="Instalações concluídas (diagnóstico 340)">Instaladas</th>
+                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-red-500 text-center border-b border-slate-200" title="Contratos instalados que estão com status Inativo">Cancel.</th>
                                         <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Faturamento</th>
-                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Vendas</th>
                                         <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Ticket Médio</th>
                                         <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Clientes</th>
                                         <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Participação</th>
                                         <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Crescimento</th>
-                                        <th class="py-3 px-4 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Meta</th>
                                     </tr>
                                 </thead>
                                 <tbody id="dvRankingTableBody" class="divide-y divide-slate-100"></tbody>
@@ -2184,8 +2119,58 @@
                         <div class="space-y-2.5" id="dvInsightsList"></div>
                     </div>
 
+
+                    <!-- NOVO: Top 15 Vendedores Gerais (Vendas e Faturamento) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="glass-card overflow-hidden parent-overflow flex flex-col">
+                            <div class="p-5 border-b border-slate-100 bg-white">
+                                <h2 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest">Top 15 Vendedores (Por Vendas)</h2>
+                            </div>
+                            <div class="overflow-x-auto table-container flex-1 bg-white" style="max-height: 400px;">
+                                <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
+                                    <thead class="bg-slate-50 sticky top-0 z-10">
+                                        <tr>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Vendas</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Contratos concluídos com Status Ativo">Ativas</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Faturamento</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200" title="Ticket Médio Atual (com desconto)">T.M. Atual</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200" title="Ticket Médio Após 1 Ano (valor cheio)">T.M. 1 Ano</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbodyTop15Vol" class="divide-y divide-slate-100">
+                                        <!-- Linhas via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="glass-card overflow-hidden parent-overflow flex flex-col">
+                            <div class="p-5 border-b border-slate-100 bg-white">
+                                <h2 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest">Top 15 Vendedores (Por Faturamento)</h2>
+                            </div>
+                            <div class="overflow-x-auto table-container flex-1 bg-white" style="max-height: 400px;">
+                                <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
+                                    <thead class="bg-slate-50 sticky top-0 z-10">
+                                        <tr>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">Vendedor</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200">Vendas</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center border-b border-slate-200" title="Contratos concluídos com Status Ativo">Ativas</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200">Faturamento</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200" title="Ticket Médio Atual (com desconto)">T.M. Atual</th>
+                                            <th class="py-3 px-5 font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right border-b border-slate-200" title="Ticket Médio Após 1 Ano (valor cheio)">T.M. 1 Ano</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbodyTop15Fat" class="divide-y divide-slate-100">
+                                        <!-- Linhas via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
-                <!-- ===== FIM ABA: DESEMPENHO DE VENDEDORES ===== -->
+                <!-- ===== FIM ABA: VENDEDORES (guia unica: ranking + desempenho) ===== -->
 
                 <!-- ===== ABA: FECHAMENTO MENSAL (guia isolada, somente admin) ===== -->
                 <div id="secaoFechamentoMensal" class="space-y-8 dashboard-section-hidden">
@@ -2508,14 +2493,14 @@
             { tabs: ['setores'] },
             { tabs: ['funil'] },
             { tabs: ['executivo'] },
-            { tabs: ['cidades', 'vendedores'] },
+            { tabs: ['cidades'] },
             { tabs: ['cruzamentos'] },
             { tabs: ['planos'] },
             { tabs: ['bairros'] },
             { tabs: ['funil'] },
             { tabs: ['funil', 'qualidade'] },
             { tabs: ['crescimento'] },
-            { tabs: ['desempenhoVendedores'] },
+            { tabs: ['vendedores'] },
             { tabs: ['fechamentoMensal'] },
             { tabs: ['buscaCliente'] }
         ];
@@ -2574,7 +2559,7 @@
         }
 
         function switchDashboardTab(tabName) {
-            if (tabName === 'desempenhoVendedores' && !_currentPodeVerDesempenhoVendedores) { tabName = 'executivo'; }
+            if (tabName === 'vendedores' && !_currentPodeVerDesempenhoVendedores) { tabName = 'executivo'; }
             if (tabName === 'fechamentoMensal' && _currentRole !== 'admin') { tabName = 'executivo'; }
             document.querySelectorAll('.dashboard-tab-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === tabName);
@@ -2588,19 +2573,6 @@
                 section.classList.toggle('dashboard-section-hidden', !tabs.includes(tabName));
             });
 
-            const analyticSection = Array.from(area.children).find(section => (section.dataset.tabs || '').includes('cidades'));
-            if (analyticSection) {
-                const children = Array.from(analyticSection.children);
-                const header = children[0];
-                const cidades = children[1];
-                const topVendedores = children[2];
-                const rankingBase = children[3];
-
-                if (header) header.classList.remove('dashboard-section-hidden');
-                if (cidades) cidades.classList.toggle('dashboard-section-hidden', tabName !== 'cidades');
-                if (topVendedores) topVendedores.classList.toggle('dashboard-section-hidden', tabName !== 'vendedores');
-                if (rankingBase) rankingBase.classList.toggle('dashboard-section-hidden', tabName !== 'vendedores');
-            }
 
             const qualidadeTitulo = document.getElementById('qualidadeDadosTitulo');
             const qualidadeCards = document.getElementById('qualidadeCards');
@@ -2614,7 +2586,7 @@
             if (qualidadeAlertasCard) qualidadeAlertasCard.classList.toggle('dashboard-section-hidden', tabName === 'funil');
 
             if (tabName === 'bairros') { setTimeout(() => renderMapaLeaflet(), 80); }
-            if (tabName === 'desempenhoVendedores') { _dvInit(); _dvRenderAll(); }
+            if (tabName === 'vendedores') { _dvInit(); _dvRenderAll(); }
             if (tabName === 'fechamentoMensal') { _fmRenderAll(); }
             if (tabName === 'buscaCliente') { _bcInit(); }
         }
@@ -2836,12 +2808,12 @@
                     ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
                     : 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
             }`;
-            // Guia "Desempenho de Vendedores": visibilidade controlada pelo admin (por usuário).
+            // Guia "Vendedores" (ranking + desempenho): visibilidade controlada pelo admin (por usuário).
             // Isolado em try/catch para nunca interromper o login caso o botão não exista no DOM.
             try {
-                const btnDesempenho = document.querySelector('[data-tab="desempenhoVendedores"]');
-                if (btnDesempenho) btnDesempenho.classList.toggle('hidden', !_currentPodeVerDesempenhoVendedores);
-            } catch (e) { console.warn('Falha ao aplicar permissão da guia Desempenho de Vendedores:', e); }
+                const btnVendedores = document.querySelector('[data-tab="vendedores"]');
+                if (btnVendedores) btnVendedores.classList.toggle('hidden', !_currentPodeVerDesempenhoVendedores);
+            } catch (e) { console.warn('Falha ao aplicar permissão da guia Vendedores:', e); }
             // Guia "Fechamento Mensal": exclusiva do admin.
             try {
                 const btnFm = document.querySelector('[data-tab="fechamentoMensal"]');
@@ -5253,11 +5225,9 @@
         }
 
         function renderVendedorSummary() {
-            const tbodyVendedor = document.getElementById('vendedorTableBody');
             const tbodyTop15Vol = document.getElementById('tbodyTop15Vol');
             const tbodyTop15Fat = document.getElementById('tbodyTop15Fat');
 
-            if(tbodyVendedor) tbodyVendedor.innerHTML = '';
             if(tbodyTop15Vol) tbodyTop15Vol.innerHTML = '';
             if(tbodyTop15Fat) tbodyTop15Fat.innerHTML = '';
 
@@ -5288,24 +5258,6 @@
                 ticket1Ano: aggGeral[k].concluidas > 0 ? (aggGeral[k].faturamentoCheio / aggGeral[k].concluidas) : 0,
                 conversao: aggGeral[k].vendas > 0 ? ((aggGeral[k].concluidas / aggGeral[k].vendas) * 100) : 0
             }));
-
-            // --- Render: Ranking Geral de Performance
-            const allSellers = [...arrGeral].sort((a, b) => b.vendas - a.vendas);
-            allSellers.forEach(v => {
-                if(!tbodyVendedor) return;
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-blue-50/50 transition-colors';
-                tr.innerHTML = `
-                    <td class="py-2 px-5 text-slate-800 font-bold text-xs truncate max-w-[200px]" title="${v.nome}">${v.nome}</td>
-                    <td class="py-2 px-5 text-slate-500 text-[10px] text-center font-bold uppercase tracking-wider">${v.setor || '-'}</td>
-                    <td class="py-2 px-5 text-slate-600 text-center font-bold">${v.vendas}</td>
-                    <td class="py-2 px-5 text-green-600 text-center font-black">${v.concluidas}</td>
-                    <td class="py-2 px-5 text-center font-black"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black ${v.ativas > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'text-slate-400'}">${v.ativas}</span></td>
-                    <td class="py-2 px-5 text-purple-600 text-center font-bold">${v.conversao.toFixed(1)}%</td>
-                    <td class="py-2 px-5 text-slate-800 text-right font-bold">${formatBRL(v.faturamento)}</td>
-                `;
-                tbodyVendedor.appendChild(tr);
-            });
 
             // --- Render: Top 15 Geral (Vendas & Faturamento) ---
             const top15Vol = [...arrGeral].sort((a, b) => b.vendas - a.vendas).slice(0, 15);
@@ -10311,6 +10263,7 @@
             comparacao: 'anterior', // 'anterior' | 'anoAnterior'
             indicadorGrafico: 'faturamento',
             ordenacaoRanking: 'faturamento',
+            buscaRanking: '',
             comparar: [], // vendedores selecionados no bloco "Comparação entre Vendedores"
             tabela: { pagina: 1, porPagina: 25, busca: '', campo: 'data', dir: 'desc' },
             _primeiraCompraCache: null
@@ -10377,17 +10330,29 @@
 
         function _dvAgregado(lista) {
             const brutas = lista.length;
-            let faturamento = 0, instaladas = 0;
+            let faturamento = 0, instaladas = 0, ativas = 0, cancelados = 0;
             const clientes = new Set();
+            const porCanal = {};
             lista.forEach(d => {
                 if (d._isConcluida) { faturamento += (d._valorDesconto || 0); instaladas++; }
+                if (isClienteAtivo(d)) ativas++;
+                if (isCancelamentoReal(d)) cancelados++;
+                const canal = _dvCanalNome(d);
+                porCanal[canal] = (porCanal[canal] || 0) + 1;
                 const c = _dvClienteNome(d);
                 if (c) clientes.add(c);
             });
+            // Canal operacional do vendedor = aquele em que ele mais vendeu no periodo
+            const canaisOrdenados = Object.keys(porCanal).sort((a, b) => porCanal[b] - porCanal[a]);
             return {
                 brutas,
                 faturamento,
                 instaladas,
+                ativas,
+                cancelados,
+                taxaCancelamento: instaladas > 0 ? (cancelados / instaladas) * 100 : 0,
+                canalPrincipal: canaisOrdenados[0] || '-',
+                canaisAtuantes: canaisOrdenados.length,
                 ticketMedio: instaladas > 0 ? faturamento / instaladas : 0,
                 clientes: clientes.size,
                 mediaVendasPorCliente: clientes.size > 0 ? brutas / clientes.size : 0
@@ -10539,23 +10504,47 @@
             return { linhas, totalFaturamento };
         }
 
+        function _dvOnBuscaRanking(valor) {
+            _dvState.buscaRanking = valor || '';
+            _dvRenderRanking();
+        }
+
         function _dvRenderRanking() {
             const tbody = document.getElementById('dvRankingTableBody');
             if (!tbody) return;
             const { linhas } = _dvCalcularRanking();
+            const info = document.getElementById('dvRankingInfo');
+
             if (linhas.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="py-4 px-4 text-center text-xs text-slate-400">Sem vendedores para os filtros selecionados.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" class="py-4 px-4 text-center text-xs text-slate-400">Sem vendedores para os filtros selecionados.</td></tr>';
+                if (info) info.textContent = '';
                 return;
             }
 
             const sorters = {
                 faturamento: (a, b) => b.faturamento - a.faturamento,
                 vendas: (a, b) => b.brutas - a.brutas,
+                cancelamentos: (a, b) => b.cancelados - a.cancelados,
                 ticket: (a, b) => b.ticketMedio - a.ticketMedio,
                 crescimento: (a, b) => (b.variacao.pct ?? -Infinity) - (a.variacao.pct ?? -Infinity),
                 clientes: (a, b) => b.clientes - a.clientes
             };
             const lista = [...linhas].sort(sorters[_dvState.ordenacaoRanking] || sorters.faturamento);
+
+            // A posicao mostrada e sempre a do ranking completo: filtrar pela busca
+            // nao pode fazer o 12o colocado parecer o 1o.
+            const posicao = new Map(lista.map((v, i) => [v.nome, i + 1]));
+            const termo = _bcNorm(_dvState.buscaRanking);
+            const exibidos = termo
+                ? lista.filter(v => _bcNorm(v.nome + ' ' + v.canalPrincipal).includes(termo))
+                : lista;
+
+            if (info) info.textContent = termo ? `${exibidos.length} de ${linhas.length} vendedores` : `${linhas.length} vendedor(es)`;
+
+            if (exibidos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="11" class="py-4 px-4 text-center text-xs text-slate-400">Nenhum vendedor encontrado para "${escapeHTML(_dvState.buscaRanking)}".</td></tr>`;
+                return;
+            }
 
             const mediaFaturamento = linhas.reduce((s, v) => s + v.faturamento, 0) / linhas.length;
             const melhor = [...linhas].sort((a, b) => b.faturamento - a.faturamento)[0];
@@ -10563,27 +10552,38 @@
             const maiorCrescimento = crescentes.length ? [...crescentes].sort((a, b) => b.variacao.pct - a.variacao.pct)[0] : null;
             const maiorQueda = crescentes.length ? [...crescentes].sort((a, b) => a.variacao.pct - b.variacao.pct)[0] : null;
 
-            tbody.innerHTML = lista.map((v, i) => {
+            tbody.innerHTML = exibidos.map(v => {
                 const b = _dvBadgeVariacao(v.variacao);
                 const destaques = [];
                 if (v.nome === melhor.nome) destaques.push('<span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 text-[9px] font-black uppercase">Melhor</span>');
                 if (maiorCrescimento && v.nome === maiorCrescimento.nome && maiorCrescimento.variacao.pct > 0) destaques.push('<span class="px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-100 text-[9px] font-black uppercase">+ Cresceu</span>');
                 if (maiorQueda && v.nome === maiorQueda.nome && maiorQueda.variacao.pct < 0) destaques.push('<span class="px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-100 text-[9px] font-black uppercase">Queda</span>');
                 if (v.faturamento < mediaFaturamento) destaques.push('<span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100 text-[9px] font-black uppercase">Abaixo da média</span>');
+
+                const canalTitulo = v.canaisAtuantes > 1
+                    ? `Canal com mais vendas do vendedor · atua em ${v.canaisAtuantes} canais no período`
+                    : 'Canal operacional do vendedor no período';
+                const canalExtra = v.canaisAtuantes > 1 ? '<span class="text-slate-300 ml-0.5">+</span>' : '';
+
+                const celulaCancel = v.cancelados > 0
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black bg-red-50 text-red-700 border border-red-200" title="${v.taxaCancelamento.toFixed(1)}% das instaladas">${v.cancelados}</span>`
+                    : '<span class="text-slate-300 font-bold">0</span>';
+
                 return `<tr class="hover:bg-indigo-50/40 transition-colors">
-                    <td class="py-2.5 px-4 text-slate-500 text-center font-bold text-xs">${i + 1}</td>
+                    <td class="py-2.5 px-4 text-slate-500 text-center font-bold text-xs">${posicao.get(v.nome)}</td>
                     <td class="py-2.5 px-4 text-slate-800 font-bold text-xs">${escapeHTML(v.nome)}<div class="flex gap-1 mt-1 flex-wrap">${destaques.join('')}</div></td>
-                    <td class="py-2.5 px-4 text-right font-black text-slate-800">${formatBRL(v.faturamento)}</td>
+                    <td class="py-2.5 px-4 text-center text-[10px] font-black uppercase tracking-wider text-slate-500" title="${canalTitulo}">${escapeHTML(v.canalPrincipal)}${canalExtra}</td>
                     <td class="py-2.5 px-4 text-center font-bold text-blue-700">${v.brutas}</td>
+                    <td class="py-2.5 px-4 text-center font-black text-green-600">${v.instaladas}</td>
+                    <td class="py-2.5 px-4 text-center">${celulaCancel}</td>
+                    <td class="py-2.5 px-4 text-right font-black text-slate-800">${formatBRL(v.faturamento)}</td>
                     <td class="py-2.5 px-4 text-right font-bold text-emerald-600">${formatBRL(v.ticketMedio)}</td>
                     <td class="py-2.5 px-4 text-center font-bold text-slate-600">${v.clientes}</td>
                     <td class="py-2.5 px-4 text-center font-bold text-purple-600">${v.participacao.toFixed(1)}%</td>
                     <td class="py-2.5 px-4 text-center"><span class="px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase ${b.classe}">${b.icone} ${v.variacao.pct !== null ? (v.variacao.pct >= 0 ? '+' : '') + v.variacao.pct.toFixed(1) + '%' : b.texto}</span></td>
-                    <td class="py-2.5 px-4 text-center text-[10px] text-slate-400 font-bold uppercase">Dados indisponíveis</td>
                 </tr>`;
             }).join('');
         }
-
         function _dvBaseParaVendedor(nome, ignorar) {
             ignorar = ignorar || [];
             return globalData.filter(item => _dvVendedorNome(item) === nome && _dvPassaFiltros(item, [...ignorar, 'vendedores']));
@@ -11364,9 +11364,11 @@
             _dvState.comparar = [];
             _dvState.tabela.busca = '';
             _dvState.tabela.pagina = 1;
+            _dvState.buscaRanking = '';
             ['dvFiltroCanal', 'dvFiltroCidade', 'dvFiltroEstado', 'dvFiltroCliente', 'dvFiltroProduto', 'dvFiltroAno', 'dvFiltroMes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             ['dvFiltroDataInicio', 'dvFiltroDataFim'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             const busca = document.getElementById('dvTabelaBusca'); if (busca) busca.value = '';
+            const buscaRank = document.getElementById('dvBuscaRanking'); if (buscaRank) buscaRank.value = '';
             _dvInit();
             _dvRenderAll();
         }
